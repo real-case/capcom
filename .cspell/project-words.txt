@@ -80,3 +80,17 @@ unreviewed
 viewports
 WCAG
 Yurii
+# CAPCOM demo — product-analytics domain vocabulary
+CAPCOM
+Mixpanel
+visx
+multitenant
+multitenancy
+jsonb
+RBAC
+heatmap
+pgTAP
+realtime
+distinctid
+upsert
+upserts

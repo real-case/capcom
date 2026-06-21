@@ -173,7 +173,7 @@ function startNext() {
 }
 
 console.log(
-  bold("\n▸ claude-code-nextjs-starter — local dev environment") +
+  bold("\n▸ capcom — local dev environment") +
     dim("\n  (ADR 0024: Supabase → types → env → next dev)"),
 );
 ensureSupabase();

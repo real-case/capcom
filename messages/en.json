@@ -1,11 +1,11 @@
 {
   "Metadata": {
-    "title": "Next.js Template",
-    "description": "Next.js App Router starter — internationalized and SEO-ready."
+    "title": "CAPCOM — Product Analytics",
+    "description": "CAPCOM: a multitenant product-analytics platform — events, funnels, retention cohorts, and segmentation."
   },
   "HomePage": {
-    "heading": "It works.",
-    "lead": "This is the template's placeholder home route. Edit src/app/[locale]/page.tsx to build your first screen."
+    "heading": "CAPCOM",
+    "lead": "Product-analytics platform demo, built on the claude-code-nextjs-starter methodology. The product UI lands incrementally — see docs/capcom/roadmap.md for the PR-by-PR plan."
   },
   "Error": {
     "title": "Something went wrong",
