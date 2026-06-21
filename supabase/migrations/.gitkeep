@@ -1,0 +1,3 @@
+# Placeholder so `supabase/migrations/` exists in a fresh template (the README and the
+# create-migration skill point here). Your first migration replaces the need for this file:
+#   npx supabase migration new <name>

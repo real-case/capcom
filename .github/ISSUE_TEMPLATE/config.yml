@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & show-and-tell (Discussions)
+    url: https://github.com/real-case/claude-code-nextjs-starter/discussions
+    about: Ask how something works, share what you built with the template, or float an idea before it becomes an issue.
+  - name: Report a security vulnerability
+    url: https://github.com/real-case/claude-code-nextjs-starter/security/advisories/new
+    about: Report privately through GitHub security advisories — never in a public issue. See SECURITY.md.

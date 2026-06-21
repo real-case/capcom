@@ -1,0 +1,6 @@
+{
+  "$schema": "./composition-graph.schema.json",
+  "version": 1,
+  "generatedNote": "Hand-maintained analytical artifact (ADR 0059) — built top-down by interface commonality, NOT generated from code. Reconciled against the dependency-cruiser import graph in Stage 1 (ADR 0060). Empty in this template: add a node here when the first component lands under src/components/ui (component-deprecation hygiene is owned by ADR 0064).",
+  "nodes": []
+}

@@ -1,0 +1,249 @@
+# CI quality gate — ADR 0010. Runs the same commands as the local gate, so
+# green-local means green-CI. Deployment is not CI's job: Vercel owns preview
+# and production deploys (ADR 0009). Action versions are pinned to commit SHAs
+# per the ADR 0044 pinning posture (reaffirmed by ADR 0056 for the scanner).
+#
+# Gate step names use a uniform `[slug] Label` format — `slug` matches the gate's
+# `npm run check:<slug>` script; each step's ADR lives in a trailing comment, not the name.
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    # `labeled` / `unlabeled` re-run the gate when the `hotfix` label is
+    # toggled, so the ADR 0008 coverage bypass is re-evaluated immediately.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+# Least-privilege default: every job reads the repo, nothing more.
+permissions:
+  contents: read
+
+# Note: toggling the `hotfix` label cancels the in-flight PR run and starts a
+# fresh one — required checks are satisfied by the latest run, by design.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  quality:
+    name: Quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # ADR 0008: only a `hotfix/*` branch or a `hotfix`-labeled PR bypasses
+      # the coverage threshold — and nothing else of the gate. Tests still run.
+      HOTFIX: ${{ github.event_name == 'pull_request' && (startsWith(github.head_ref, 'hotfix/') || contains(github.event.pull_request.labels.*.name, 'hotfix')) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up Node 24 from .nvmrc (ADR 0004)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ADR 0034→0037/0036/0040: the Storybook stories-as-tests project runs in Vitest
+      # browser mode, so `test:coverage` needs a Playwright browser. (This is the only
+      # engine the coverage gate depends on; the test-runner SMOKE job stays local-only
+      # during bootstrap — see the note at the foot of this file.)
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: "[types] Typecheck"
+        run: npm run typecheck # ADR 0003
+
+      - name: "[lint] ESLint"
+        run: npm run lint # ADR 0006
+
+      - name: "[format] Prettier check"
+        run: npm run format:check # ADR 0006
+
+      - name: "[audit] Dependency vulnerabilities"
+        run: npm run check:audit # ADR 0069
+
+      - name: "[licenses] License allowlist"
+        run: npm run check:licenses # ADR 0071
+
+      - name: "[spelling] Spell check"
+        run: npm run check:spelling # ADR 0074
+
+      - name: "[stories] Colocated stories"
+        run: npm run check:stories # ADR 0042
+
+      - name: "[boundaries] Module imports"
+        run: npm run check:boundaries # ADR 0060
+
+      - name: "[fsd] Layer boundaries"
+        run: npm run check:fsd # ADR 0065/0066
+
+      - name: "[graph] Composition vs imports"
+        run: npm run check:graph # ADR 0059/0060
+
+      - name: "[design-intent] Fitness functions"
+        run: npm run check:design-intent # ADR 0062
+
+      - name: "[seals] Figma drift seals"
+        run: npm run check:seals # ADR 0063 (inert until a Figma file is wired)
+
+      - name: "[i18n] Key parity + ICU"
+        run: npm run check:i18n # ADR 0055
+
+      - name: "[gates] Self test"
+        run: npm run check:gates # ADR 0078, P6
+
+      - name: "[tokens] Codegen drift"
+        # ADR 0058 — gen:tokens output must match the @theme layer in globals.css
+        run: |
+          npm run gen:tokens
+          git diff --exit-code -- src/design-system/tokens.generated.ts src/design-system/tokens.allowlist.json src/design-system/tokens.agent-rules.md
+
+      - name: "[build] Next build"
+        run: npm run build # ADR 0002
+
+      - name: "[coverage] Coverage gate"
+        if: env.HOTFIX != 'true'
+        run: npm run test:coverage # ADR 0008/0041 (merged ≥80%)
+
+      - name: "[coverage] Hotfix bypass"
+        if: env.HOTFIX == 'true'
+        run: npm run test # ADR 0008 (tests still run; threshold waived)
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      # gitleaks-action lists the PR's commits via the API on pull_request
+      # events; still read-only — no write path anywhere in this job.
+      pull-requests: read
+    steps:
+      - name: Checkout full history (incoming commits are scanned, ADR 0056)
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: "[secrets] Gitleaks scan"
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Committed, human-reviewed allowlist (ADR 0056, 0046).
+          GITLEAKS_CONFIG: .gitleaks.toml
+          # Least-privilege: no PR-comment write path — the red check plus the
+          # job summary are the signal.
+          GITLEAKS_ENABLE_COMMENTS: "false"
+
+  # ── Claude-infrastructure integrity ─────────────────────────────────────────
+  # Applies the project's own drift-prevention discipline (single source + gates
+  # that test themselves, AI-GUARDRAILS.md §7) to the surfaces that hard-code ~200
+  # ADR numbers and dozens of npm-script / scripts/* references but had no upstream
+  # guard: the `.claude/` tree (check:claude), CLAUDE.md (check:claude-md), and the
+  # operative CI/env surfaces that cite ADRs (check:citations — this file + .env.example).
+  # Dependency-free Node scripts — no node_modules needed — so this job skips `npm ci`
+  # and runs in parallel with the quality gate.
+  #
+  # GOVERNANCE: these reference-integrity gates are recorded by ADR 0067 (accepted) and
+  # extend the ADR 0054 drift-audit posture. Marking any of them a required check remains a
+  # 👤 branch-protection setting.
+  claude-infra:
+    name: Claude-infra integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up Node 24 from .nvmrc (ADR 0004)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: "[claude] Self test"
+        run: npm run check:claude -- --self-test # P6 (the check:gates pattern)
+
+      - name: "[claude] Refs resolve"
+        run: npm run check:claude # ADR 0054 (skill-drift gate)
+
+      - name: "[claude-md] Accepted-only citations"
+        run: npm run check:claude-md # ADR 0001
+
+      - name: "[citations] Self test"
+        run: npm run check:citations -- --self-test # P6
+
+      - name: "[citations] Resolve references"
+        run: npm run check:citations # ADR 0067
+
+      - name: "[action-pins] Self test"
+        run: npm run check:action-pins -- --self-test # P6
+
+      - name: "[action-pins] SHA-pinned actions"
+        run: npm run check:action-pins # ADR 0044/0070
+
+      - name: "[debt] Escape-hatch inventory"
+        run: npm run check:debt # ADR 0078 escape-hatch gate (sources 0003/0029/0039/0049/0062/0064)
+
+  # ── Conventional Commits ─────────────────────────────────────────────────────
+  # commitlint over the PR's commit range (ADR 0072) — the format the AI changelog draft
+  # (0050) assumes. Merge commits are ignored by config-conventional; squash-merge title
+  # enforcement is a separate 👤 branch-protection setting.
+  commitlint:
+    name: Conventional Commits
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node 24 from .nvmrc (ADR 0004)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: "[commits] Conventional format"
+        env:
+          COMMITLINT_FROM: ${{ github.event.pull_request.base.sha }}
+          COMMITLINT_TO: ${{ github.event.pull_request.head.sha }}
+        run: npm run check:commits -- --verbose # ADR 0072
+
+
+  # ── e2e job: deferred during bootstrap ──────────────────────────────────────
+  # ADR 0007/0010 commit the Playwright e2e to the CI gate (Supabase stack
+  # startup → migration replay → gen:types drift check → auth/RLS e2e). The job
+  # is not wired in yet because the Supabase image pulls (~3–4 min/run) dominate
+  # CI turnaround during bootstrap while there are no real feature components and
+  # no migrations to exercise yet. This is a deliberate, temporary deviation
+  # tracked in docs/deviations.md (DEV-001), NOT an ADR change — e2e-in-CI remains
+  # the target end-state.
+  #
+  # The specs still run locally on every change: `npm run test:e2e` (needs a
+  # local Supabase stack: `npx supabase start`).
+  #
+  # Re-enable before the first dev→main production promotion (ADR 0011): author
+  # the job (Supabase startup → migration replay → gen:types drift → auth/RLS
+  # e2e) — there is no prior job in this repo's history to recover.
+
+  # ── Storybook test-runner smoke: local-only during bootstrap (Phase 10) ─────
+  # ADR 0037 puts a `@storybook/test-runner` smoke pass over the *statically built*
+  # Storybook in CI (storybook build → serve → render + play, no axe, no coverage).
+  # It is deferred from CI for now — same lean-bootstrap rationale as the e2e job:
+  # it adds a Storybook build + serve + a second browser run, while the Vitest addon
+  # (browser-mode story tests + a11y + merged coverage, ADR 0037/0039/0041) already runs in
+  # the quality gate above and is the load-bearing engine. This is a deliberate,
+  # temporary deviation tracked in docs/deviations.md (DEV-002), NOT an ADR change.
+  #
+  # It runs LOCALLY on demand: `npm run build-storybook`, serve `storybook-static`
+  # (or `npm run storybook`), then `npm run test:storybook`.
+  #
+  # Re-enable with the e2e job before the first dev→main production promotion.

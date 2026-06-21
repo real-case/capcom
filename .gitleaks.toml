@@ -1,0 +1,26 @@
+# Gitleaks configuration — ADR 0055, Layer 1 (blocking secret scan).
+#
+# This file exists for one purpose: an *auditable, committed allowlist* for
+# false positives (high-entropy non-secrets). Every entry must be narrowly
+# scoped and carry a justification; changes to this file are human-reviewed
+# like any other (ADR 0046). Weakening the scan here is a red flag in review.
+
+title = "claude-code-nextjs-starter gitleaks config"
+
+[extend]
+# Extend the default gitleaks ruleset — never replace it.
+useDefault = true
+
+# Supabase publishable key (ADR 0010, 0055). Publishable keys are public by
+# design — they ship to the browser and every access is RLS-gated, so this is
+# not a secret. The value is the stack's universal local shared default, used as
+# the env.ts build/test/preview fallback. Scoped to exactly the `sb_publishable_`
+# pattern, so only this public-key family is allowlisted; the `sb_secret_` key
+# (different prefix) and every other secret stay fully scanned.
+#
+# Must be the SINGULAR `[allowlist]` table: the gitleaks version pinned by the
+# action (8.24.3) honors `[allowlist]` but silently ignores the plural
+# `[[allowlists]]` form — verified against that exact binary.
+[allowlist]
+description = "Supabase publishable key — public, RLS-gated, shared local default"
+regexes = ['''sb_publishable_[A-Za-z0-9_-]+''']

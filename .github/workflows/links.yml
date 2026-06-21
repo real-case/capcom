@@ -1,0 +1,36 @@
+# Documentation link-integrity gate — ADR 0073. Checks INTERNAL links (relative paths and
+# in-repo file references) across every Markdown file with lychee in OFFLINE mode:
+# deterministic, no network, no retry policy to violate (ADR 0049). External-URL liveness is
+# deliberately out of scope (non-deterministic). Catches the dead-internal-link rot the audit
+# found (a dangling docs/bootstrap-plan.md pointer). Action SHA-pinned per ADR 0044/0070.
+name: Doc links
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: links-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  links:
+    name: Internal link check (lychee offline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: "[links] Internal links"
+        uses: lycheeverse/lychee-action@8646ba30535128ac92d33dfc9133794bfdd9b411 # v2.8.0
+        with:
+          # --offline: no network; only relative/in-repo links are resolved (ADR 0073/0049).
+          # (Links inside code blocks are skipped by default — illustrative examples don't fail.)
+          args: "--offline --no-progress './**/*.md'"
+          fail: true

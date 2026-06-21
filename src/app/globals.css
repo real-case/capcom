@@ -1,0 +1,191 @@
+/* ============================================================
+   DESIGN TOKENS (Tailwind CSS v4) — neutral template baseline.
+
+   This file is the canonical token source (ADR 0032/0033). `npm run gen:tokens`
+   parses it into the typed union, the lint allowlist, and the agent rules
+   (`src/design-system/tokens.*`) — never hand-edit those; edit here and regenerate.
+
+   Layered per ADR 0033 so a real design system can drop in by replacing the
+   values, not the structure:
+     1) Value layer    — the raw semantic variables in `:root` + `.dark` overrides.
+     2) Spacing / radius / type scale (`@theme`).
+     3) shadcn bridge  — `@theme inline` aliases `--color-*` onto the value layer
+                          so every Tailwind utility inherits the `.dark` swap.
+
+   The neutral palette below is the stock shadcn (Tailwind v4) set. When you wire
+   a Figma export, reintroduce a primitive layer and point the value layer at it
+   (the layered architecture in ADR 0033) — the bridge and `gen:tokens` stay unchanged.
+   ============================================================ */
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ====================== LAYER 1 — VALUE LAYER (semantic) ====================== */
+/* Raw semantic variables; values swap under `.dark`. The bridge (Layer 3) exposes
+   each as a Tailwind color utility. */
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.141 0.005 285.823);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.141 0.005 285.823);
+  --primary: oklch(0.21 0.006 285.885);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.967 0.001 286.375);
+  --muted-foreground: oklch(0.552 0.016 285.938);
+  --accent: oklch(0.967 0.001 286.375);
+  --accent-foreground: oklch(0.21 0.006 285.885);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.92 0.004 286.32);
+  --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.705 0.015 286.067);
+}
+
+.dark {
+  --background: oklch(0.141 0.005 285.823);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.92 0.004 286.32);
+  --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.274 0.006 286.033);
+  --muted-foreground: oklch(0.705 0.015 286.067);
+  --accent: oklch(0.274 0.006 286.033);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.552 0.016 285.938);
+}
+
+/* ============= LAYER 2 — SPACING / RADIUS / TYPOGRAPHY (@theme) ============= */
+@theme {
+  /* Spacing scale (4px base) */
+  --spacing-0: 0px;
+  --spacing-0_5: 2px;
+  --spacing-1: 4px;
+  --spacing-1_5: 6px;
+  --spacing-2: 8px;
+  --spacing-2_5: 10px;
+  --spacing-3: 12px;
+  --spacing-3_5: 14px;
+  --spacing-4: 16px;
+  --spacing-4_5: 18px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-6_5: 28px;
+  --spacing-8: 32px;
+  --spacing-8_5: 36px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-12_5: 52px;
+  --spacing-16: 64px;
+
+  /* Border radius */
+  --radius-xs: 12px;
+  --radius-s: 16px;
+  --radius-m: 20px;
+  --radius-l: 32px;
+  --radius-xl: 40px;
+  --radius-full: 9999px;
+
+  /* Typography (font-size + line-height) */
+  --text-h0: 94px;
+  --text-h0--line-height: 94px;
+  --text-h1: 36px;
+  --text-h1--line-height: 100px;
+  --text-h2: 32px;
+  --text-h2--line-height: 100px;
+  --text-h3: 28px;
+  --text-h3--line-height: 90px;
+  --text-h4: 24px;
+  --text-h4--line-height: 110px;
+  --text-h5: 18px;
+  --text-h5--line-height: 120%;
+  --text-title-16: 16px;
+  --text-title-16--line-height: 120%;
+  --text-title-14: 14px;
+  --text-title-14--line-height: 120%;
+  --text-title-12: 12px;
+  --text-title-12--line-height: 100%;
+  --text-body-20: 20px;
+  --text-body-20--line-height: 1.5;
+  --text-body-16: 16px;
+  --text-body-16--line-height: 120%;
+  --text-body-16m: 16px;
+  --text-body-16m--line-height: 120%;
+  --text-body-14: 14px;
+  --text-body-14--line-height: 1.5;
+  --text-body-12: 12px;
+  --text-body-12--line-height: 100%;
+  --text-button: 12px;
+  --text-button--line-height: 150%;
+}
+
+/* ============= LAYER 3 — shadcn COMPATIBILITY BRIDGE (ADR 0033) ============= */
+/* `@theme inline` aliases each shadcn semantic name onto a value-layer variable via
+   `var()`; because the reference is INLINED, every utility (e.g. `bg-primary`) emits
+   the value-layer `var()` directly and therefore inherits its `.dark` swap — no
+   separate dark bridge is needed. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: var(--radius-xs);
+  --radius-md: var(--radius-s);
+  --radius-lg: var(--radius-m);
+
+  /* `--font-geist-*` are injected at runtime by next/font (layout.tsx) and are
+     intentionally NOT declared in this file. */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-geist-sans);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}

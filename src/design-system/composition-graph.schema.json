@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "composition-graph.schema.json",
+  "title": "Component composition dependency graph (ADR 0059)",
+  "description": "Top-down analytical model of how components compose, built by interface commonality before code. Distinct from the code-derived import graph (ADR 0060), which it is reconciled against.",
+  "type": "object",
+  "required": ["version", "nodes"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "type": "integer", "const": 1 },
+    "generatedNote": { "type": "string" },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/node" }
+    }
+  },
+  "$defs": {
+    "node": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "archetype",
+        "module",
+        "composedOf",
+        "usedIn",
+        "compositionSignature"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "kind": {
+          "enum": ["primitive", "composite", "pattern"]
+        },
+        "archetype": {
+          "type": ["string", "null"],
+          "description": "An entry from src/design-system/archetypes.ts, or null when no archetype fits — a human escalation, never an agent default (ADR 0061)."
+        },
+        "module": {
+          "type": "string",
+          "description": "Repo-relative path to the component module."
+        },
+        "composedOf": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Graph node ids this node is built from (its constituent components)."
+        },
+        "usedIn": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Module paths that import this node; reconciled against the dependency-cruiser import graph (ADR 0060) and the source of the API-derivation union (ADR 0062)."
+        },
+        "compositionSignature": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "v1 = the sorted exact set of composed primitive ids; no subtree topology (ADR 0059). Equal signatures are structural-duplication candidates."
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

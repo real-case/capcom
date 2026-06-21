@@ -1,0 +1,36 @@
+name: Proposal / feature request
+description: Propose a change, a new pattern, or an architectural decision.
+title: "proposal: "
+labels: ["proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is **decisions-first**: a change that adds a dependency, introduces a new
+        pattern, or departs from a recorded rule needs an ADR before code depends on it (see
+        [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md)). Describe the decision here — the ADR can follow.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem or gap does this address? Why does the current template fall short?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What should change, and how would it work?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: MADR records at least two options. What else did you weigh, and why is this better?
+  - type: checkboxes
+    id: adr
+    attributes:
+      label: Decision record
+      options:
+        - label: This likely needs a new ADR under docs/decisions/ (or a CON-00x constraint).

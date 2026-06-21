@@ -1,0 +1,21 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "files": ["**/*.md"],
+  "useGitignore": true,
+  "ignorePaths": [
+    "node_modules/**",
+    ".next/**",
+    "coverage/**",
+    "**/package-lock.json",
+    "docs/decisions/README.md"
+  ],
+  "dictionaryDefinitions": [
+    {
+      "name": "project-words",
+      "path": "./.cspell/project-words.txt",
+      "addWords": true
+    }
+  ],
+  "dictionaries": ["project-words"]
+}

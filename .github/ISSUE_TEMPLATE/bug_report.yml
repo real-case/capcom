@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in the template, a gate, or the Claude Code configuration behaves incorrectly.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a report. First confirm you are on **Node 24** (`nvm use`) — several gates
+        fail spuriously on older releases. Search existing issues before opening a new one.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Describe the problem and what you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Run `npm run ...`
+        2. ...
+        3. See error
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the template is affected?
+      options:
+        - Gates / CI (check:* scripts)
+        - Claude Code config (.claude — hooks, skills, agents, commands)
+        - ADR tooling or documentation
+        - Application scaffolding (src/)
+        - Supabase / migrations
+        - Build / dev orchestration
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: "v24.x.x (output of `node -v`)"
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output
+      description: Gate output, a stack trace, or logs. Rendered as code, so no backticks needed.
+      render: shell

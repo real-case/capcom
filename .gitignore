@@ -1,0 +1,47 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# Local environment — secrets never enter version control
+.env
+.env.*
+!.env.example
+
+# Per-developer local overrides
+.claude/settings.local.json
+
+# Next.js
+/.next/
+/out/
+/build
+next-env.d.ts
+*.tsbuildinfo
+
+# Testing
+/coverage
+/playwright-report
+/test-results
+/blob-report
+/playwright/.cache
+
+# Storybook
+/storybook-static
+*storybook.log
+
+# Vercel
+.vercel
+
+# Debug
+npm-debug.log*
+
+# IDE / OS
+.idea/
+.DS_Store
+*.pem
+
+# ADR-edit waiver sentinel — template-maintenance opt-out for the accepted-ADR
+# immutability guard (scripts/hooks/guard-protected-files.mjs). NEVER commit it: a
+# committed sentinel would ship the guard disabled. Drop it locally to edit an accepted
+# ADR in place, remove it when done.
+.adr-edit-waiver

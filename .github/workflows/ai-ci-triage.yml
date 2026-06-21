@@ -1,0 +1,55 @@
+# Phase-12 ADVISORY CI-failure triage (ADR 0049). Fires after the CI workflow finishes;
+# if it FAILED, an AI pass classifies the failure (real regression / flaky / infra) with
+# evidence and comments on the PR. It NEVER retries (there is no global retry policy) and
+# NEVER quarantines on its own — both are human actions (ADR 0049). INERT until a 👤
+# provisions AI_API_KEY (provider-agnostic, ADR 0075), via the same `guard` pattern as ai-advisory.yml.
+name: AI CI-failure triage (Phase 12)
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+# Read the repo + the failing run's logs; comment on the PR. No other write path.
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  guard:
+    name: Failed run + has key?
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    outputs:
+      has_key: ${{ steps.k.outputs.has_key }}
+    steps:
+      - id: k
+        run: echo "has_key=${{ secrets.AI_API_KEY != '' }}" >> "$GITHUB_OUTPUT"
+
+  triage:
+    name: AI triage (advisory)
+    needs: guard
+    if: needs.guard.outputs.has_key == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Fetch the failing run's log
+        run: gh run view ${{ github.event.workflow_run.id }} --log-failed > ci-failure.log || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: AI CI-failure triage (ADR 0049)
+        run: node scripts/ai/ci-triage.mjs
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_BASE_URL: ${{ vars.AI_BASE_URL }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
+          CI_LOG_PATH: ci-failure.log
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

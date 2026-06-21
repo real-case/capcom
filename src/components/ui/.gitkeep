@@ -1,0 +1,4 @@
+# Keeps src/components/ui/ present so the design-system gate scripts
+# (check:stories, check:graph, check:design-intent, check:seals) walk an
+# empty tree and pass, instead of crashing on a missing directory.
+# Delete this once the first real component lands.

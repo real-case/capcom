@@ -1,0 +1,326 @@
+# CLAUDE.md
+
+> **Stage.** The template's infrastructure and scaffolding are in place under `src/`
+> (the env / Supabase / i18n / logging / state / SEO layers); feature code is built on
+> top. The **Stack / Commands / Conventions / Restrictions** sections below are synced
+> from the **accepted** ADRs via the `adr-sync-claude-md` skill and describe the shipped
+> code. Architectural decisions are still recorded as ADRs under `docs/decisions/`
+> **before** any code depends on them; the **ADR Process** section is authoritative.
+> These sections track the **accepted** ADRs; the full Phase-3 baseline is now accepted, so
+> nothing below is flagged as still-proposed pending the acceptance gate.
+
+## ADR Process
+
+All architectural decisions are recorded as ADRs before any code depends on them.
+
+- **Location:** `docs/decisions/`.
+- **File naming:** `NNNN-kebab-case-title.md`, zero-padded sequential number; numbers
+  are permanent IDs and never change, even under supersession.
+- **Template (pinned):** **MADR full template** — `Context and Problem Statement`,
+  `Decision Drivers`, `Considered Options` (≥2), `Decision Outcome` (`Chosen option …
+  because …`), `Consequences` (Good/Bad), `Confirmation`, `Pros and Cons of the
+  Options` (per option), `More Information`. The canonical source is
+  `.claude/skills/adr/assets/adr-template.md`.
+- **Lifecycle:** `proposed → accepted`. A record is edited freely while `proposed`;
+  once `accepted`, changes are made only by a **new superseding record**, never by
+  editing in place. The `proposed → accepted` transition is **human-confirmed** — an
+  agent never sets `accepted`.
+- **Status values:** `proposed | accepted | rejected | deprecated | superseded`.
+- **Superseding:** set paired links `supersedes NNNN` / `superseded by NNNN` and move
+  the replaced record to `superseded` — done via `adr-supersede`, not by hand.
+- **Constraints:** externally fixed, client-mandated stack choices (no alternatives)
+  live as `CON-00x` rows in `docs/decisions/constraints.md`, not as ADRs. ADRs cite
+  them by ID; the registry back-links to the ADR that resolves any residual choice.
+- **Tooling** (`.claude/skills/adr/scripts/adr.py`):
+  - `adr.py next` — next zero-padded number.
+  - `adr.py index` — regenerate `docs/decisions/README.md` (run after every create or
+    status change).
+  - `adr.py lint` — corpus integrity (numbering, references, required sections, index
+    freshness). Also exposed as the `adr-audit` skill.
+  - `adr.py accept NNNN` — the human acceptance gate (`adr-accept` skill).
+  - `adr.py supersede --old --new` — paired link-flip (`adr-supersede` skill).
+- **Skills:** `adr` (create), `adr-accept`, `adr-audit`, `adr-coverage` (gap
+  analysis), `adr-supersede`, `adr-sync-claude-md`. Guided creation/review via the
+  `app.adr-create` / `app.adr-review` commands.
+
+When a change needs a decision no ADR covers, record the ADR first (or, for an
+externally fixed client mandate, a `CON-00x` row in `constraints.md`), then implement.
+
+## Stack
+
+_Derived from the accepted ADRs via `adr-sync-claude-md`. The full Phase-3 baseline is now
+accepted — design tokens (0033), Feature-Sliced Design (0065/0066), the security & integrity
+gates (0067–0074), the advisory-AI client (0075), and the guardrail meta-layer (0076–0078) —
+so nothing below is flagged as still-proposed._
+
+- **Next.js (App Router)** on **React 19** (`^19` pinned) — Server Components by
+  default (0002; CON-001/CON-002).
+- **TypeScript** — `strict: true` + `noUncheckedIndexedAccess` + `noImplicitOverride`
+  (0003).
+- **Node.js 24 LTS** (`engines.node >=24 <25`, `.nvmrc` `24`); Node-first route
+  runtime (0004).
+- **npm** — package manager of record, `package-lock.json` (0005).
+- **ESLint (flat config) + Prettier** via `eslint-config-prettier`; composes
+  `eslint-config-next` + typescript-eslint (0006).
+- **Vitest + React Testing Library** (unit/component), **Playwright** (e2e) (0007).
+- **Supabase**, scoped to Postgres + RLS + Auth (0012): `@supabase/ssr` data access
+  (0013), Supabase CLI migrations (0014), generated DB types (0015), Supabase Auth
+  with email/password baseline (0016).
+- **Vercel** hosting — Git-integrated per-PR preview + production deploys (0009); CI
+  on **GitHub Actions** (0010). Local dev builds on the official platform CLIs
+  (0021): `next dev` + `vercel env pull` (0023), local Supabase via CLI (0022).
+- **Zod** as the single validation authority (0017); **React Hook Form** +
+  `zodResolver` (0020); Zod-validated env modules with a `server-only` secret fence
+  (0018).
+- **TanStack Query** — server state (0025); **Zustand** — ephemeral client state
+  (0026); **nuqs** + Next.js typed routes — URL state (0027).
+- **Tailwind CSS, CSS-first** (0032); design tokens as CSS custom properties in
+  `@theme` — this template ships a **neutral shadcn baseline**: a value layer (`:root` +
+  `.dark`) bridged to the shadcn names via `@theme inline`. The layered Figma-export
+  architecture (primitive + semantic + component `--color-c-*` layers) is documented in
+  ADR 0033 for when a real design export is wired; **shadcn/ui** is
+  copied into the repo (0034).
+- **next-intl** for i18n (0030); App Router Metadata API for SEO (0031).
+- **React Compiler** — automatic memoization (0029).
+- **Storybook 10** on `@storybook/nextjs-vite`, stories double as tests via
+  `@storybook/addon-vitest` (0035): CSF 3 (0036), Vitest addon +
+  test-runner smoke engines (0037), `storybook/test` play functions (0038),
+  `addon-a11y`/axe gate at WCAG 2.2 AA (0039), scoped DOM-snapshot policy (0040),
+  **Chromatic** visual regression with TurboSnap (0043).
+- App Router error boundaries + structured stdout JSON logger `src/lib/logger.ts`
+  (0019).
+- **MCP toolchain** (CON-003): committed `.mcp.json` with env-reference secrets —
+  context7, figma (read-only design context, 0045), vercel, supabase, chromatic,
+  github (0044).
+- **Design-system AI-tooling governance** (decided 0058–0064; enforcement lands with
+  Phase 12 / Stages 0–6): single-source token codegen + a stylelint/ESLint token-usage gate
+  (0058); a top-down composition graph (0059) reconciled against a **dependency-cruiser**
+  import graph (0060); human-authored controlled vocabularies/state registries under
+  `src/design-system/` (0061); per-component typed `design-intent.ts` specs (0062);
+  anti-hallucination Figma-image approval with a drift seal (0063); a Defect Log driving
+  reactive fitness-function growth (0064).
+- **Feature-Sliced Design** application architecture (0065): layers `src/shared`,
+  `src/entities`, `src/features`, `src/widgets` under canonical FSD names, added
+  **additively** beside `src/app` (App Router, the app/pages role), the `src/components/ui`
+  shadcn kit, and `src/design-system`. Boundaries are a gate, not a convention — **Steiger**
+  (`check:fsd`, 0066).
+- **Security & supply-chain gates**: `gitleaks` secret scan (0056) and **CodeQL** SAST
+  (`security-extended`; analysis inert until a 👤 enables code scanning, 0068); `npm audit`
+  (0069), GitHub Actions SHA-pinning (0070), an SPDX license allowlist (0071), Conventional
+  Commits via **commitlint** (0072), offline `lychee` docs link-integrity (0073), and `cspell`
+  spell-check (0074).
+- **Reference-integrity gates** (0067): every `ADR NNNN` / `CON-00x` citation on operative
+  surfaces resolves (`check:citations`), alongside the Claude-infra gates (`check:claude` /
+  `check:claude-md`).
+- **Provider-agnostic advisory-AI client** (0075): OpenAI-compatible Chat Completions over
+  `fetch` (zero-dep), reaching any compatible key (Gemini, OpenAI, OpenRouter, …); inert until
+  `AI_API_KEY` is provisioned.
+- **Guardrail layers** (the three-layer control model): edit-time **Claude Code hooks**
+  (`PreToolUse` guard + `PostToolUse` checks, 0076); **skills + review-subagents** as the
+  structural/recall layer (advisory, never a gate's source of truth, 0077); **self-testing
+  gates** (`check:gates`) + the **technical-debt escape-hatch** gate (`check:debt`) as the
+  meta-integrity layer (0078).
+
+## Commands
+
+- `npm run dev` — orchestrated startup: Supabase up → `gen:types` → env sync
+  (`vercel env pull` when linked) → `next dev` (0023, 0024).
+- `npx supabase start` / `npx supabase stop` — local Supabase stack, requires Docker
+  (0022).
+- `npm run db:reset` — rebuild the local database from `supabase/` migrations
+  (0014, 0022).
+- `npm run gen:types` — regenerate `src/lib/supabase/database.types.ts`; run after
+  every migration; CI fails on drift (0015).
+- `npm run lint` — ESLint; `npm run format:check` — Prettier check mode (0006).
+- `npm run test` — Vitest, both projects (unit jsdom + Storybook browser-mode);
+  `npm run test:unit` — fast jsdom-only loop; `npm run test:coverage` —
+  merged-workspace coverage run, fails below 80% (0010, 0008, 0041).
+- `npm run storybook` — component workbench dev server; `npm run build-storybook` —
+  static build (0035). `npm run test:storybook` — test-runner build-integrity smoke
+  over the built Storybook (0037); `npm run check:stories` — every `src/components/**`
+  module has colocated stories (0042).
+- `tsc --noEmit` — typecheck, part of the CI gate (0003, 0010).
+- CI (`.github/workflows/ci.yml`, Node 24, `npm ci`) runs parallel required jobs. The
+  **quality gate** (ordered): typecheck → lint → format:check → check:audit → check:licenses
+  → check:spelling → check:stories → check:boundaries → check:fsd → check:graph →
+  check:design-intent → check:seals → check:i18n → check:gates → token-drift → build →
+  test:coverage (≥80%). Alongside it: a **secret scan** (gitleaks, 0056), a **Claude-infra
+  integrity** job (check:claude / check:claude-md / check:citations / check:action-pins /
+  check:debt — each custom gate self-tests via `-- --self-test`, P6/0078), and a PR-only
+  **commitlint** job (check:commits, 0072). **CodeQL** (0068), **Chromatic** (0043), and the
+  **docs link check** (0073) run as separate workflows. The Playwright e2e + migration-replay
+  job and the Storybook test-runner smoke are **deferred during bootstrap** — they run locally
+  (`npm run test:e2e`, `npm run test:storybook`) and return before the first production
+  promotion; tracked in `docs/deviations.md` (0010, 0024, 0041, 0042).
+- Design-system gates (Stages 0–3, wired in CI): `npm run gen:tokens` — regenerate the
+  semantic-token union + lint allowlist + agent-rules reference from the `@theme`/`:root`
+  layer, CI drift-checked like `gen:types` (0058); `npm run check:boundaries`
+  (`depcruise`) — module-boundary gate (0060); `npm run check:graph` —
+  composition↔import reconciliation (0059/0060); `npm run check:design-intent` —
+  `design-intent.ts` fitness functions (api↔props, state coverage by subtraction,
+  states↔stories contract-expansion, meta↔graph) (0062); `npm run check:seals` — Figma
+  drift-seal shape/presence gate, inert until a Figma project exists (0063); `npm run
+  check:tokens` — token-usage lint over `src/components/**` (0058); `npm run check:i18n` —
+  key-parity + ICU (0055); `npm run check:gates` — gate self-test (every custom rule
+  rejects its violator, P6); `npm run check:design-system` runs the bundle.
+- Security & integrity gates: `npm run check:audit` (`npm audit --audit-level=high
+  --omit=dev`, 0069); `npm run check:action-pins` — every workflow `uses:` pinned to a commit
+  SHA (0044/0070); `npm run check:licenses` — production deps against an SPDX allowlist (0071);
+  `npm run check:spelling` — `cspell` over `**/*.md` (0074); `npm run check:commits` —
+  commitlint over the PR range (0072); `npm run check:citations` — ADR/CON citations resolve on
+  operative surfaces (0067); `npm run check:fsd` — Feature-Sliced Design boundaries via Steiger
+  (0066).
+- Design-system agent-loop helpers (advisory — run before/while building a component):
+  `npm run ds:signature` — composition-signature duplicate check before creating a
+  component (0059, P2); `npm run ds:states` — the mandatory state set for an archetype,
+  coverage by subtraction (0061/0062, P8); `npm run ds:escalations` — the Stage-4
+  escalation surfacer (usageRole collisions + state-set deviations + the rubber-stamp
+  metric, 0061/0062, P3/P8); `npm run ds:tokens-table` — the end-of-wave token-consistency
+  table (0058, Stage 6, P1). Surfaced as the `component-signature`, `state-coverage`, and
+  `check-tokens` skills. The allowed-token list is the **generated**
+  `src/design-system/tokens.agent-rules.md` — never re-list tokens in prose (0058, P6).
+- Phase-12 advisory AI jobs (`scripts/ai/*`, ADRs 0048–0057, 0075) — provider-agnostic via the
+  OpenAI-compatible client (0075), inert until a 👤 provisions `AI_API_KEY`: AI PR review (0048),
+  CI-failure triage (0049), changelog draft
+  (0050), security Layer 2 (0056), via `.github/workflows/ai-advisory.yml` /
+  `ai-ci-triage.yml`, plus the Renovate config `renovate.json` (0057). Each is advisory
+  (never a required check) and self-activates when the key lands.
+
+## Conventions
+
+- Server Components by default; `"use client"` only at interactive leaves; mutations
+  via Server Actions (route handlers for webhook-style endpoints); app code in
+  `src/app/` (0002).
+- Application code is placed by Feature-Sliced Design (0065): the `new-slice` skill's decision
+  tree picks the layer (`shared`/`entities`/`features`/`widgets`); imports go downward only,
+  same-layer slices are isolated, and each slice is reached through its public `index.ts`. A
+  reusable shadcn primitive goes in `src/components/ui` via `new-component` (a kit outside FSD);
+  `src/design-system`, `src/lib`, and `src/i18n` also stay outside the FSD area (0065/0066).
+- Types are inferred from Zod schemas (`z.infer`), never written separately; boundary
+  schemas carry origin markers (`[env]`, `[form:signup]`, …) (0017); the same schema
+  validates on the client and re-validates on the server (0020).
+- Data access through request-scoped `@supabase/ssr` clients under
+  `src/lib/supabase/`; all user-facing access runs as the user under RLS
+  (`auth.uid()`); session refresh in middleware (0013, 0016).
+- Migrations are plain SQL (including RLS policies) under `supabase/` (0014).
+- Env: `NEXT_PUBLIC_*` in `src/lib/env.ts`; secrets in `src/lib/env.server.ts`
+  importing `server-only`; values stored per environment in Vercel (0018).
+- Errors: `error.tsx` / `global-error.tsx` / `not-found.tsx` boundaries; structured
+  JSON logs to stdout; client-facing messages stay generic (0019).
+- State buckets: server-derived → TanStack Query; ephemeral UI → Zustand;
+  shareable/bookmarkable (search, filters, sort, pagination, tab) → URL via nuqs
+  (0025, 0026, 0027).
+- Optimistic UI is the default mutation pattern (`onMutate` → rollback on error →
+  invalidate); a non-optimistic mutation needs an objective reason, justified in
+  review (0025).
+- For render-bound jank reach for `useTransition` / `useDeferredValue` first;
+  debounce/throttle for network costs, virtualization for huge DOM (0028).
+- Styling: Tailwind utilities against the semantic tokens — the neutral shadcn names
+  (`--color-primary`, `--color-muted-foreground`, …) exposed via the `@theme inline`
+  bridge; light/dark = `.dark` value-layer overrides; shadcn components live in
+  `src/components/ui` (0032, 0033, 0034).
+- i18n: routes under `src/app/[locale]/`; catalogs in `messages/<locale>.json`;
+  middleware composes next-intl with the Supabase session refresh (0030). Metadata
+  via `metadata` / `generateMetadata`, `app/sitemap.ts`, `app/robots.ts` (0031).
+- Git: feature branches → PR into `dev` (integration); `dev` is promoted to `main`
+  (production, always deployable); both protected, CI check required (0011);
+  production deploys from `main`, every PR gets a preview URL (0009).
+- Commits follow Conventional Commits (commitlint); the machine-readable history feeds the
+  AI changelog draft at the `dev`→`main` release (0072, 0050).
+- Versioning is template-adapted SemVer (0080): the number signals migration cost for an
+  upstream-tracking adopter, not an npm contract — a superseding ADR / structural change /
+  removed-or-renamed gate · script · skill / dropped Node · Next major is MAJOR; an additive
+  accepted ADR is MINOR; in-range dependency bumps and doc fixes are PATCH; stay on `0.x`
+  until the governance surface is stable enough for `1.0.0`. A release promotes `dev`→`main`,
+  bumps `package.json`, carries the human-edited `CHANGELOG.md` entry (0050), and is marked
+  by an annotated `vX.Y.Z` tag + GitHub Release.
+- Tests are colocated (`src/**/*.test.tsx`), e2e lives in `e2e/`; coverage is
+  risk-weighted — auth/RLS/critical flows get e2e first (0007).
+- Every exported component in `src/components/**` ships colocated CSF 3 stories
+  covering its meaningful states (variants, interactive, data-edge, theme/locale);
+  interactive components require `play` functions with `@storybook/test`; purely
+  presentational ones are exempt (0036, 0038, 0042).
+- The AI agent is the primary implementer (0046); commit/PR attribution convention is
+  left to the consuming project, not mandated by the template. AI assistance is advisory
+  and ADR-grounded: PR
+  review citing record numbers (0048), CI-failure triage (0049), changelog drafting
+  at `dev`→`main` release (0050), story matrices/play drafts under the 0042 human
+  judgment (0051), semantic a11y pass (0052), diff-scoped security review atop a
+  blocking secret scan (0056), dependency-update triage on bot PRs (0057),
+  translations drafted from the canonical source locale with key parity enforced in
+  CI (0055). A scheduled drift audit checks code against accepted ADR Confirmations
+  (0054).
+- Design tokens: in tokenizable CSS properties only `var(--token)` is allowed and the token
+  must exist in the generated registry; components never use raw color/size literals,
+  inline-`style` raw values, raw SVG `fill`/`stroke`, or Tailwind's numbered palette; a
+  primitive owns no external margin; the token union, lint allowlist, and agent rules are all
+  generated from the `@theme` layer, never hand-maintained (0058).
+- Components are governed top-down by a composition graph (`composedOf`/`usedIn`, exact-set
+  `compositionSignature` v1), checked before a new component is created (0059); imports obey
+  primitive↛composite + public-API-only (`index.ts`) + no-circular/no-orphans, reconciled
+  against the dependency-cruiser import graph (0060). Roles/classes come from human-authored
+  controlled vocabularies under `src/design-system/` — `usage-roles.ts`, `archetypes.ts`, the
+  archetype→states registry, the state-precedence matrix (0061).
+- Each component ships a typed `design-intent.ts` at Definition-of-Ready: API derived from the
+  `usedIn` union (not guessed), slot-vs-variant boundary recorded with rationale, state
+  coverage by subtraction from the 0061 archetype set (`applicable:false` requires a rationale)
+  (0062). API approval uses an ephemeral Figma-image artifact (figma server image capability,
+  never its code path, never the agent's own render) sealed by `renderHash` +
+  `figmaFileVersion` as a drift detector (0063); a Defect Log of missing/ambiguous rules is
+  filled in review, and invariants graduate into Stage-1 checks on first violation (0064).
+
+## Restrictions
+
+- `any` is disallowed (`@typescript-eslint/no-explicit-any`) — use `unknown` +
+  narrowing (0003).
+- The Edge runtime is per-route opt-in, never the default (0004). pnpm / yarn / bun
+  are not used (0024).
+- The service-role key never reaches the client and is confined to trusted
+  server-only contexts (0013). Secrets are never importable into client code
+  (`server-only` fence, 0018). Credentials in `.mcp.json` are env-references, never
+  literals; servers pinned, official/first-party, least-privilege tokens (0044).
+- Server data is never mirrored into Zustand; optimistic state lives in the Query
+  cache, not Zustand; Server Components never import stores (0026).
+- No manual `useMemo` / `useCallback` / `React.memo` — the React Compiler owns
+  memoization; exceptions are rare and documented (`"use no memo"`) (0029).
+- No `tailwind.config.js` — CSS-first configuration only (0032). Token values are
+  code-canonical: Figma conforms to code and never forks it; the figma MCP server is
+  read-only (0033, 0045).
+- CSF 2 (`Template.bind({})`) and `storiesOf` fail lint; MDX never defines stories
+  (0036). Snapshot baselines update only as a reviewed action (0040). The
+  test-runner contributes no coverage and duplicates no assertion suite
+  (0037, 0041). a11y opt-outs only as explicit, reviewed per-story `a11y` parameters
+  with a stated reason (0039).
+- Coverage below 80% blocks merge; only `hotfix/*` / `hotfix`-labeled PRs bypass the
+  threshold — and nothing else of the gate (0008).
+- No global CI retry policy; flaky tests are quarantined explicitly (annotated skip
+  + tracked issue, time-boxed), never papered over with retries (0049).
+- Human-only actions: accepting ADRs, repo/branch-protection settings, production
+  promotion/rollback, provisioning/rotating/revealing secrets, editing
+  `constraints.md`, merging into `dev`/`main` (0046). Every PR requires human
+  approval — AI review never substitutes (0047, 0048).
+- Accepted ADRs are never edited in place — changes go through a superseding record
+  (0001).
+- Supabase usage stays within the Postgres + RLS + Auth baseline; Storage / Edge
+  Functions / Realtime each need their own ADR first (0012). External error tracking
+  (e.g. Sentry) is deferred to its own ADR (0019).
+- In `src/components/**`: no raw color/size literals, inline-`style` raw values, raw SVG
+  `fill`/`stroke`, or Tailwind numbered-palette classes; the token allowlist + agent rules are
+  generated, never hand-written (0058). Primitives never import composites; cross-component
+  imports go through `index.ts`; no import cycles or orphan modules (0060).
+- Application code obeys FSD direction: no upward imports, no imports between same-layer slices,
+  no sidestep of a slice's public `index.ts` — enforced by Steiger (`check:fsd`, 0066).
+- GitHub Actions `uses:` are pinned to a full commit SHA (0044/0070); production dependencies
+  stay within the SPDX license allowlist (0071); commits violating Conventional Commits fail CI
+  (0072).
+- Runtime theme switching is deferred (0079): the template ships only the `.dark` value layer
+  and the `dark` variant — no theme toggle or provider; a consuming project records its own ADR
+  to add one.
+- The template is never published to npm — `private: true` is retained permanently; the
+  release artifacts are the git tag + GitHub Release + `CHANGELOG.md`, not an npm package
+  (0080).
+- The agent never approves its own visual baseline (Chromatic UI, human-only) and is never
+  shown its own implementation during API approval — the proof is Figma pixels it does not
+  control (0063, 0047). Controlled-vocabulary entries are human-authored; a rename/merge/split
+  is a governed migration with an owner, and a component fitting no archetype escalates to a
+  human (0061, 0064).

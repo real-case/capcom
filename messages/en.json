@@ -1,0 +1,21 @@
+{
+  "Metadata": {
+    "title": "Next.js Template",
+    "description": "Next.js App Router starter — internationalized and SEO-ready."
+  },
+  "HomePage": {
+    "heading": "It works.",
+    "lead": "This is the template's placeholder home route. Edit src/app/[locale]/page.tsx to build your first screen."
+  },
+  "Error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. Please try again.",
+    "reference": "Reference: {digest}",
+    "retry": "Try again"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or was moved.",
+    "home": "Go home"
+  }
+}

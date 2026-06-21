@@ -1,0 +1,73 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "//": "ADR 0057 — dependency-update bot config. Pinned, grouped, scheduled. Humans merge; NO auto-merge anywhere. Security updates bypass the schedule. MCP server pins (.mcp.json) are in scope. Enabling Renovate is a 👤 action (install the GitHub App); this config is inert until then, like the AI jobs.",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":prHourlyLimit2",
+    ":prConcurrentLimit10"
+  ],
+  "automerge": false,
+  "rangeStrategy": "bump",
+  "schedule": ["before 9am on monday"],
+  "labels": ["dependencies", "agent-authored"],
+  "rebaseWhen": "conflicted",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 9am on the first day of the month"]
+  },
+  "vulnerabilityAlerts": {
+    "//": "Security fixes bypass the weekly schedule and are raised immediately (ADR 0057).",
+    "labels": ["security", "dependencies"],
+    "schedule": ["at any time"]
+  },
+  "packageRules": [
+    {
+      "//": "Group the framework + its lints so they bump together and review once.",
+      "matchPackageNames": ["next", "eslint-config-next"],
+      "groupName": "next.js"
+    },
+    {
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "@types/react",
+        "@types/react-dom"
+      ],
+      "groupName": "react"
+    },
+    {
+      "matchPackageNames": [
+        "storybook",
+        "@storybook/nextjs-vite",
+        "@storybook/addon-a11y",
+        "@storybook/addon-vitest",
+        "@storybook/test-runner",
+        "eslint-plugin-storybook"
+      ],
+      "groupName": "storybook"
+    },
+    {
+      "matchPackageNames": [
+        "vitest",
+        "@vitest/browser",
+        "@vitest/browser-playwright",
+        "@vitest/coverage-v8"
+      ],
+      "groupName": "vitest"
+    },
+    {
+      "//": "Pin GitHub Actions to commit SHAs (ADR 0044/0056 pinning posture).",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true,
+      "groupName": "github-actions"
+    },
+    {
+      "//": "MCP server pins live in .mcp.json — keep them in scope and never auto-merge (ADR 0044/0057).",
+      "matchFileNames": [".mcp.json"],
+      "groupName": "mcp-servers",
+      "automerge": false
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# Build and tool output
+.next
+out
+build
+coverage
+playwright-report
+test-results
+next-env.d.ts
+package-lock.json
+
+# Accepted ADRs are immutable (ADR 0001) and CLAUDE.md sections are generated
+# from them via adr-sync-claude-md — the formatter must not rewrite either.
+docs/decisions/
+CLAUDE.md
+
+# Agent toolchain (skills/agents mirrored from a shared source)
+.claude/

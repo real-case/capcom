@@ -1,0 +1,78 @@
+# Static application security testing — ADR 0068. Native CodeQL code scanning over
+# JavaScript/TypeScript; deterministic results land in the Security tab as SARIF,
+# completing the defense-in-depth of ADR 0056 (gitleaks secret scan + advisory AI review).
+#
+# INERT until a 👤 enables code scanning on the repo (Settings → Code security & analysis —
+# free on public repos; GitHub Advanced Security on private ones). SARIF upload is rejected
+# until then, so a `precheck` job detects enablement and SKIPS analyze otherwise — the same
+# inert-until-provisioned posture as the Chromatic token guard (no red X while dormant).
+# ADVISORY during bootstrap: promoting the code-scanning check to REQUIRED is a 👤
+# branch-protection setting (ADR 0046/0047). Action versions are SHA-pinned (ADR 0044/0070).
+name: CodeQL
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  schedule:
+    # Weekly re-scan of unchanged code against improved queries (ADR 0068).
+    - cron: "23 5 * * 1"
+
+# Least-privilege default; the analyze job elevates only what CodeQL needs.
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # secrets/features can't be read in a job-level `if:`, so surface a boolean output.
+  precheck:
+    name: Code scanning enabled?
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      security-events: read
+    outputs:
+      enabled: ${{ steps.c.outputs.enabled }}
+    steps:
+      - name: Detect code scanning (ADR 0068)
+        id: c
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh api "repos/${{ github.repository }}/code-scanning/alerts" -q 'length' >/dev/null 2>&1; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Code scanning not enabled — skipping CodeQL (ADR 0068). Enable it in Settings → Code security & analysis (free on public repos; GitHub Advanced Security on private)."
+          fi
+
+  analyze:
+    name: Analyze (javascript-typescript)
+    needs: precheck
+    if: needs.precheck.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      actions: read # CodeQL reads the workflow run for SARIF context (get-a-workflow-run)
+      contents: read
+      security-events: write # upload SARIF to the Security tab
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: "[codeql] Initialize"
+        uses: github/codeql-action/init@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3
+        with:
+          languages: javascript-typescript
+          # default + security-extended query suite (ADR 0068).
+          queries: security-extended
+
+      - name: "[codeql] Analyze"
+        uses: github/codeql-action/analyze@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3
+        with:
+          category: "/language:javascript-typescript"
