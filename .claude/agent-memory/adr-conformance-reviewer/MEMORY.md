@@ -1,0 +1,1 @@
+- [CAPCOM domain ADRs cross-ref convention](capcom-domain-adr-cross-ref.md) — proposed siblings in one PR cite each other by descriptive phrase, not number, until accepted; only cite a number when the target record exists.
