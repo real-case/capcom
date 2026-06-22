@@ -92,5 +92,6 @@ heatmap
 pgTAP
 realtime
 distinctid
+timestamptz
 upsert
 upserts
