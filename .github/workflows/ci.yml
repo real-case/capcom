@@ -102,6 +102,9 @@ jobs:
           npm run gen:tokens
           git diff --exit-code -- src/design-system/tokens.generated.ts src/design-system/tokens.allowlist.json src/design-system/tokens.agent-rules.md
 
+      - name: "[contrast] WCAG-AA token contrast"
+        run: npm run check:contrast # ADR 0081 (status fg/bg + text/surface ≥ AA)
+
       - name: "[build] Next build"
         run: npm run build # ADR 0002
 

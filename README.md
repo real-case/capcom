@@ -73,11 +73,11 @@ the repo:
 
 A companion overview set explains the approach itself:
 
-| #   | Document                                                      | Subject                                                                           |
-| --- | ------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| 01  | [Problems and advantages](docs/01-problems-and-advantages.md) | The problems the approach solves and the advantages that follow                   |
-| 02  | [Defense mechanisms](docs/02-defense-mechanisms.md)           | The control mechanisms: hooks, deterministic gates, code generation, CI           |
-| 03  | [Methodology](docs/03-methodology.md)                         | The ADR lifecycle, human and agent roles, and the feedback loops                  |
+| #   | Document                                                      | Subject                                                                 |
+| --- | ------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| 01  | [Problems and advantages](docs/01-problems-and-advantages.md) | The problems the approach solves and the advantages that follow         |
+| 02  | [Defense mechanisms](docs/02-defense-mechanisms.md)           | The control mechanisms: hooks, deterministic gates, code generation, CI |
+| 03  | [Methodology](docs/03-methodology.md)                         | The ADR lifecycle, human and agent roles, and the feedback loops        |
 
 ## License
 

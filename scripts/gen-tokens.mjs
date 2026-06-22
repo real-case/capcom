@@ -50,6 +50,83 @@ function customProps(body) {
   return [...new Set(names)].sort();
 }
 
+// The :root layer is split by prefix (ADR 0081): `--c-*` is the PRIMITIVE layer (raw
+// values a tenant swaps, ADR 0082); everything else is the semantic value layer.
+const PRIMITIVE_PREFIX = "--c-";
+const TENANT_RE = /\[data-tenant[^\]]*\]\s*\{([^}]*)\}/g;
+const DENSITY_RE = /\[data-density[^\]]*\]\s*\{([^}]*)\}/g;
+const ROOT_RE = /:root\s*\{([^}]*)\}/g;
+
+/** The `--c-*` primitive names declared across the given :root block bodies. */
+function collectPrimitives(rootBodyList) {
+  return new Set(
+    customProps(rootBodyList.join("\n")).filter((p) =>
+      p.startsWith(PRIMITIVE_PREFIX),
+    ),
+  );
+}
+
+/** Swap-only invariant (ADR 0082): a [data-tenant] / [data-density] override block may
+ *  ONLY redefine names already declared as `--c-*` primitives — never introduce a new
+ *  token, never touch a semantic value-layer / `--color-*` name. Throws to fail the build
+ *  (the gen:tokens drift gate exercises this on the real globals.css, so it can't rot). */
+function assertSwapOnly(primitives, label, bodies) {
+  for (const body of bodies) {
+    for (const name of customProps(body)) {
+      if (!primitives.has(name)) {
+        throw new Error(
+          `gen-tokens: ${label} block redefines '${name}', which is not a ${PRIMITIVE_PREFIX}* primitive declared in :root — tenant/density overrides may only swap existing primitives (swap-only invariant, ADR 0082).`,
+        );
+      }
+    }
+  }
+}
+
+/** `--self-test` (ADR 0078 idiom): prove the swap-only validator on synthetic fixtures —
+ *  a valid primitive-only override is accepted, a violating block is rejected. Exits
+ *  non-zero on any mismatch (so CI can gate it); never touches the real globals.css. */
+function runSelfTest() {
+  const okCss = `:root{--c-x:1;--surface-y:var(--c-x);}[data-tenant="t"]{--c-x:2;}`;
+  const badCss = `:root{--c-x:1;--surface-y:0;}[data-tenant="t"]{--surface-y:9;}`;
+  let ok = true;
+
+  try {
+    assertSwapOnly(
+      collectPrimitives(blockBodies(okCss, new RegExp(ROOT_RE.source, "g"))),
+      "[data-tenant]",
+      blockBodies(okCss, new RegExp(TENANT_RE.source, "g")),
+    );
+  } catch (e) {
+    console.error(
+      `self-test FAIL: valid primitive-only override rejected — ${e.message}`,
+    );
+    ok = false;
+  }
+
+  let threw = false;
+  try {
+    assertSwapOnly(
+      collectPrimitives(blockBodies(badCss, new RegExp(ROOT_RE.source, "g"))),
+      "[data-tenant]",
+      blockBodies(badCss, new RegExp(TENANT_RE.source, "g")),
+    );
+  } catch {
+    threw = true;
+  }
+  if (!threw) {
+    console.error(
+      "self-test FAIL: a violating override (redefines a non-primitive) was accepted",
+    );
+    ok = false;
+  }
+
+  if (!ok) process.exit(1);
+  console.log("gen-tokens --self-test: swap-only invariant OK");
+  process.exit(0);
+}
+
+if (process.argv.includes("--self-test")) runSelfTest();
+
 const css = readFileSync(CSS, "utf8");
 
 // One parse feeds the whole registry: union token NAMES across every @theme /
@@ -73,7 +150,26 @@ const darkColorNames = customProps(darkBodies.join("\n")).filter((p) =>
   p.startsWith("--color-"),
 );
 const themeProps = [...new Set([...themeNames, ...darkColorNames])].sort(); // semantic tokens
-const rootProps = customProps(rootBodies.join("\n")); // runtime value layer (primitives)
+// Split :root into the --c-* PRIMITIVE layer and the semantic value layer (ADR 0081).
+const allRootProps = customProps(rootBodies.join("\n"));
+const primitiveProps = allRootProps.filter((p) =>
+  p.startsWith(PRIMITIVE_PREFIX),
+);
+const rootProps = allRootProps.filter((p) => !p.startsWith(PRIMITIVE_PREFIX)); // value layer
+
+// Enforce the swap-only invariant on the REAL file (ADR 0082): tenant/density override
+// blocks may only redefine existing primitives. A throw here fails gen:tokens, hence CI.
+const primitiveSet = new Set(primitiveProps);
+assertSwapOnly(
+  primitiveSet,
+  "[data-tenant]",
+  blockBodies(css, new RegExp(TENANT_RE.source, "g")),
+);
+assertSwapOnly(
+  primitiveSet,
+  "[data-density]",
+  blockBodies(css, new RegExp(DENSITY_RE.source, "g")),
+);
 
 const KNOWN_PREFIXES = ["--color-", "--radius-", "--font-"];
 const byPrefix = (prefix) => themeProps.filter((p) => p.startsWith(prefix));
@@ -124,6 +220,11 @@ export type SemanticToken = (typeof SEMANTIC_TOKENS)[number];
 /** Runtime \`:root\` variables the \`@theme\` tokens alias (the value layer). */
 ${constArray("THEME_VARIABLES", rootProps)}
 export type ThemeVariable = (typeof THEME_VARIABLES)[number];
+
+/** The \`--c-*\` PRIMITIVE layer (ADR 0081) — raw values a tenant swaps (ADR 0082),
+ *  split out of \`:root\` by prefix. Components never reference these directly. */
+${constArray("PRIMITIVE_VARIABLES", primitiveProps)}
+export type PrimitiveVariable = (typeof PRIMITIVE_VARIABLES)[number];
 `;
 
 const allowlist = {
@@ -131,6 +232,7 @@ const allowlist = {
     "scripts/gen-tokens.mjs (ADR 0058) — do not hand-edit; run `npm run gen:tokens`",
   semanticTokens: semanticAll,
   themeVariables: rootProps,
+  primitiveVariables: primitiveProps,
 };
 
 // Agent-facing reference (Stage 2, problem P6). The bare `stem` is the Tailwind
@@ -183,6 +285,6 @@ console.log(
   `gen-tokens: ${semanticAll.length} semantic tokens ` +
     `(${colorTokens.length} color, ${radiusTokens.length} radius, ${fontTokens.length} font` +
     `${otherTokens.length ? `, ${otherTokens.length} other` : ""}), ` +
-    `${rootProps.length} runtime variables ` +
+    `${rootProps.length} value-layer + ${primitiveProps.length} primitive variables ` +
     `→ tokens.generated.ts + tokens.allowlist.json + tokens.agent-rules.md`,
 );
