@@ -21,16 +21,18 @@ and the `/check-tokens` skill point here; they never re-list tokens in prose —
 - A primitive owns **no external margin** — spacing is the composing parent's job.
 - Light/dark is a semantic-variable override (`.dark`), never a different token.
 
-## Semantic color tokens — back `bg-*` / `text-*` / `border-*` / `ring-*` (19)
+## Semantic color tokens — back `bg-*` / `text-*` / `border-*` / `ring-*` (62)
 
 - `--color-accent` → `accent`
 - `--color-accent-foreground` → `accent-foreground`
 - `--color-background` → `background`
 - `--color-border` → `border`
+- `--color-border-hairline` → `border-hairline`
 - `--color-card` → `card`
 - `--color-card-foreground` → `card-foreground`
 - `--color-destructive` → `destructive`
 - `--color-destructive-foreground` → `destructive-foreground`
+- `--color-divider` → `divider`
 - `--color-foreground` → `foreground`
 - `--color-input` → `input`
 - `--color-muted` → `muted`
@@ -42,6 +44,47 @@ and the `/check-tokens` skill point here; they never re-list tokens in prose —
 - `--color-ring` → `ring`
 - `--color-secondary` → `secondary`
 - `--color-secondary-foreground` → `secondary-foreground`
+- `--color-status-caution-bg` → `status-caution-bg`
+- `--color-status-caution-border` → `status-caution-border`
+- `--color-status-caution-fg` → `status-caution-fg`
+- `--color-status-critical-bg` → `status-critical-bg`
+- `--color-status-critical-border` → `status-critical-border`
+- `--color-status-critical-fg` → `status-critical-fg`
+- `--color-status-nominal-bg` → `status-nominal-bg`
+- `--color-status-nominal-border` → `status-nominal-border`
+- `--color-status-nominal-fg` → `status-nominal-fg`
+- `--color-status-warning-bg` → `status-warning-bg`
+- `--color-status-warning-border` → `status-warning-border`
+- `--color-status-warning-fg` → `status-warning-fg`
+- `--color-surface-background` → `surface-background`
+- `--color-surface-elevated` → `surface-elevated`
+- `--color-surface-overlay` → `surface-overlay`
+- `--color-surface-panel` → `surface-panel`
+- `--color-text-primary` → `text-primary`
+- `--color-text-secondary` → `text-secondary`
+- `--color-text-tertiary` → `text-tertiary`
+- `--color-viz-categorical-1` → `viz-categorical-1`
+- `--color-viz-categorical-10` → `viz-categorical-10`
+- `--color-viz-categorical-11` → `viz-categorical-11`
+- `--color-viz-categorical-12` → `viz-categorical-12`
+- `--color-viz-categorical-2` → `viz-categorical-2`
+- `--color-viz-categorical-3` → `viz-categorical-3`
+- `--color-viz-categorical-4` → `viz-categorical-4`
+- `--color-viz-categorical-5` → `viz-categorical-5`
+- `--color-viz-categorical-6` → `viz-categorical-6`
+- `--color-viz-categorical-7` → `viz-categorical-7`
+- `--color-viz-categorical-8` → `viz-categorical-8`
+- `--color-viz-categorical-9` → `viz-categorical-9`
+- `--color-viz-diverging-1` → `viz-diverging-1`
+- `--color-viz-diverging-2` → `viz-diverging-2`
+- `--color-viz-diverging-3` → `viz-diverging-3`
+- `--color-viz-diverging-4` → `viz-diverging-4`
+- `--color-viz-diverging-5` → `viz-diverging-5`
+- `--color-viz-sequential-1` → `viz-sequential-1`
+- `--color-viz-sequential-2` → `viz-sequential-2`
+- `--color-viz-sequential-3` → `viz-sequential-3`
+- `--color-viz-sequential-4` → `viz-sequential-4`
+- `--color-viz-sequential-5` → `viz-sequential-5`
 
 ## Semantic radius tokens — back `rounded-*` (9)
 
@@ -61,7 +104,7 @@ and the `/check-tokens` skill point here; they never re-list tokens in prose —
 - `--font-mono` → `mono`
 - `--font-sans` → `sans`
 
-## Other `@theme` tokens (49)
+## Other `@theme` tokens (61)
 
 - `--spacing-0` → `spacing-0`
 - `--spacing-0_5` → `spacing-0_5`
@@ -82,6 +125,8 @@ and the `/check-tokens` skill point here; they never re-list tokens in prose —
 - `--spacing-6_5` → `spacing-6_5`
 - `--spacing-8` → `spacing-8`
 - `--spacing-8_5` → `spacing-8_5`
+- `--text-body` → `text-body`
+- `--text-body--line-height` → `text-body--line-height`
 - `--text-body-12` → `text-body-12`
 - `--text-body-12--line-height` → `text-body-12--line-height`
 - `--text-body-14` → `text-body-14`
@@ -94,6 +139,8 @@ and the `/check-tokens` skill point here; they never re-list tokens in prose —
 - `--text-body-20--line-height` → `text-body-20--line-height`
 - `--text-button` → `text-button`
 - `--text-button--line-height` → `text-button--line-height`
+- `--text-caption` → `text-caption`
+- `--text-caption--line-height` → `text-caption--line-height`
 - `--text-h0` → `text-h0`
 - `--text-h0--line-height` → `text-h0--line-height`
 - `--text-h1` → `text-h1`
@@ -106,6 +153,14 @@ and the `/check-tokens` skill point here; they never re-list tokens in prose —
 - `--text-h4--line-height` → `text-h4--line-height`
 - `--text-h5` → `text-h5`
 - `--text-h5--line-height` → `text-h5--line-height`
+- `--text-label` → `text-label`
+- `--text-label--line-height` → `text-label--line-height`
+- `--text-metric` → `text-metric`
+- `--text-metric--line-height` → `text-metric--line-height`
+- `--text-metric-hero` → `text-metric-hero`
+- `--text-metric-hero--line-height` → `text-metric-hero--line-height`
+- `--text-mono-data` → `text-mono-data`
+- `--text-mono-data--line-height` → `text-mono-data--line-height`
 - `--text-title-12` → `text-title-12`
 - `--text-title-12--line-height` → `text-title-12--line-height`
 - `--text-title-14` → `text-title-14`

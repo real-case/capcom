@@ -80,6 +80,17 @@ so nothing below is flagged as still-proposed._
   architecture (primitive + semantic + component `--color-c-*` layers) is documented in
   ADR 0033 for when a real design export is wired; **shadcn/ui** is
   copied into the repo (0034).
+- **Mission-control design tokens** (0081): a dark-first vocabulary on a re-introduced
+  `--c-*` **primitive layer** under `:root` — surface hierarchy, `status-{nominal|caution|`
+  `warning|critical}-{fg|bg|border}`, an 8–12-hue colorblind-safe data-viz palette
+  (categorical + sequential + diverging), hairline/divider, elevation, motion, and the
+  `metric-hero|metric|label|body|caption|mono-data` type-scale roles; semantic vars reference
+  primitives via `var()`, bridged to utilities through `@theme inline`, with geist-mono as the
+  technical/numeric face (extends 0033). **Multi-tenant + density runtime theming** (0082):
+  `[data-tenant]` re-composes the palette and `[data-density="comfortable"|"dense"]` swaps the
+  dimension tokens by overriding the `--c-*` primitive layer **only** — pure CSS, no theme
+  provider; the new ADR 0079 requires to gate runtime switching (its light/dark toggle stays
+  deferred).
 - **next-intl** for i18n (0030); App Router Metadata API for SEO (0031).
 - **React Compiler** — automatic memoization (0029).
 - **Storybook 10** on `@storybook/nextjs-vite`, stories double as tests via
@@ -154,7 +165,12 @@ so nothing below is flagged as still-proposed._
   promotion; tracked in `docs/deviations.md` (0010, 0024, 0041, 0042).
 - Design-system gates (Stages 0–3, wired in CI): `npm run gen:tokens` — regenerate the
   semantic-token union + lint allowlist + agent-rules reference from the `@theme`/`:root`
-  layer, CI drift-checked like `gen:types` (0058); `npm run check:boundaries`
+  layer, CI drift-checked like `gen:types` (0058); it splits the `--c-*` primitive layer into
+  `PRIMITIVE_VARIABLES` and enforces the tenant/density **swap-only invariant** — throws on a
+  non-primitive override, proven by `--self-test` (0081/0082); `npm run check:contrast` —
+  computed WCAG 2.2 AA contrast over the mission-control status fg/bg + text/surface pairs
+  (oklch→sRGB→luminance), in `check:design-system` and the CI gate (0081); `npm run
+  check:boundaries`
   (`depcruise`) — module-boundary gate (0060); `npm run check:graph` —
   composition↔import reconciliation (0059/0060); `npm run check:design-intent` —
   `design-intent.ts` fitness functions (api↔props, state coverage by subtraction,
@@ -255,6 +271,12 @@ so nothing below is flagged as still-proposed._
   inline-`style` raw values, raw SVG `fill`/`stroke`, or Tailwind's numbered palette; a
   primitive owns no external margin; the token union, lint allowlist, and agent rules are all
   generated from the `@theme` layer, never hand-maintained (0058).
+- Mission-control tokens sit on a two-layer split (0081): the `--c-*` **primitive layer** holds
+  raw `oklch` values; role-named semantic vars (`--surface-*`, `--status-*`, `--viz-*`, the
+  type-scale roles) reference primitives via `var()` and are bridged to Tailwind utilities by
+  `@theme inline`. A tenant (`[data-tenant]`) and a density mode (`[data-density]`) re-compose by
+  overriding the **primitive layer only** — the semantic layer and components never change per
+  tenant or density (0082).
 - Components are governed top-down by a composition graph (`composedOf`/`usedIn`, exact-set
   `compositionSignature` v1), checked before a new component is created (0059); imports obey
   primitive↛composite + public-API-only (`index.ts`) + no-circular/no-orphans, reconciled
@@ -313,9 +335,13 @@ so nothing below is flagged as still-proposed._
 - GitHub Actions `uses:` are pinned to a full commit SHA (0044/0070); production dependencies
   stay within the SPDX license allowlist (0071); commits violating Conventional Commits fail CI
   (0072).
-- Runtime theme switching is deferred (0079): the template ships only the `.dark` value layer
-  and the `dark` variant — no theme toggle or provider; a consuming project records its own ADR
-  to add one.
+- Runtime light/dark theme switching is deferred (0079): only the `.dark` value layer and the
+  `dark` variant ship — no light/dark toggle or theme provider. ADR 0082 bounds this for the
+  tenant/density axes: `[data-tenant]` / `[data-density]` re-composition is allowed but a block
+  may redefine **only** existing `--c-*` primitives — never introduce a token or touch a semantic
+  `--color-*` name; `gen:tokens` throws on violation (swap-only invariant, self-tested). Adding a
+  light/dark toggle still needs its own ADR (0079). Mission-control status fg/bg and text/surface
+  token pairs must clear WCAG 2.2 AA — enforced by `check:contrast` (0081).
 - The template is never published to npm — `private: true` is retained permanently; the
   release artifacts are the git tag + GitHub Release + `CHANGELOG.md`, not an npm package
   (0080).

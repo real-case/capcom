@@ -178,6 +178,331 @@
   --font-heading: var(--font-geist-sans);
 }
 
+/* ============================================================
+   MISSION-CONTROL DESIGN SYSTEM (ADR 0081 / 0082)
+
+   Dark-first, aerospace-telemetry vocabulary added ADDITIVELY beside the
+   neutral shadcn chrome above (which is left untouched). Layered per ADR 0033:
+     0) PRIMITIVE layer  — raw oklch palette + viz scales + dimension primitives,
+                           every name prefixed `--c-`. Tenant-swappable (ADR 0082).
+     1) SEMANTIC layer   — role-named value-layer vars referencing primitives via
+                           var(--c-*). Components consume these, never primitives.
+     2) @theme inline    — bridges the semantic layer to Tailwind utilities
+                           (bg-surface-panel, text-status-caution-fg, ...).
+     3) [data-*] swaps   — tenant re-composes PRIMITIVES only; density swaps the
+                           dimension primitives only. gen:tokens enforces swap-only.
+   ============================================================ */
+
+/* ---- LAYER 0 — PRIMITIVE LAYER (--c-*, tenant-swappable; ADR 0081/0082) ---- */
+:root {
+  /* Neutral ramp — cool-tinted for an instrument-panel feel (dark-first) */
+  --c-gray-950: oklch(0.16 0.012 256);
+  --c-gray-900: oklch(0.2 0.013 256);
+  --c-gray-850: oklch(0.235 0.013 256);
+  --c-gray-800: oklch(0.27 0.013 256);
+  --c-gray-700: oklch(0.34 0.012 256);
+  --c-gray-600: oklch(0.44 0.011 256);
+  --c-gray-500: oklch(0.55 0.01 256);
+  --c-gray-400: oklch(0.66 0.009 256);
+  --c-gray-300: oklch(0.78 0.008 256);
+  --c-gray-200: oklch(0.87 0.006 256);
+  --c-gray-100: oklch(0.93 0.005 256);
+  --c-gray-50: oklch(0.97 0.004 256);
+
+  /* Accent — calm instrument cyan-blue */
+  --c-blue-300: oklch(0.8 0.1 233);
+  --c-blue-400: oklch(0.72 0.13 235);
+  --c-blue-500: oklch(0.64 0.15 240);
+  --c-blue-600: oklch(0.55 0.15 242);
+
+  /* Status hues — nominal/caution/warning/critical (bright fg, dark bg, mid border) */
+  --c-green-400: oklch(0.84 0.16 152);
+  --c-green-600: oklch(0.6 0.14 152);
+  --c-green-950: oklch(0.26 0.05 152);
+  --c-amber-400: oklch(0.86 0.15 86);
+  --c-amber-600: oklch(0.66 0.14 80);
+  --c-amber-950: oklch(0.27 0.045 75);
+  --c-orange-400: oklch(0.8 0.16 58);
+  --c-orange-600: oklch(0.62 0.16 50);
+  --c-orange-950: oklch(0.26 0.05 48);
+  --c-red-400: oklch(0.74 0.19 26);
+  --c-red-600: oklch(0.56 0.2 27);
+  --c-red-950: oklch(0.24 0.08 27);
+
+  /* Data-viz categorical — colorblind-safe (Okabe-Ito family, brightened for dark) */
+  --c-viz-cat-01: oklch(0.7 0.14 238);
+  --c-viz-cat-02: oklch(0.76 0.15 62);
+  --c-viz-cat-03: oklch(0.78 0.14 158);
+  --c-viz-cat-04: oklch(0.86 0.15 100);
+  --c-viz-cat-05: oklch(0.64 0.16 286);
+  --c-viz-cat-06: oklch(0.66 0.19 28);
+  --c-viz-cat-07: oklch(0.7 0.15 330);
+  --c-viz-cat-08: oklch(0.82 0.1 200);
+  --c-viz-cat-09: oklch(0.74 0.13 128);
+  --c-viz-cat-10: oklch(0.72 0.13 12);
+  --c-viz-cat-11: oklch(0.8 0.11 52);
+  --c-viz-cat-12: oklch(0.76 0.1 270);
+
+  /* Data-viz sequential — single-hue intensity ramp (dark -> bright) */
+  --c-viz-seq-1: oklch(0.3 0.05 240);
+  --c-viz-seq-2: oklch(0.42 0.08 238);
+  --c-viz-seq-3: oklch(0.54 0.11 236);
+  --c-viz-seq-4: oklch(0.66 0.13 234);
+  --c-viz-seq-5: oklch(0.78 0.14 232);
+
+  /* Data-viz diverging — amber <-> neutral <-> cyan */
+  --c-viz-div-1: oklch(0.7 0.15 60);
+  --c-viz-div-2: oklch(0.8 0.08 70);
+  --c-viz-div-3: oklch(0.7 0.01 256);
+  --c-viz-div-4: oklch(0.74 0.09 220);
+  --c-viz-div-5: oklch(0.66 0.14 235);
+
+  /* Dimension primitives — COMFORTABLE defaults; [data-density=dense] swaps these */
+  --c-space-1: 4px;
+  --c-space-2: 8px;
+  --c-space-3: 12px;
+  --c-space-4: 16px;
+  --c-space-5: 24px;
+  --c-space-6: 32px;
+  --c-row-height: 40px;
+  --c-control-height: 36px;
+  --c-font-size-metric-hero: 48px;
+  --c-font-size-metric: 28px;
+  --c-font-size-label: 12px;
+  --c-font-size-body: 14px;
+  --c-font-size-caption: 11px;
+  --c-font-size-mono-data: 13px;
+}
+
+/* ---- LAYER 1 — SEMANTIC LAYER (role-named, references primitives; ADR 0081) ---- */
+:root {
+  /* Surface hierarchy (dark-first) */
+  --surface-background: var(--c-gray-950);
+  --surface-panel: var(--c-gray-900);
+  --surface-elevated: var(--c-gray-850);
+  --surface-overlay: var(--c-gray-800);
+
+  /* Text roles */
+  --text-primary: var(--c-gray-100);
+  --text-secondary: var(--c-gray-300);
+  --text-tertiary: var(--c-gray-500);
+
+  /* Status semantics — mission-control vocabulary, each fg/bg/border */
+  --status-nominal-fg: var(--c-green-400);
+  --status-nominal-bg: var(--c-green-950);
+  --status-nominal-border: var(--c-green-600);
+  --status-caution-fg: var(--c-amber-400);
+  --status-caution-bg: var(--c-amber-950);
+  --status-caution-border: var(--c-amber-600);
+  --status-warning-fg: var(--c-orange-400);
+  --status-warning-bg: var(--c-orange-950);
+  --status-warning-border: var(--c-orange-600);
+  --status-critical-fg: var(--c-red-400);
+  --status-critical-bg: var(--c-red-950);
+  --status-critical-border: var(--c-red-600);
+
+  /* Data-viz roles */
+  --viz-categorical-1: var(--c-viz-cat-01);
+  --viz-categorical-2: var(--c-viz-cat-02);
+  --viz-categorical-3: var(--c-viz-cat-03);
+  --viz-categorical-4: var(--c-viz-cat-04);
+  --viz-categorical-5: var(--c-viz-cat-05);
+  --viz-categorical-6: var(--c-viz-cat-06);
+  --viz-categorical-7: var(--c-viz-cat-07);
+  --viz-categorical-8: var(--c-viz-cat-08);
+  --viz-categorical-9: var(--c-viz-cat-09);
+  --viz-categorical-10: var(--c-viz-cat-10);
+  --viz-categorical-11: var(--c-viz-cat-11);
+  --viz-categorical-12: var(--c-viz-cat-12);
+  --viz-sequential-1: var(--c-viz-seq-1);
+  --viz-sequential-2: var(--c-viz-seq-2);
+  --viz-sequential-3: var(--c-viz-seq-3);
+  --viz-sequential-4: var(--c-viz-seq-4);
+  --viz-sequential-5: var(--c-viz-seq-5);
+  --viz-diverging-1: var(--c-viz-div-1);
+  --viz-diverging-2: var(--c-viz-div-2);
+  --viz-diverging-3: var(--c-viz-div-3);
+  --viz-diverging-4: var(--c-viz-div-4);
+  --viz-diverging-5: var(--c-viz-div-5);
+
+  /* Structure + elevation (instrument-panel: hairlines, minimal shadow) */
+  --border-hairline: var(--c-gray-700);
+  --divider: var(--c-gray-800);
+  --elevation-low: 0 1px 2px oklch(0 0 0 / 0.4);
+
+  /* Motion — restrained timing for data updates / panel transitions */
+  --motion-duration-fast: 120ms;
+  --motion-duration-base: 200ms;
+  --motion-duration-slow: 320ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+
+  /* Dimension semantics (consumed via var; swap with [data-density]) */
+  --space-1: var(--c-space-1);
+  --space-2: var(--c-space-2);
+  --space-3: var(--c-space-3);
+  --space-4: var(--c-space-4);
+  --space-5: var(--c-space-5);
+  --space-6: var(--c-space-6);
+  --row-height: var(--c-row-height);
+  --control-height: var(--c-control-height);
+}
+
+/* ---- LAYER 2 — @theme inline BRIDGE (mission-control utilities; ADR 0081) ---- */
+@theme inline {
+  /* Surfaces -> bg-surface-* / text-surface-* */
+  --color-surface-background: var(--surface-background);
+  --color-surface-panel: var(--surface-panel);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-overlay: var(--surface-overlay);
+
+  /* Text roles -> text-text-* (consumed as text-* in components) */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+
+  /* Status -> bg-status-* / text-status-* / border-status-* */
+  --color-status-nominal-fg: var(--status-nominal-fg);
+  --color-status-nominal-bg: var(--status-nominal-bg);
+  --color-status-nominal-border: var(--status-nominal-border);
+  --color-status-caution-fg: var(--status-caution-fg);
+  --color-status-caution-bg: var(--status-caution-bg);
+  --color-status-caution-border: var(--status-caution-border);
+  --color-status-warning-fg: var(--status-warning-fg);
+  --color-status-warning-bg: var(--status-warning-bg);
+  --color-status-warning-border: var(--status-warning-border);
+  --color-status-critical-fg: var(--status-critical-fg);
+  --color-status-critical-bg: var(--status-critical-bg);
+  --color-status-critical-border: var(--status-critical-border);
+
+  /* Data-viz */
+  --color-viz-categorical-1: var(--viz-categorical-1);
+  --color-viz-categorical-2: var(--viz-categorical-2);
+  --color-viz-categorical-3: var(--viz-categorical-3);
+  --color-viz-categorical-4: var(--viz-categorical-4);
+  --color-viz-categorical-5: var(--viz-categorical-5);
+  --color-viz-categorical-6: var(--viz-categorical-6);
+  --color-viz-categorical-7: var(--viz-categorical-7);
+  --color-viz-categorical-8: var(--viz-categorical-8);
+  --color-viz-categorical-9: var(--viz-categorical-9);
+  --color-viz-categorical-10: var(--viz-categorical-10);
+  --color-viz-categorical-11: var(--viz-categorical-11);
+  --color-viz-categorical-12: var(--viz-categorical-12);
+  --color-viz-sequential-1: var(--viz-sequential-1);
+  --color-viz-sequential-2: var(--viz-sequential-2);
+  --color-viz-sequential-3: var(--viz-sequential-3);
+  --color-viz-sequential-4: var(--viz-sequential-4);
+  --color-viz-sequential-5: var(--viz-sequential-5);
+  --color-viz-diverging-1: var(--viz-diverging-1);
+  --color-viz-diverging-2: var(--viz-diverging-2);
+  --color-viz-diverging-3: var(--viz-diverging-3);
+  --color-viz-diverging-4: var(--viz-diverging-4);
+  --color-viz-diverging-5: var(--viz-diverging-5);
+
+  /* Structure */
+  --color-border-hairline: var(--border-hairline);
+  --color-divider: var(--divider);
+
+  /* Type-scale roles — density-swappable font sizes (text-metric-hero, ...) */
+  --text-metric-hero: var(--c-font-size-metric-hero);
+  --text-metric-hero--line-height: 1.05;
+  --text-metric: var(--c-font-size-metric);
+  --text-metric--line-height: 1.1;
+  --text-label: var(--c-font-size-label);
+  --text-label--line-height: 1.2;
+  --text-body: var(--c-font-size-body);
+  --text-body--line-height: 1.5;
+  --text-caption: var(--c-font-size-caption);
+  --text-caption--line-height: 1.3;
+  --text-mono-data: var(--c-font-size-mono-data);
+  --text-mono-data--line-height: 1.4;
+}
+
+/* ---- LAYER 3 — DENSITY (swaps --c-* dimension primitives ONLY; ADR 0082) ---- */
+[data-density="comfortable"] {
+  --c-space-1: 4px;
+  --c-space-2: 8px;
+  --c-space-3: 12px;
+  --c-space-4: 16px;
+  --c-space-5: 24px;
+  --c-space-6: 32px;
+  --c-row-height: 40px;
+  --c-control-height: 36px;
+  --c-font-size-metric-hero: 48px;
+  --c-font-size-metric: 28px;
+  --c-font-size-label: 12px;
+  --c-font-size-body: 14px;
+  --c-font-size-caption: 11px;
+  --c-font-size-mono-data: 13px;
+}
+
+[data-density="dense"] {
+  --c-space-1: 2px;
+  --c-space-2: 4px;
+  --c-space-3: 8px;
+  --c-space-4: 12px;
+  --c-space-5: 16px;
+  --c-space-6: 24px;
+  --c-row-height: 28px;
+  --c-control-height: 28px;
+  --c-font-size-metric-hero: 40px;
+  --c-font-size-metric: 24px;
+  --c-font-size-label: 11px;
+  --c-font-size-body: 13px;
+  --c-font-size-caption: 10px;
+  --c-font-size-mono-data: 12px;
+}
+
+/* ---- TENANT EXAMPLE — redefines PALETTE primitives ONLY (ADR 0082) ----
+   Proof of full re-composition through one swap point: only --c-* names appear
+   here, so every surface/text/status/viz token re-resolves with NO change to the
+   semantic layer or components. A warmer, violet-accented mission profile. */
+[data-tenant="example"] {
+  --c-gray-950: oklch(0.17 0.014 286);
+  --c-gray-900: oklch(0.21 0.015 286);
+  --c-gray-850: oklch(0.245 0.015 286);
+  --c-gray-800: oklch(0.28 0.015 286);
+  --c-gray-700: oklch(0.35 0.014 286);
+  --c-gray-600: oklch(0.45 0.012 286);
+  --c-gray-500: oklch(0.56 0.011 286);
+  --c-gray-400: oklch(0.67 0.01 286);
+  --c-gray-300: oklch(0.79 0.008 286);
+  --c-gray-200: oklch(0.88 0.006 286);
+  --c-gray-100: oklch(0.94 0.005 286);
+  --c-gray-50: oklch(0.97 0.004 286);
+
+  --c-blue-300: oklch(0.82 0.12 320);
+  --c-blue-400: oklch(0.74 0.16 322);
+  --c-blue-500: oklch(0.66 0.19 324);
+  --c-blue-600: oklch(0.57 0.19 326);
+
+  --c-green-400: oklch(0.85 0.16 168);
+  --c-green-600: oklch(0.61 0.14 168);
+  --c-green-950: oklch(0.27 0.05 168);
+  --c-amber-400: oklch(0.87 0.15 96);
+  --c-amber-600: oklch(0.67 0.14 92);
+  --c-amber-950: oklch(0.28 0.045 92);
+  --c-orange-400: oklch(0.81 0.16 40);
+  --c-orange-600: oklch(0.63 0.16 36);
+  --c-orange-950: oklch(0.27 0.05 36);
+  --c-red-400: oklch(0.75 0.19 12);
+  --c-red-600: oklch(0.57 0.2 14);
+  --c-red-950: oklch(0.25 0.08 14);
+
+  --c-viz-cat-01: oklch(0.72 0.16 324);
+  --c-viz-cat-02: oklch(0.78 0.14 96);
+  --c-viz-cat-03: oklch(0.79 0.14 168);
+  --c-viz-cat-04: oklch(0.86 0.14 110);
+  --c-viz-cat-05: oklch(0.66 0.16 270);
+  --c-viz-cat-06: oklch(0.68 0.19 18);
+  --c-viz-cat-07: oklch(0.72 0.15 350);
+  --c-viz-cat-08: oklch(0.83 0.1 212);
+  --c-viz-cat-09: oklch(0.75 0.13 140);
+  --c-viz-cat-10: oklch(0.73 0.13 2);
+  --c-viz-cat-11: oklch(0.81 0.11 64);
+  --c-viz-cat-12: oklch(0.77 0.11 290);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
