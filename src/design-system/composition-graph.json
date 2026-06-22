@@ -1,6 +1,34 @@
 {
   "$schema": "./composition-graph.schema.json",
   "version": 1,
-  "generatedNote": "Hand-maintained analytical artifact (ADR 0059) — built top-down by interface commonality, NOT generated from code. Reconciled against the dependency-cruiser import graph in Stage 1 (ADR 0060). Empty in this template: add a node here when the first component lands under src/components/ui (component-deprecation hygiene is owned by ADR 0064).",
-  "nodes": []
+  "generatedNote": "Hand-maintained analytical artifact (ADR 0059) — built top-down by interface commonality, NOT generated from code. Reconciled against the dependency-cruiser import graph in Stage 1 (ADR 0060). Add a node here when a component lands under src/components/ui (component-deprecation hygiene is owned by ADR 0064).",
+  "nodes": [
+    {
+      "id": "button",
+      "kind": "primitive",
+      "archetype": "action-trigger",
+      "module": "src/components/ui/button.tsx",
+      "composedOf": [],
+      "usedIn": [],
+      "compositionSignature": []
+    },
+    {
+      "id": "badge",
+      "kind": "primitive",
+      "archetype": "categorical-indicator",
+      "module": "src/components/ui/badge.tsx",
+      "composedOf": [],
+      "usedIn": [],
+      "compositionSignature": []
+    },
+    {
+      "id": "status-indicator",
+      "kind": "primitive",
+      "archetype": "categorical-indicator",
+      "module": "src/components/ui/status-indicator.tsx",
+      "composedOf": [],
+      "usedIn": [],
+      "compositionSignature": []
+    }
+  ]
 }
