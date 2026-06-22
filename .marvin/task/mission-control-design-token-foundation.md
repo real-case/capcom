@@ -330,3 +330,11 @@ marvin-tm-spec-critic — pass 1: **BLOCK** (3 blockers), pass 2 on the revision
 
 - Component waves as sibling specs, each with its archetype mapping, `design-intent.ts`, stories, and token compliance: StatusBadge (`categorical-indicator`) → Toolbar (**new archetype — human escalation**, ADR 0061/0064)/TabStrip/SideNav (`navigation`) → MetricCard/WidgetTile/ChartContainer (`container`) → DataTable (`collection`) → QueryBar (`text-input`, signature). The StatusBadge spec consumes the status tokens first under the axe a11y gate (ADR 0039).
 - Wire a dedicated technical display face; add a light-mode mission theme or a 3rd tenant; optionally extend `check:contrast` to colorblind-distance metrics once a CVD model is chosen.
+
+## Delivery
+
+- PR: https://github.com/real-case/capcom/pull/1 (`task/mission-control-design-token-foundation` → `dev`)
+- Commit: `e91a2bb` — `feat(design-system): mission-control token foundation`
+- Verification: all 7 ACs green (Node 24); repo gates lint/format:check/check:design-system/build green; diff-critic PASS WITH WARNINGS (no blockers).
+- SPEC GAP applied: `README.md` reformatted (pre-existing prettier table mis-alignment).
+- **Pending human gate:** accept ADRs 0081/0082 (`adr.py accept`) + `adr-sync-claude-md` before merge (ADR 0046).
