@@ -86,4 +86,7 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0080](0080-versioning-and-release-policy.md) | Versioning and release policy: template-adapted SemVer with dev→main tagged releases | accepted | 2026-06-21 |
 | [0081](0081-mission-control-design-token-vocabulary.md) | Mission-control design-token vocabulary on a re-introduced primitive layer | accepted | 2026-06-22 |
 | [0082](0082-multitenant-density-runtime-theming.md) | Multi-tenant and density runtime theming via data-attributes, on a swap-only primitive layer | accepted | 2026-06-22 |
-| [0083](0083-event-identity-model-and-multitenancy.md) | Event & identity model and multitenancy | proposed | 2026-06-22 |
+| [0083](0083-event-identity-model-and-multitenancy.md) | Event & identity model and multitenancy | accepted | 2026-06-22 |
+| [0084](0084-aggregation-strategy.md) | Aggregation strategy: in-database SQL functions | proposed | 2026-06-22 |
+| [0085](0085-event-ingestion-contract.md) | Event ingestion contract | proposed | 2026-06-22 |
+| [0086](0086-charting-primitive-layer-visx.md) | Charting primitive layer: visx + design tokens | proposed | 2026-06-22 |
