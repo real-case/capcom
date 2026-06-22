@@ -30,6 +30,14 @@ State has exactly one home (ADR 0025/0026/0027): **server → TanStack Query**, 
 **ephemeral UI → Zustand**. Charts draw only from the generated design-token allowlist
 (ADR 0033/0058), via **visx** primitives (ADR 0086, below).
 
+**Design input is optional and code-canonical.** Figma never gates the pipeline (`check:seals`
+stays inert until a Figma file exists) and never forks token values — it conforms to code
+(ADR 0033/0045) and is consumed per-component as the ADR 0063 image API-approval artifact. So a
+design is never strictly required; the slices proceed code-first from the token vocabulary and
+each component's `design-intent.ts`. The two points where a design most changes the output are
+flagged inline below as a **🎨 Design checkpoint**: **PR-4** (the data-viz visual language) and
+**PR-8** (the dashboard composition).
+
 ## Domain model (the architectural showpiece)
 
 ```
@@ -138,6 +146,13 @@ Each follows the ADR lifecycle: drafted `proposed`, reviewed by `app.adr-review`
 
 ## PR-4 — Trends (first flagship vertical slice)
 
+> **🎨 Design checkpoint.** This is the first surface where a dashboard / data-viz design
+> materially changes the output — chart styling, axis/legend treatment, widget composition. If
+> the visualization language is to be **design-led rather than agent-led**, the Figma source
+> lands **here, before the widgets**: read-only and token-conformant (ADR 0033/0045), consumed
+> per-widget as the ADR 0063 image API-approval artifact (`renderHash` + `figmaFileVersion`
+> seal). Absent a design, the slice proceeds code-first — `check:seals` stays inert.
+
 - **Migration `fn_event_trends`:** a SQL function returning time-bucketed event counts with an
   optional breakdown by a property (ADR 0084).
 - **Feature `trends-explorer`:** a TanStack Query hook over the RPC; **nuqs** URL-state for
@@ -170,6 +185,11 @@ Migration `create_segments` stores the rule JSON; a SQL function computes segmen
 distribution. Feature `segment-builder` + `widgets/segment-distribution`.
 
 ## PR-8 — Dashboards & saved reports
+
+> **🎨 Design checkpoint.** The dashboard _composition_ itself — grid, card layout, which charts
+> sit where — first appears here. If only the overall dashboard look matters (not per-widget
+> styling), this is the **latest** point to provide a design; same posture as PR-4 (read-only,
+> token-conformant, ADR 0063 per-component approval).
 
 Migration for `reports` / `dashboards` (saved chart configs + a simple layout). **Server
 Actions** (ADR 0020) persist reports and segments, with the optimistic-mutation default
