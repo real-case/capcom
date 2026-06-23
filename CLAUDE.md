@@ -50,8 +50,9 @@ externally fixed client mandate, a `CON-00x` row in `constraints.md`), then impl
 
 _Derived from the accepted ADRs via `adr-sync-claude-md`. The full Phase-3 baseline is now
 accepted — design tokens (0033), Feature-Sliced Design (0065/0066), the security & integrity
-gates (0067–0074), the advisory-AI client (0075), and the guardrail meta-layer (0076–0078) —
-so nothing below is flagged as still-proposed._
+gates (0067–0074), the advisory-AI client (0075), and the guardrail meta-layer (0076–0078),
+plus the CAPCOM analytics-domain foundation (0083–0086) — so nothing below is flagged as
+still-proposed._
 
 - **Next.js (App Router)** on **React 19** (`^19` pinned) — Server Components by
   default (0002; CON-001/CON-002).
@@ -131,6 +132,15 @@ so nothing below is flagged as still-proposed._
   structural/recall layer (advisory, never a gate's source of truth, 0077); **self-testing
   gates** (`check:gates`) + the **technical-debt escape-hatch** gate (`check:debt`) as the
   meta-integrity layer (0078).
+- **CAPCOM analytics domain** (0083–0086): a multi-tenant `organization → project` model with
+  RBAC roles `owner | admin | analyst | viewer`, the deliberate auth-user ≠ profile split, and
+  the event shape `event_name | distinct_id | properties jsonb | ts`, isolated by **RLS scoped
+  through a membership join** (0083); **in-database aggregation** — trends / funnels / retention /
+  segments as Postgres views + `SECURITY INVOKER` set-returning functions run under the caller's
+  RLS and refreshed by poll (0084); a single `POST /api/ingest` route — a Zod-validated batch
+  behind a per-project ingest key — as the **seeded-data** intake contract (0085); and **visx**
+  unstyled charting primitives so every chart value comes from the generated token allowlist
+  (0086).
 
 ## Commands
 
@@ -290,6 +300,26 @@ so nothing below is flagged as still-proposed._
   never its code path, never the agent's own render) sealed by `renderHash` +
   `figmaFileVersion` as a drift detector (0063); a Defect Log of missing/ambiguous rules is
   filled in review, and invariants graduate into Stage-1 checks on first violation (0064).
+- Multitenancy & identity (0083): every domain row carries `project_id` under
+  `organization → project`; isolation is **RLS scoped by a membership join** via
+  `search_path`-pinned `is_member(project)` / `has_role(project, role)` helpers, with RBAC roles
+  `owner | admin | analyst | viewer` composing **over** isolation. The authenticated member
+  (`auth.users`) and the tracked end-user (`profiles`, keyed by `distinct_id`) are distinct
+  entities and never collapse into one table; the client never asserts tenancy.
+- Aggregations live in the database (0084): trends, funnels, retention, and segment
+  distributions are Postgres views / `SECURITY INVOKER` set-returning functions invoked as RPC
+  under the caller's RLS — never reduced in application code; results are typed via `gen:types`
+  and refreshed by poll (no realtime). Features and widgets consume already-reduced rows.
+- Event ingestion is a single `POST /api/ingest` route handler on the Node runtime (0085): a Zod
+  `[ingest]` batch authenticated by a per-project ingest key (hashed at rest) that resolves
+  server-side to one `project_id`; the write runs in a confined trusted server-only context
+  stamped with the resolved project, with a structured `401/403/422` error contract. It is the
+  one demonstration intake — data is otherwise seeded.
+- Charts are built from **visx** unstyled primitives (0086): scale ranges and sizes come only
+  from the generated token allowlist (0058) and the mission-control data-viz palette (0081);
+  chart widgets are presentational — they receive reduced rows as props (TanStack Query over the
+  0084 RPCs) and own no fetching or aggregation; SVG carries explicit a11y roles and renders
+  deterministically for Chromatic.
 
 ## Restrictions
 
@@ -350,3 +380,14 @@ so nothing below is flagged as still-proposed._
   control (0063, 0047). Controlled-vocabulary entries are human-authored; a rename/merge/split
   is a governed migration with an owner, and a component fitting no archetype escalates to a
   human (0061, 0064).
+- Tenant isolation is a database invariant: every domain table has RLS enabled and
+  deny-by-default, scoped by the membership join; the client never supplies its own tenant id,
+  and `auth.users` (member) is never conflated with `profiles` (tracked end-user) (0083).
+  Aggregation/reduction logic never lives in application code, and no second datastore / external
+  OLAP is introduced — aggregations stay in Postgres (0084).
+- The ingest-key write path is server-only and never reaches client code; it is confined to the
+  resolved `project_id`, the key is compared against a hash (never logged), and its rotation is a
+  human-only action (0085, 0013/0046). No ingestion SDK, queue, or high-volume pipeline — the
+  seeded-data posture is a recorded scope boundary (0085).
+- Chart widgets carry no baked palette and no raw SVG `fill`/`stroke` — visx primitives are fed
+  token values only and stay presentational (no data fetching or aggregation) (0086, 0058).

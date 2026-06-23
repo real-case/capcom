@@ -92,5 +92,11 @@ heatmap
 pgTAP
 realtime
 distinctid
+timestamptz
+plpgsql
+rollups
+backpressure
+infographics
+gridlines
 upsert
 upserts
