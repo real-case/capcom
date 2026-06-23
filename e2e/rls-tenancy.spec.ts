@@ -24,9 +24,11 @@ const SUPABASE_KEY =
 // Seeded fixtures — see supabase/seed.sql.
 const AURORA = "0a000000-0000-0000-0000-000000000001";
 const GLOBEX = "0b000000-0000-0000-0000-000000000002";
+const AURORA_PROJECT = "0a000000-0000-0000-0000-0000000000a1";
 const GLOBEX_PROJECT = "0b000000-0000-0000-0000-0000000000b1";
 const BOB_ID = "bbbb2222-2222-2222-2222-222222222222";
 const ALICE_ID = "aaaa1111-1111-1111-1111-111111111111";
+const CAROL_ID = "cccc3333-3333-3333-3333-333333333333";
 const PASSWORD = "password123";
 
 function anonClient(): SupabaseClient {
@@ -182,5 +184,69 @@ test.describe("RBAC composes over isolation (ADR 0083)", () => {
       .eq("user_id", ALICE_ID)
       .eq("organization_id", GLOBEX);
     expect(error).not.toBeNull();
+  });
+
+  test("an admin cannot promote to owner — only an owner may grant owner", async () => {
+    const alice = await signIn("alice@capcom.dev"); // admin @ Globex (not owner there)
+    // WITH CHECK rejects the new owner row → error, no mutation.
+    const { error } = await alice
+      .from("memberships")
+      .update({ role: "owner" })
+      .eq("user_id", ALICE_ID)
+      .eq("organization_id", GLOBEX);
+    expect(error).not.toBeNull();
+
+    const { data } = await alice
+      .from("memberships")
+      .select("role")
+      .eq("user_id", ALICE_ID)
+      .eq("organization_id", GLOBEX)
+      .single();
+    expect(data?.role).toBe("admin");
+  });
+
+  test("an admin cannot touch an owner's membership", async () => {
+    const alice = await signIn("alice@capcom.dev"); // admin @ Globex
+    // Carol is owner @ Globex; the USING clause hides her row from a mere admin,
+    // so this matches zero rows (no error) and her role is unchanged.
+    await alice
+      .from("memberships")
+      .update({ role: "viewer" })
+      .eq("user_id", CAROL_ID)
+      .eq("organization_id", GLOBEX);
+
+    const { data } = await alice
+      .from("memberships")
+      .select("role")
+      .eq("user_id", CAROL_ID)
+      .eq("organization_id", GLOBEX)
+      .single();
+    expect(data?.role).toBe("owner");
+  });
+});
+
+test.describe("project-scoped membership helpers (ADR 0083)", () => {
+  test("is_member / has_role answer for the caller's own access", async () => {
+    const bob = await signIn("bob@capcom.dev"); // viewer @ Aurora
+
+    const ownProject = await bob.rpc("is_member", {
+      p_project_id: AURORA_PROJECT,
+    });
+    expect(ownProject.data).toBe(true);
+    const otherProject = await bob.rpc("is_member", {
+      p_project_id: GLOBEX_PROJECT,
+    });
+    expect(otherProject.data).toBe(false);
+
+    const asViewer = await bob.rpc("has_role", {
+      p_project_id: AURORA_PROJECT,
+      p_min_role: "viewer",
+    });
+    expect(asViewer.data).toBe(true);
+    const asAdmin = await bob.rpc("has_role", {
+      p_project_id: AURORA_PROJECT,
+      p_min_role: "admin",
+    });
+    expect(asAdmin.data).toBe(false);
   });
 });

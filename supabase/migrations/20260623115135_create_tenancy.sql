@@ -293,6 +293,13 @@ create policy "Owners delete projects in their organization"
 -- Read: members see the roster of orgs they belong to (so the app can show "your
 -- role" and a team list). Manage (add / change role / remove): admin+. is_org_member
 -- and has_org_role run as DEFINER, so reading memberships here does not recurse.
+--
+-- The `owner` role is owner-gated on every write: an admin may manage members up
+-- to `admin`, but only an existing owner may grant the owner role, touch an
+-- owner's row, or remove an owner. Without this an admin could self-promote to
+-- owner (then delete the org), collapsing the owner/admin distinction. The
+-- predicate reads the row's `role` — the OLD row in USING (which rows may be
+-- touched), the NEW row in WITH CHECK (what they may become).
 create policy "Members read the roster of their organizations"
   on public.memberships for select
   to authenticated
@@ -301,15 +308,27 @@ create policy "Members read the roster of their organizations"
 create policy "Admins add members to their organization"
   on public.memberships for insert
   to authenticated
-  with check (public.has_org_role(organization_id, 'admin'));
+  with check (
+    public.has_org_role(organization_id, 'admin')
+    and (role <> 'owner' or public.has_org_role(organization_id, 'owner'))
+  );
 
 create policy "Admins change roles in their organization"
   on public.memberships for update
   to authenticated
-  using (public.has_org_role(organization_id, 'admin'))
-  with check (public.has_org_role(organization_id, 'admin'));
+  using (
+    public.has_org_role(organization_id, 'admin')
+    and (role <> 'owner' or public.has_org_role(organization_id, 'owner'))
+  )
+  with check (
+    public.has_org_role(organization_id, 'admin')
+    and (role <> 'owner' or public.has_org_role(organization_id, 'owner'))
+  );
 
 create policy "Admins remove members from their organization"
   on public.memberships for delete
   to authenticated
-  using (public.has_org_role(organization_id, 'admin'));
+  using (
+    public.has_org_role(organization_id, 'admin')
+    and (role <> 'owner' or public.has_org_role(organization_id, 'owner'))
+  );
