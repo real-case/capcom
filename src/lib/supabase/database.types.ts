@@ -34,18 +34,122 @@ export type Database = {
   };
   public: {
     Tables: {
-      // No tables yet — `npm run gen:types` regenerates this from your Supabase
-      // migrations once the first table lands (ADR 0015).
-      [_ in never]: never;
+      memberships: {
+        Row: {
+          created_at: string;
+          id: string;
+          organization_id: string;
+          role: Database["public"]["Enums"]["app_role"];
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          organization_id: string;
+          role: Database["public"]["Enums"]["app_role"];
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          organization_id?: string;
+          role?: Database["public"]["Enums"]["app_role"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "memberships_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      organizations: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      projects: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          organization_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          organization_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          organization_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "projects_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      has_org_role: {
+        Args: {
+          p_min_role: Database["public"]["Enums"]["app_role"];
+          p_organization_id: string;
+        };
+        Returns: boolean;
+      };
+      has_role: {
+        Args: {
+          p_min_role: Database["public"]["Enums"]["app_role"];
+          p_project_id: string;
+        };
+        Returns: boolean;
+      };
+      is_member: { Args: { p_project_id: string }; Returns: boolean };
+      is_org_member: { Args: { p_organization_id: string }; Returns: boolean };
+      role_rank: {
+        Args: { p_role: Database["public"]["Enums"]["app_role"] };
+        Returns: number;
+      };
     };
     Enums: {
-      [_ in never]: never;
+      app_role: "owner" | "admin" | "analyst" | "viewer";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -178,6 +282,8 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["owner", "admin", "analyst", "viewer"],
+    },
   },
 } as const;
