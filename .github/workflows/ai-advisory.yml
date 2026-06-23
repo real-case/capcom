@@ -5,7 +5,7 @@
 # AI_API_KEY secret (ADR 0046/0044): the `guard` job reads whether the secret is non-empty
 # WITHOUT exposing it, and the AI jobs are skipped while it is absent — so this lands dormant
 # and self-activates on the day the key is added, exactly like the Chromatic token.
-name: "[AI] Advisory"
+name: "🤖 [AI] Advisory"
 
 on:
   pull_request:
@@ -32,7 +32,7 @@ jobs:
         run: echo "has_key=${{ secrets.AI_API_KEY != '' }}" >> "$GITHUB_OUTPUT"
 
   review:
-    name: "[AI] Advisory review + security"
+    name: "🤖 [AI] Advisory review + security"
     needs: guard
     if: needs.guard.outputs.has_key == 'true'
     runs-on: ubuntu-latest
@@ -46,7 +46,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: "[AI] Advisory general review"
+      - name: "🤖 [AI] Advisory general review"
         run: node scripts/ai/pr-review.mjs
         env:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
@@ -58,7 +58,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           DIFF_BASE: ${{ github.event.pull_request.base.ref }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: "[AI] Advisory security review"
+      - name: "🤖 [AI] Advisory security review"
         run: node scripts/ai/security-review.mjs
         env:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
@@ -69,7 +69,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   changelog:
-    name: "[AI] Advisory changelog draft"
+    name: "🤖 [AI] Advisory changelog draft"
     needs: guard
     if: needs.guard.outputs.has_key == 'true' && github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
@@ -83,7 +83,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: "[AI] Draft changelog"
+      - name: "🤖 [AI] Draft changelog"
         run: node scripts/ai/changelog.mjs
         env:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
