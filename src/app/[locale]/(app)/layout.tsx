@@ -8,7 +8,7 @@ import { fetchProjects } from "@/entities/project";
 import { SignOutButton } from "@/features/auth-by-email";
 import { Link, redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser, getServerClient } from "@/lib/supabase/server";
 import { WorkspaceSwitcher } from "@/widgets/workspace-switcher";
 
 /**
@@ -30,10 +30,8 @@ export default async function AppLayout({
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerClient();
+  const user = await getCurrentUser();
   if (!user) {
     redirect({ href: "/sign-in", locale });
     return null; // unreachable (redirect throws); narrows `user` for the rest.

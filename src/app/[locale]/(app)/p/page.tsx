@@ -8,7 +8,7 @@ import { fetchOrganizations } from "@/entities/organization";
 import { fetchProjects } from "@/entities/project";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser, getServerClient } from "@/lib/supabase/server";
 
 /**
  * Workspace home (ADR 0083). Lists the organizations the signed-in member can
@@ -28,10 +28,8 @@ export default async function WorkspaceHomePage({
   const t = await getTranslations("Workspace");
   const tRoles = await getTranslations("Roles");
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerClient();
+  const user = await getCurrentUser();
 
   const [organizations, projects, memberships] = await Promise.all([
     fetchOrganizations(supabase),

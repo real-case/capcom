@@ -7,7 +7,7 @@ import { fetchMyMemberships } from "@/entities/membership";
 import { fetchOrganization } from "@/entities/organization";
 import { fetchProject } from "@/entities/project";
 import { routing } from "@/i18n/routing";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser, getServerClient } from "@/lib/supabase/server";
 
 /**
  * Project overview (ADR 0083) — the end-to-end proof that a scoped read works:
@@ -29,10 +29,8 @@ export default async function ProjectOverviewPage({
   const t = await getTranslations("ProjectOverview");
   const tRoles = await getTranslations("Roles");
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getServerClient();
+  const user = await getCurrentUser();
   if (!user) notFound();
 
   const project = await fetchProject(supabase, projectId);
