@@ -13,7 +13,11 @@ export const buttonIntent = {
     archetype: "action-trigger",
     compositionSignature: [],
     composedOf: [],
-    usedIn: [], // no call-sites yet; the API below is the action-trigger union
+    usedIn: [
+      "src/features/auth-by-email/ui/SignInForm.tsx",
+      "src/features/auth-by-email/ui/SignOutButton.tsx",
+      "src/features/auth-by-email/ui/SignUpForm.tsx",
+    ],
   },
   usageRole: "action-trigger",
   variants: {

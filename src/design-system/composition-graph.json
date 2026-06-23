@@ -9,7 +9,11 @@
       "archetype": "action-trigger",
       "module": "src/components/ui/button.tsx",
       "composedOf": [],
-      "usedIn": [],
+      "usedIn": [
+        "src/features/auth-by-email/ui/SignInForm.tsx",
+        "src/features/auth-by-email/ui/SignOutButton.tsx",
+        "src/features/auth-by-email/ui/SignUpForm.tsx"
+      ],
       "compositionSignature": []
     },
     {
@@ -18,7 +22,10 @@
       "archetype": "categorical-indicator",
       "module": "src/components/ui/badge.tsx",
       "composedOf": [],
-      "usedIn": [],
+      "usedIn": [
+        "src/app/[locale]/(app)/p/[projectId]/page.tsx",
+        "src/app/[locale]/(app)/p/page.tsx"
+      ],
       "compositionSignature": []
     },
     {

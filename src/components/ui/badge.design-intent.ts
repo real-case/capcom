@@ -14,7 +14,10 @@ export const badgeIntent = {
     archetype: "categorical-indicator",
     compositionSignature: [],
     composedOf: [],
-    usedIn: [],
+    usedIn: [
+      "src/app/[locale]/(app)/p/[projectId]/page.tsx",
+      "src/app/[locale]/(app)/p/page.tsx",
+    ],
   },
   usageRole: "categorical-status-indicator",
   variants: {

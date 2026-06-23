@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 import { env } from "@/lib/env";
 
@@ -37,3 +38,23 @@ export async function createClient() {
     },
   );
 }
+
+/**
+ * Request-scoped, deduplicated server client and current user (React `cache`).
+ * A Server Component tree typically resolves the user more than once per
+ * request — the protected layout guards on it, then a page reads it again — and
+ * each raw `getUser()` is a round-trip to the Auth server. `cache` collapses
+ * both the client construction and the user lookup to one per request, while
+ * still revalidating the token with the Auth server (not `getSession`, ADR 0013/
+ * 0016). Use these from Server Components; Server Actions still build their own
+ * client via `createClient` (they are their own request).
+ */
+export const getServerClient = cache(createClient);
+
+export const getCurrentUser = cache(async () => {
+  const supabase = await getServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+});

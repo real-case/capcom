@@ -124,6 +124,22 @@ export default defineConfig({
         // catch-all dir — the `[.` in `[...rest]` would otherwise be parsed as a
         // POSIX collating-symbol opener and never match.
         "src/app/[locale]/[[]...rest]/page.tsx",
+        // PR-2 (ADR 0083): the (auth)/(app) route files are async Server
+        // Components that read cookies and call getUser, and the auth Server
+        // Actions import the server-only Supabase chain — none execute under
+        // jsdom. They are exercised by `next build` + the e2e specs (RLS
+        // isolation + smoke); the pure logic (schemas, role ladder, entity
+        // queries) and client UI (forms, switcher) are unit-tested directly.
+        // `*` matches the (auth)/(app) route-group segment and the [projectId]
+        // dynamic segment — the literal parens/brackets are not glob-matchable
+        // here, but a single-segment `*` is exact enough (these are the only
+        // route-group children).
+        "src/app/[locale]/*/sign-in/page.tsx",
+        "src/app/[locale]/*/sign-up/page.tsx",
+        "src/app/[locale]/*/layout.tsx",
+        "src/app/[locale]/*/p/page.tsx",
+        "src/app/[locale]/*/p/*/page.tsx",
+        "src/features/auth-by-email/api/actions.ts",
       ],
       // ADR 0008: global ≥80% on statements/lines gates the merge; branch
       // coverage is tracked in reports and may be tightened later.
