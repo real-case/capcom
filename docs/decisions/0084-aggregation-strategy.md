@@ -162,7 +162,7 @@ A dedicated analytics store (ClickHouse / DuckDB / warehouse) beside Postgres.
 This record builds directly on the **0083** event shape and isolation model and is consumed by
 the PR-4 trends slice, the PR-5 funnel slice, the PR-6 retention cohort grid, and the PR-7
 segmentation feature — each adds one SQL function under this strategy. The companion PR-1
-records fix the ingestion contract that writes the events and the charting primitive (**0086**) that
+records fix the ingestion contract (**0085**) that writes the events and the charting primitive (**0086**) that
 renders the reduced rows. The refresh-by-poll posture follows **0012** and the realtime deferral
 in **0079**; the typed call surface follows **0015**. The decision should be revisited only if
 the demo adopts genuinely high-volume ingestion (which would reopen materialized rollups within
