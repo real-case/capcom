@@ -46,7 +46,7 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: "[AI] Advisory review"
+      - name: "[AI] Advisory general review"
         run: node scripts/ai/pr-review.mjs
         env:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
