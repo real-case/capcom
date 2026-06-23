@@ -46,7 +46,7 @@ const draft = await advise({
 });
 
 writeFileSync("CHANGELOG.draft.md", `${draft}\n`);
-const body = `### 🤖 Advisory changelog draft (ADR 0050 — a human edits this in the release PR; not auto-committed)\n\n${draft}`;
+const body = `### 🤖 [AI] Advisory changelog draft\n\n${draft}`;
 postPrComment(process.env.PR_NUMBER, body);
 console.log(
   "ai-changelog: draft written to CHANGELOG.draft.md and posted (human edits in the release PR, ADR 0050).",

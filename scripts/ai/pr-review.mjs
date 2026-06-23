@@ -32,6 +32,6 @@ const review = await advise({
   payload: `\`\`\`diff\n${diff.slice(0, 180000)}\n\`\`\``,
 });
 
-const body = `### 🤖 Advisory AI review (ADR 0048 — not a required check; a human review is still required, ADR 0047)\n\n${review}`;
+const body = `### 🤖 [AI] Advisory general review\n\n${review}`;
 postPrComment(process.env.PR_NUMBER, body);
 console.log("ai-pr-review: advisory posted.");

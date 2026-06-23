@@ -34,6 +34,6 @@ const triage = await advise({
   payload: `Failing CI log (tail):\n\`\`\`\n${log.slice(-120000)}\n\`\`\``,
 });
 
-const body = `### 🤖 Advisory CI-failure triage (ADR 0049 — advisory; no auto-retry, no auto-quarantine)\n\n${triage}`;
+const body = `### 🤖 [AI] Advisory CI-failure triage\n\n${triage}`;
 postPrComment(process.env.PR_NUMBER, body);
 console.log("ai-ci-triage: advisory posted.");

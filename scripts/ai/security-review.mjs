@@ -39,6 +39,6 @@ const review = await advise({
   payload: `\`\`\`diff\n${diff.slice(0, 180000)}\n\`\`\``,
 });
 
-const body = `### 🤖 Advisory security review — Layer 2 (ADR 0056; the blocking gitleaks scan is Layer 1)\n\n${review}`;
+const body = `### 🤖 [AI] Advisory security review\n\n${review}`;
 postPrComment(process.env.PR_NUMBER, body);
 console.log("ai-security-review: advisory posted.");

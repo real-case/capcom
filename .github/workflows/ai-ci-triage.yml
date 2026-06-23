@@ -3,7 +3,7 @@
 # evidence and comments on the PR. It NEVER retries (there is no global retry policy) and
 # NEVER quarantines on its own — both are human actions (ADR 0049). INERT until a 👤
 # provisions AI_API_KEY (provider-agnostic, ADR 0075), via the same `guard` pattern as ai-advisory.yml.
-name: AI CI-failure triage (Phase 12)
+name: "🤖 [AI] Advisory CI-failure triage"
 
 on:
   workflow_run:
@@ -28,7 +28,7 @@ jobs:
         run: echo "has_key=${{ secrets.AI_API_KEY != '' }}" >> "$GITHUB_OUTPUT"
 
   triage:
-    name: AI triage (advisory)
+    name: "🤖 [AI] Advisory triage"
     needs: guard
     if: needs.guard.outputs.has_key == 'true'
     runs-on: ubuntu-latest
@@ -44,7 +44,7 @@ jobs:
         run: gh run view ${{ github.event.workflow_run.id }} --log-failed > ci-failure.log || true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: AI CI-failure triage (ADR 0049)
+      - name: "🤖 [AI] CI-failure triage"
         run: node scripts/ai/ci-triage.mjs
         env:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
