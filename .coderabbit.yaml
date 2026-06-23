@@ -1,0 +1,83 @@
+language: en-US
+
+reviews:
+  profile: assertive
+  request_changes_workflow: true
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+      - dev
+    ignore_usernames:
+      - renovate[bot]
+      - dependabot[bot]
+
+  path_filters:
+    - "!package-lock.json"
+    - "!**/*.generated.ts"
+    - "!src/lib/supabase/database.types.ts"
+    - "!src/design-system/tokens.allowlist.json"
+    - "!src/design-system/tokens.agent-rules.md"
+
+  path_instructions:
+    - path: "src/shared/**"
+      instructions: |
+        shared is the lowest Feature-Sliced Design layer and must not import from
+        entities, features, widgets, or app. Flag any upward cross-layer import as an
+        FSD boundary violation. Each slice must expose its public API only through its
+        index.ts barrel; flag deep imports that bypass it.
+
+    - path: "src/entities/**"
+      instructions: |
+        entities may import only from shared. Flag imports from features, widgets, or
+        app, and imports between sibling entity slices. Reach every slice through its
+        index.ts public API.
+
+    - path: "src/features/**"
+      instructions: |
+        A feature must not import another feature directly; share through shared or
+        entities, or compose at the widgets layer. Keep side effects (Supabase calls,
+        mutations) in the model and api segments, never in ui. Reach every slice
+        through its index.ts public API.
+
+    - path: "src/widgets/**"
+      instructions: |
+        Widgets compose features and entities and import downward only (features,
+        entities, shared). Chart widgets are presentational: they receive
+        already-reduced rows as props and own no data fetching or aggregation. Charts
+        are built from visx primitives fed only design-token values — flag raw SVG
+        fill/stroke and any baked palette. Type props with discriminated unions;
+        flag any.
+
+    - path: "src/components/**"
+      instructions: |
+        Enforce the design-token rules: no raw color or size literals, no inline-style
+        raw values, no raw SVG fill/stroke, no Tailwind numbered-palette classes. Use
+        only semantic tokens from the generated allowlist. Primitives must not import
+        composites, and cross-component imports must go through index.ts.
+
+    - path: "supabase/**"
+      instructions: |
+        Migrations are plain SQL. Every domain table must enable RLS and be
+        deny-by-default, scoped through the membership join (is_member / has_role);
+        flag a new table that lacks RLS policies. The client never supplies its own
+        tenant id. SECURITY DEFINER functions must pin search_path. Keep aggregation
+        in the database (views and SECURITY INVOKER set-returning functions), never in
+        application code.
+
+    - path: "**/*.{ts,tsx}"
+      instructions: |
+        Disallow any and unchecked as assertions without a justifying comment; prefer
+        unknown plus narrowing. No manual useMemo, useCallback, or React.memo — the
+        React Compiler owns memoization, and exceptions require an explicit
+        "use no memo" with a reason. Infer types from Zod schemas instead of
+        duplicating them by hand. Server Components are the default; "use client"
+        belongs only at interactive leaves. For useEffect, check the dependency array
+        and cleanup. For Zustand, select narrow slices rather than subscribing to the
+        whole store, and never mirror server data into a store. For TanStack Query,
+        queryKey must be stable and serializable.
+
+chat:
+  auto_reply: true
