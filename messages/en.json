@@ -5,7 +5,64 @@
   },
   "HomePage": {
     "heading": "CAPCOM",
-    "lead": "Product-analytics platform demo, built on the claude-code-nextjs-starter methodology. The product UI lands incrementally — see docs/capcom/roadmap.md for the PR-by-PR plan."
+    "lead": "Product-analytics platform demo, built on the claude-code-nextjs-starter methodology. The product UI lands incrementally — see docs/capcom/roadmap.md for the PR-by-PR plan.",
+    "signInCta": "Sign in"
+  },
+  "Auth": {
+    "email": "Email",
+    "password": "Password",
+    "signIn": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "noAccount": "No account yet?",
+      "createOne": "Create one"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in"
+    },
+    "signOut": "Sign out",
+    "errors": {
+      "emailInvalid": "Enter a valid email address.",
+      "passwordRequired": "Enter your password.",
+      "passwordTooShort": "Password must be at least {min} characters.",
+      "invalidCredentials": "Invalid email or password.",
+      "signupFailed": "We couldn't create that account. Try a different email.",
+      "invalidInput": "Please check the form and try again."
+    }
+  },
+  "Workspace": {
+    "switcher": {
+      "label": "Switch project",
+      "placeholder": "Select a project"
+    },
+    "home": {
+      "title": "Your workspaces",
+      "lead": "Organizations and projects you can access."
+    },
+    "empty": {
+      "title": "No workspaces yet",
+      "body": "You're not a member of any organization. Ask an admin to invite you."
+    },
+    "openProject": "Open"
+  },
+  "Roles": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "analyst": "Analyst",
+    "viewer": "Viewer"
+  },
+  "AppShell": {
+    "brand": "CAPCOM",
+    "signedInAs": "Signed in as {email}"
+  },
+  "ProjectOverview": {
+    "organization": "Organization",
+    "yourRole": "Your role",
+    "placeholderTitle": "Project overview",
+    "placeholderBody": "Trends, funnels, retention, and segmentation land in upcoming slices — see the roadmap."
   },
   "Error": {
     "title": "Something went wrong",
