@@ -61,6 +61,7 @@ describe("SignInForm", () => {
       }),
     );
     await waitFor(() => expect(push).toHaveBeenCalledWith("/p"));
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
   });
 
   it("shows a generic message when credentials are rejected (ADR 0019)", async () => {

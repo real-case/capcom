@@ -13,6 +13,8 @@ function clientReturning(result: Result): SupabaseClient {
     maybeSingle: () => builder,
     then: (resolve: (value: Result) => unknown) => resolve(result),
   };
+  // Double-cast: the full SupabaseClient surface is far larger than this test
+  // exercises, so we model only the query-builder shape the fetchers actually call.
   return { from: () => builder } as unknown as SupabaseClient;
 }
 

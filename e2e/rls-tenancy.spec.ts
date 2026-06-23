@@ -67,18 +67,21 @@ test.describe("tenant isolation (ADR 0083)", () => {
   test("cross-tenant reads return nothing, not an error (deny-by-default)", async () => {
     const bob = await signIn("bob@capcom.dev");
 
-    const { data: org } = await bob
+    const { data: org, error: orgError } = await bob
       .from("organizations")
       .select("*")
       .eq("id", GLOBEX)
       .maybeSingle();
+    // A denied SELECT is an empty result, not an error — no existence leak.
+    expect(orgError).toBeNull();
     expect(org).toBeNull();
 
-    const { data: project } = await bob
+    const { data: project, error: projectError } = await bob
       .from("projects")
       .select("*")
       .eq("id", GLOBEX_PROJECT)
       .maybeSingle();
+    expect(projectError).toBeNull();
     expect(project).toBeNull();
   });
 
@@ -121,14 +124,17 @@ test.describe("RBAC composes over isolation (ADR 0083)", () => {
     expect(error).not.toBeNull();
   });
 
-  test("a viewer cannot add or escalate a membership", async () => {
+  test("a viewer cannot add a member", async () => {
     const bob = await signIn("bob@capcom.dev");
+    // Carol is not in Aurora, so there is no (user_id, organization_id) row to
+    // collide with — the insert can only fail on the RLS WITH CHECK (42501),
+    // proving the authorization gate rather than a unique-constraint accident.
     const { error } = await bob.from("memberships").insert({
-      user_id: BOB_ID,
+      user_id: CAROL_ID,
       organization_id: AURORA,
-      role: "owner",
+      role: "viewer",
     });
-    expect(error).not.toBeNull();
+    expect(error?.code).toBe("42501");
   });
 
   test("a viewer cannot raise their own role (silent no-op under RLS)", async () => {
@@ -150,11 +156,13 @@ test.describe("RBAC composes over isolation (ADR 0083)", () => {
   });
 
   test("an admin can create a project in their tenant", async () => {
-    const alice = await signIn("alice@capcom.dev"); // admin @ Globex
+    const alice = await signIn("alice@capcom.dev"); // admin @ Globex — may create
+    const carol = await signIn("carol@capcom.dev"); // owner @ Globex — DELETE is owner-only
     const NAME = "RBAC test project";
 
-    // Idempotent: clear any residue from an interrupted prior run before asserting.
-    await alice
+    // Idempotent pre-clean, run as the owner (the project DELETE policy is
+    // owner-only, so an admin's delete would silently no-op and leak residue).
+    await carol
       .from("projects")
       .delete()
       .eq("organization_id", GLOBEX)
@@ -168,9 +176,9 @@ test.describe("RBAC composes over isolation (ADR 0083)", () => {
     expect(error).toBeNull();
     expect(data?.organization_id).toBe(GLOBEX);
 
-    // Keep the fixture set hermetic — remove what this test created.
+    // Keep the fixture set hermetic — the owner removes what the admin created.
     if (data?.id) {
-      await alice.from("projects").delete().eq("id", data.id);
+      await carol.from("projects").delete().eq("id", data.id);
     }
   });
 
@@ -183,18 +191,20 @@ test.describe("RBAC composes over isolation (ADR 0083)", () => {
       .update({ organization_id: AURORA })
       .eq("user_id", ALICE_ID)
       .eq("organization_id", GLOBEX);
-    expect(error).not.toBeNull();
+    // Assert the trigger's own message, so an unrelated policy/constraint error
+    // can't masquerade as immutability enforcement.
+    expect(error?.message).toMatch(/immutable/i);
   });
 
   test("an admin cannot promote to owner — only an owner may grant owner", async () => {
     const alice = await signIn("alice@capcom.dev"); // admin @ Globex (not owner there)
-    // WITH CHECK rejects the new owner row → error, no mutation.
+    // WITH CHECK rejects the new owner row → RLS violation (42501), no mutation.
     const { error } = await alice
       .from("memberships")
       .update({ role: "owner" })
       .eq("user_id", ALICE_ID)
       .eq("organization_id", GLOBEX);
-    expect(error).not.toBeNull();
+    expect(error?.code).toBe("42501");
 
     const { data } = await alice
       .from("memberships")
@@ -208,12 +218,14 @@ test.describe("RBAC composes over isolation (ADR 0083)", () => {
   test("an admin cannot touch an owner's membership", async () => {
     const alice = await signIn("alice@capcom.dev"); // admin @ Globex
     // Carol is owner @ Globex; the USING clause hides her row from a mere admin,
-    // so this matches zero rows (no error) and her role is unchanged.
-    await alice
+    // so the UPDATE matches zero rows (returned set is empty) and her role holds.
+    const { data: updated } = await alice
       .from("memberships")
       .update({ role: "viewer" })
       .eq("user_id", CAROL_ID)
-      .eq("organization_id", GLOBEX);
+      .eq("organization_id", GLOBEX)
+      .select("role");
+    expect(updated).toEqual([]);
 
     const { data } = await alice
       .from("memberships")
