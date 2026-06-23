@@ -26,7 +26,7 @@ describe("SignOutButton", () => {
   });
 
   it("clears the session and returns to sign-in", async () => {
-    signOut.mockResolvedValue(undefined);
+    signOut.mockResolvedValue({ ok: true });
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
         <SignOutButton />
@@ -37,5 +37,6 @@ describe("SignOutButton", () => {
 
     await waitFor(() => expect(signOut).toHaveBeenCalled());
     await waitFor(() => expect(push).toHaveBeenCalledWith("/sign-in"));
+    await waitFor(() => expect(refresh).toHaveBeenCalled());
   });
 });

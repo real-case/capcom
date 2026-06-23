@@ -50,7 +50,10 @@ export async function signUp(input: SignUpValues): Promise<AuthResult> {
   return { ok: true };
 }
 
-export async function signOut(): Promise<void> {
+export async function signOut(): Promise<{ ok: boolean }> {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+  // Surface the outcome instead of dropping it — the caller decides whether to
+  // navigate away (a failed sign-out leaves the session intact).
+  return { ok: !error };
 }

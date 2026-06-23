@@ -26,8 +26,10 @@ export function SignOutButton() {
       disabled={pending}
       onClick={() =>
         startTransition(async () => {
-          await signOut();
-          router.push("/sign-in");
+          const { ok } = await signOut();
+          // A failed sign-out leaves the session intact; only navigate away when
+          // it succeeded. `refresh` re-runs the guard either way.
+          if (ok) router.push("/sign-in");
           router.refresh();
         })
       }
