@@ -153,7 +153,7 @@ Compute scales with `d3-scale`; emit SVG by hand; no charting library.
 
 ## More Information
 
-This record completes PR-1: with the event model (**0083**), the aggregation strategy, and the
+This record completes PR-1: with the event model (**0083**), the aggregation strategy (**0084**), and the
 ingestion contract decided, the charting layer fixes how reduced rows are rendered. It is bound
 by the design-token governance (**0058**) and the mission-control palette (**0081**), the
 dark-first deferral (**0079**), the React model (**0002/0029**), and the Storybook/a11y/visual
