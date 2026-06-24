@@ -82,6 +82,8 @@ WCAG
 Yurii
 # CAPCOM demo — product-analytics domain vocabulary
 CAPCOM
+Globex
+PostgREST
 Mixpanel
 visx
 multitenant
