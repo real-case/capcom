@@ -13,12 +13,16 @@
 // (ADR 0085). Isolation is still honored: every row is stamped with one of the
 // seeded project_ids and nothing else.
 //
-// Deterministic: a seeded PRNG (mulberry32) means re-runs reproduce the same data,
-// and the script is idempotent — it clears the demo projects' events/profiles
-// first, so running it twice does not double the volume.
+// Deterministic structure: a seeded PRNG (mulberry32) fixes every user's plan,
+// event sequence, and jitter, and the script is idempotent — it clears the demo
+// projects' events/profiles first, so running it twice does not double the volume.
+// Timestamps are relative to an anchor "now": by default the wall clock, so demo
+// data always lands in the trailing 90 days and the charts look current. Set
+// SEED_EVENTS_ANCHOR (an ISO datetime) to pin the anchor for byte-reproducible runs.
 //
 // Usage (after `npm run db:reset`, with the local stack up):
 //   npm run seed:events
+//   SEED_EVENTS_ANCHOR=2026-06-24T12:00:00.000Z npm run seed:events   # reproducible
 // Credentials are auto-detected from the local stack (`supabase status`); override
 // with SUPABASE_URL / SUPABASE_SECRET_KEY for a non-local target.
 
@@ -46,6 +50,21 @@ const PROJECTS = [
 const DAYS_WINDOW = 90; // events spread across the trailing 90 days (trends).
 const INSERT_CHUNK = 500; // rows per insert call.
 
+// Anchor "now": the wall clock by default (so data stays current), pinned by
+// SEED_EVENTS_ANCHOR for byte-reproducible runs. An invalid override fails loudly.
+const SEED_NOW = (() => {
+  const raw = process.env.SEED_EVENTS_ANCHOR;
+  if (!raw) return Date.now();
+  const t = new Date(raw).getTime();
+  if (Number.isNaN(t)) {
+    console.error(
+      `[seed-events] SEED_EVENTS_ANCHOR is not a valid date: ${raw}`,
+    );
+    process.exit(1);
+  }
+  return t;
+})();
+
 // ── Domain vocabularies ───────────────────────────────────────────────────────
 const PLANS = ["free", "free", "free", "pro", "pro", "enterprise"]; // weighted.
 const COUNTRIES = ["US", "US", "GB", "DE", "FR", "CA", "IN", "BR", "JP", "AU"];
@@ -70,9 +89,11 @@ const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
 const chance = (rng, p) => rng() < p;
 const intBetween = (rng, lo, hi) => lo + Math.floor(rng() * (hi - lo + 1));
 
-/** A timestamp `daysAgo` days back, at a random hour/minute, as an ISO string. */
+/** A timestamp `daysAgo` days back, at a random hour/minute, as an ISO string.
+ * Derived from the SEED_NOW anchor (not the live clock) so a pinned anchor yields
+ * identical timestamps; the jitter stays seeded-rng-driven. */
 function isoDaysAgo(rng, daysAgo) {
-  const base = Date.now() - daysAgo * 86_400_000;
+  const base = SEED_NOW - daysAgo * 86_400_000;
   const jitter = Math.floor(rng() * 86_400_000); // somewhere within that day.
   return new Date(base - jitter).toISOString();
 }
