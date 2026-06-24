@@ -32,15 +32,23 @@ create table public.profiles (
   distinct_id text not null check (char_length(distinct_id) between 1 and 200),
   -- User properties ("traits"): an open bag set/merged by the emitter. Defaults
   -- to an empty object so a profile materialized from a bare event is still valid.
-  traits jsonb not null default '{}'::jsonb,
+  -- Constrained to a JSON object so direct service-role writes can't store an
+  -- array/scalar — keeping the DB contract aligned with the ingest schema (ADR 0017).
+  traits jsonb not null default '{}'::jsonb check (jsonb_typeof(traits) = 'object'),
   first_seen_at timestamptz not null default now(),
   last_seen_at timestamptz not null default now(),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   -- One profile per tracked user per project. Also the lookup index the ingest
-  -- upsert and the member read path hit (project_id-leading).
+  -- upsert hits (project_id-leading).
   unique (project_id, distinct_id)
 );
+
+-- The member read path lists profiles by recency within a project
+-- (fetchProfiles: filter project_id, order last_seen_at desc), which the unique
+-- index above does not serve; this project-leading index avoids the sort.
+create index profiles_project_id_last_seen_at_idx
+  on public.profiles (project_id, last_seen_at desc);
 
 comment on table public.profiles is
   'Tracked end-user keyed by (project_id, distinct_id) (ADR 0083). Read-only to members under RLS; written only by the ingest path. Never conflated with auth.users.';
@@ -58,8 +66,9 @@ create table public.events (
   event_name text not null check (char_length(event_name) between 1 and 200),
   distinct_id text not null check (char_length(distinct_id) between 1 and 200),
   -- Event properties: an open bag validated at the ingest boundary (ADR 0017),
-  -- stored as-is for the in-database aggregations (ADR 0084) to read.
-  properties jsonb not null default '{}'::jsonb,
+  -- stored as-is for the in-database aggregations (ADR 0084) to read. Constrained
+  -- to a JSON object so a direct write can't store an array/scalar (matches ingest).
+  properties jsonb not null default '{}'::jsonb check (jsonb_typeof(properties) = 'object'),
   -- When the event happened (emitter clock), distinct from the row's create time.
   -- The ingest path defaults an absent ts to now() (ADR 0085); created_at records
   -- when the row landed.
