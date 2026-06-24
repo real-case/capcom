@@ -110,3 +110,50 @@ values
   ('aaaa1111-1111-1111-1111-111111111111', '0b000000-0000-0000-0000-000000000002', 'admin'),
   ('bbbb2222-2222-2222-2222-222222222222', '0a000000-0000-0000-0000-000000000001', 'viewer'),
   ('cccc3333-3333-3333-3333-333333333333', '0b000000-0000-0000-0000-000000000002', 'owner');
+
+-- ── Analytics domain (PR-3) ───────────────────────────────────────────────────
+-- Per-project ingest keys (ADR 0085). Stored hashed — only sha-256(token) hex is
+-- persisted; the plaintext below is a demo credential, documented here so the seed
+-- generator (scripts/seed-events.mjs) and the ingest route test can authenticate.
+-- A real key is provisioned once, shown once, and never written in plaintext.
+--   Aurora Web      → cap_ingest_aurora_web_dev
+--   Aurora Mobile   → cap_ingest_aurora_mobile_dev
+--   Globex Marketing→ cap_ingest_globex_marketing_dev
+-- digest() is pgcrypto (extensions schema), the same module the password hashing
+-- above uses, so the hash matches Node's crypto.createHash('sha256') in the route.
+insert into public.project_ingest_keys (project_id, key_hash, label)
+values
+  (
+    '0a000000-0000-0000-0000-0000000000a1',
+    encode(extensions.digest('cap_ingest_aurora_web_dev', 'sha256'), 'hex'),
+    'Aurora Web — demo ingest key'
+  ),
+  (
+    '0a000000-0000-0000-0000-0000000000a2',
+    encode(extensions.digest('cap_ingest_aurora_mobile_dev', 'sha256'), 'hex'),
+    'Aurora Mobile — demo ingest key'
+  ),
+  (
+    '0b000000-0000-0000-0000-0000000000b1',
+    encode(extensions.digest('cap_ingest_globex_marketing_dev', 'sha256'), 'hex'),
+    'Globex Marketing — demo ingest key'
+  );
+
+-- A small, deterministic slice of tracked users + events so the cross-tenant RLS
+-- test (e2e/rls-events.spec.ts) has known data to prove isolation against without
+-- depending on the bulk generator. The generator adds dense volume on top; the
+-- isolation assertions are tenant-scoped (cross-tenant reads return zero rows),
+-- so they hold whether or not the generator has run.
+insert into public.profiles (project_id, distinct_id, traits)
+values
+  ('0a000000-0000-0000-0000-0000000000a1', 'seed-aurora-web-1', '{"plan":"pro"}'),
+  ('0a000000-0000-0000-0000-0000000000a1', 'seed-aurora-web-2', '{"plan":"free"}'),
+  ('0b000000-0000-0000-0000-0000000000b1', 'seed-globex-1', '{"plan":"enterprise"}');
+
+insert into public.events (project_id, event_name, distinct_id, properties, ts)
+values
+  ('0a000000-0000-0000-0000-0000000000a1', 'page_view', 'seed-aurora-web-1', '{"path":"/"}', now() - interval '2 days'),
+  ('0a000000-0000-0000-0000-0000000000a1', 'sign_up', 'seed-aurora-web-1', '{}', now() - interval '2 days'),
+  ('0a000000-0000-0000-0000-0000000000a1', 'page_view', 'seed-aurora-web-2', '{"path":"/pricing"}', now() - interval '1 day'),
+  ('0b000000-0000-0000-0000-0000000000b1', 'page_view', 'seed-globex-1', '{"path":"/"}', now() - interval '1 day'),
+  ('0b000000-0000-0000-0000-0000000000b1', 'purchase', 'seed-globex-1', '{"amount":99}', now() - interval '3 hours');

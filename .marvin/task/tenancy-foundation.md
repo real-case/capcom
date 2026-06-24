@@ -1,7 +1,7 @@
 ---
 slug: tenancy-foundation
 type: feature
-status: in-progress
+status: done
 created: 2026-06-23
 tracker: none
 supersedes: none
@@ -173,7 +173,7 @@ is the only clean realization of the ADR's "readable one-liner policy" requireme
 - [x] Auth shell + switcher; one Zod schema validates client and server.
 - [x] Seed loads; all members can sign in.
 - [x] Full quality-gate suite green; coverage ≥80%.
-- [ ] **Human gate:** review + merge the PR into `dev` (ADR 0046).
+- [x] **Human gate:** reviewed + merged into `dev` (ADR 0046) — PR #6.
 
 ## Non-goals
 
@@ -192,9 +192,15 @@ text leaks, ADR 0019). The identity split is structural — no FK to `auth.users
 
 ## Delivery
 
-- Branch: `feat/tenancy-foundation`.
-- Verification: tsc, lint, format, check:fsd/boundaries/graph/design-intent/i18n/
-  design-system/claude/claude-md/citations/licenses/action-pins/gates/debt green;
-  `next build` + 10 e2e tests pass; coverage 95.5% lines / 94.8% statements (Node 24).
-- **Pending human gate:** review and merge into `dev` (ADR 0046); production apply is
-  human-only (ADR 0085 ingest-key rotation et al. not in scope here).
+- **Merged into `dev` as PR #6** (merge commit `0081b20`).
+- Commits: `84ffff7` migration/seed/types · `11f8008` app layer + tests · `216b37b`
+  spec · `2a54e00` owner-gating (review W1) · `ccf6558` request-dedupe via React
+  cache (review W2) · `c65245c` sign-out error handling · `3258534` RLS-test hardening.
+- Review: `supabase-rls-reviewer` — no blockers (forged-argument attack proven not to
+  widen scope, live). All 14 CodeRabbit threads resolved — W1/W2 + test tightening
+  applied; the 3 "entities import only from shared" flags declined as intentional
+  (`src/lib` is outside FSD per ADR 0065; `database.types.ts` is the single source per
+  ADR 0013/0015; Steiger `check:fsd` passes).
+- Verification (Node 24): tsc, lint, format, full `check:*` suite, `next build`, **14
+  e2e tests**, coverage 95.5% lines / 94.8% statements.
+- Production apply remains human-only.

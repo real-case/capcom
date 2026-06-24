@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "seed:events": "node scripts/seed-events.mjs",
     "test:storybook": "test-storybook",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

@@ -140,6 +140,13 @@ export default defineConfig({
         "src/app/[locale]/*/p/page.tsx",
         "src/app/[locale]/*/p/*/page.tsx",
         "src/features/auth-by-email/api/actions.ts",
+        // PR-3 (ADR 0085): the ingest route handler imports the server-only
+        // service-role client and builds NextResponse on the Node runtime — it
+        // can't execute under jsdom. It is exercised by `next build` + the ingest
+        // e2e spec (full 202/401/403/422 contract + project-scoped write); its
+        // pure logic (the [ingest] Zod schema, key extraction/hashing) is
+        // unit-tested directly in src/lib/ingest.
+        "src/app/api/ingest/route.ts",
       ],
       // ADR 0008: global ≥80% on statements/lines gates the merge; branch
       // coverage is tracked in reports and may be tightened later.
