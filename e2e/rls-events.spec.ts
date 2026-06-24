@@ -75,10 +75,13 @@ test.describe("event isolation (ADR 0083)", () => {
 
   test("an owner of one tenant never sees another tenant's events", async () => {
     const carol = await signIn("carol@capcom.dev"); // owner @ Globex only
-    const { data } = await carol
+    const { data, error } = await carol
       .from("events")
       .select("project_id")
       .eq("project_id", AURORA_WEB_PROJECT);
+    // carol holds the SELECT grant; the RLS USING filter hides Aurora rows, so
+    // this is an empty result with NO error — not a hard denial.
+    expect(error).toBeNull();
     expect(data ?? []).toEqual([]);
   });
 
@@ -94,10 +97,12 @@ test.describe("event isolation (ADR 0083)", () => {
     expect(error).not.toBeNull();
   });
 
-  test("anonymous callers see no events", async () => {
+  test("anonymous callers are hard-denied events", async () => {
     const anon = anonClient();
-    const { data } = await anon.from("events").select("*");
-    // anon holds no table GRANT — the read comes back empty, refused before RLS.
+    const { data, error } = await anon.from("events").select("*");
+    // anon holds no table GRANT, so the read is refused before RLS is consulted —
+    // a hard permission-denied error (42501), not merely an empty result.
+    expect(error?.code).toBe("42501");
     expect(data ?? []).toEqual([]);
   });
 });
@@ -133,27 +138,29 @@ test.describe("profile isolation (ADR 0083)", () => {
     expect(error).not.toBeNull();
   });
 
-  test("anonymous callers see no profiles", async () => {
+  test("anonymous callers are hard-denied profiles", async () => {
     const anon = anonClient();
-    const { data } = await anon.from("profiles").select("*");
+    const { data, error } = await anon.from("profiles").select("*");
+    expect(error?.code).toBe("42501");
     expect(data ?? []).toEqual([]);
   });
 });
 
 test.describe("ingest-key isolation (ADR 0085)", () => {
-  test("members cannot read the ingest-key table (no GRANT)", async () => {
+  test("members are hard-denied the ingest-key table (no GRANT)", async () => {
     const alice = await signIn("alice@capcom.dev"); // owner/admin across both orgs
     const { data, error } = await alice.from("project_ingest_keys").select("*");
     // The credential table has no member GRANT and no policy — invisible to every
-    // member, even one who administers the project. Supabase returns an error or
-    // an empty set depending on layer; either way no key material is exposed.
+    // member, even one who administers the project. This is a hard permission-denied
+    // (42501), not an empty result: no key material is exposed at any layer.
+    expect(error?.code).toBe("42501");
     expect(data ?? []).toEqual([]);
-    if (error) expect(error.code).toBeDefined();
   });
 
-  test("anonymous callers cannot read the ingest-key table", async () => {
+  test("anonymous callers are hard-denied the ingest-key table", async () => {
     const anon = anonClient();
-    const { data } = await anon.from("project_ingest_keys").select("*");
+    const { data, error } = await anon.from("project_ingest_keys").select("*");
+    expect(error?.code).toBe("42501");
     expect(data ?? []).toEqual([]);
   });
 });
