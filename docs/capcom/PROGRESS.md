@@ -23,9 +23,11 @@ Accepted ADRs run 0001–0086. PR-3 needed **no new ADR** (0083 identity/event m
 
 - **Node 24 is required** (`engines.node >=24 <25`). The default shell `node` is
   **v22** — prepend Node 24 before any `npm`/`npx`:
+
   ```bash
   export PATH="$(ls -d ~/.nvm/versions/node/v24.*/bin | tail -1):$PATH"
   ```
+
 - **Local Supabase needs Docker running**, then `npx supabase start` (first boot pulls
   images). The DB container is `supabase_db_capcom`; direct psql:
   `docker exec -i supabase_db_capcom psql -U postgres -d postgres`.
