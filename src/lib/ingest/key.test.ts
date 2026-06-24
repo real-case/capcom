@@ -7,6 +7,20 @@ describe("extractBearerToken", () => {
     expect(extractBearerToken("Bearer abc123")).toBe("abc123");
   });
 
+  it("matches the scheme case-insensitively (RFC 7235)", () => {
+    expect(extractBearerToken("bearer abc123")).toBe("abc123");
+    expect(extractBearerToken("BEARER abc123")).toBe("abc123");
+    expect(extractBearerToken("BeArEr abc123")).toBe("abc123");
+  });
+
+  it("tolerates leading whitespace before the scheme", () => {
+    expect(extractBearerToken("  Bearer abc123")).toBe("abc123");
+  });
+
+  it("preserves the token's own casing", () => {
+    expect(extractBearerToken("bearer AbC_123")).toBe("AbC_123");
+  });
+
   it("trims surrounding whitespace", () => {
     expect(extractBearerToken("Bearer   abc123  ")).toBe("abc123");
   });

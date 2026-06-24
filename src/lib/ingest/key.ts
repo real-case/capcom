@@ -8,16 +8,21 @@ import { createHash } from "node:crypto";
  * and the route resolves the hash against the database under the service-role.
  */
 
-const BEARER_PREFIX = "Bearer ";
+// The auth scheme is case-insensitive (RFC 7235 §2.1), so compare lowercased.
+const BEARER_PREFIX = "bearer ";
 
 /**
  * Pull the token out of an `Authorization: Bearer <token>` header. Returns
  * `null` for a missing, non-Bearer, or empty header — the route maps that to a
- * `401` (missing/malformed credential, ADR 0085).
+ * `401` (missing/malformed credential, ADR 0085). The scheme match is
+ * case-insensitive and tolerates leading whitespace; the token itself is taken
+ * verbatim (then trimmed) so a key's own casing is preserved.
  */
 export function extractBearerToken(header: string | null): string | null {
-  if (!header || !header.startsWith(BEARER_PREFIX)) return null;
-  const token = header.slice(BEARER_PREFIX.length).trim();
+  if (!header) return null;
+  const normalized = header.trimStart();
+  if (!normalized.toLowerCase().startsWith(BEARER_PREFIX)) return null;
+  const token = normalized.slice(BEARER_PREFIX.length).trim();
   return token.length > 0 ? token : null;
 }
 
