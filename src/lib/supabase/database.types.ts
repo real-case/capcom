@@ -34,6 +34,44 @@ export type Database = {
   };
   public: {
     Tables: {
+      events: {
+        Row: {
+          created_at: string;
+          distinct_id: string;
+          event_name: string;
+          id: string;
+          project_id: string;
+          properties: Json;
+          ts: string;
+        };
+        Insert: {
+          created_at?: string;
+          distinct_id: string;
+          event_name: string;
+          id?: string;
+          project_id: string;
+          properties?: Json;
+          ts?: string;
+        };
+        Update: {
+          created_at?: string;
+          distinct_id?: string;
+          event_name?: string;
+          id?: string;
+          project_id?: string;
+          properties?: Json;
+          ts?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "events_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       memberships: {
         Row: {
           created_at: string;
@@ -89,6 +127,82 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      profiles: {
+        Row: {
+          created_at: string;
+          distinct_id: string;
+          first_seen_at: string;
+          id: string;
+          last_seen_at: string;
+          project_id: string;
+          traits: Json;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          distinct_id: string;
+          first_seen_at?: string;
+          id?: string;
+          last_seen_at?: string;
+          project_id: string;
+          traits?: Json;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          distinct_id?: string;
+          first_seen_at?: string;
+          id?: string;
+          last_seen_at?: string;
+          project_id?: string;
+          traits?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "profiles_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      project_ingest_keys: {
+        Row: {
+          created_at: string;
+          id: string;
+          key_hash: string;
+          label: string | null;
+          project_id: string;
+          revoked_at: string | null;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          key_hash: string;
+          label?: string | null;
+          project_id: string;
+          revoked_at?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          key_hash?: string;
+          label?: string | null;
+          project_id?: string;
+          revoked_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "project_ingest_keys_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       projects: {
         Row: {
