@@ -1,7 +1,7 @@
 ---
 slug: trends-explorer
 type: feature
-status: in-progress
+status: shipped
 created: 2026-06-25
 tracker: none
 supersedes: none
@@ -597,3 +597,26 @@ correct; no new ADR required; rejected variants are not strawmen.
 - Multi-event trend overlays and absolute custom date ranges are deliberately deferred.
 - Saved/known reports (PR-8) will persist the same nuqs query state that this slice already
   makes shareable by URL.
+
+## Delivery
+
+- **PR:** [capcom#8](https://github.com/real-case/capcom/pull/8) (`feat/trends-explorer` → `dev`).
+- **Verification:** all gates green — `tsc` · `lint` · `format:check` · `check:fsd` ·
+  `check:boundaries` · `check:design-system` · `check:spelling` · `check:citations` ·
+  `check:licenses` · `build` · `test:coverage` 97.05% (163 tests) · `test:e2e` 35 passed.
+  Self-review `marvin-tm-diff-critic`: PASS (one blocker found and fixed pre-PR — AC4's
+  rpc-shape oracle had been omitted; added).
+- **⚠️ SPEC GAP — FSD slice structure (deviation from the contract `files`).** The contract
+  listed `features/trends-explorer` + separate `widgets/trends-chart` + `widgets/top-events-bar`.
+  FSD forbids that shape (`widgets` is a higher layer than `features` → a feature cannot import a
+  widget; sibling widgets cannot import each other), and `check:fsd` (Steiger) rejected it.
+  Decision: consolidated into one `widgets/trends-explorer` slice with the charts as internal
+  `ui/` segments — the only FSD-legal shape; charts stay under `src/widgets/**` so the token gate
+  still enforces AC7; public API exposes only `TrendsExplorer`; each chart keeps colocated
+  stories. Rationale: minimal reasonable choice, no scope expansion; the diff-critic confirmed it
+  correct and complete.
+- **Conscious demo-scope (non-blocking, from the diff-critic):** a breakdown value literally
+  named `'Other'` would merge with the rollup; the event picker lists the top-10 events (others
+  URL-editable); a trailing zero bucket can render at the window edge.
+- **Before merge (human):** run `supabase-rls-reviewer` over the migration (ADR 0083
+  confirmation; CI e2e deferred under DEV-001).
