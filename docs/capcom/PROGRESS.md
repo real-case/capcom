@@ -6,15 +6,16 @@
 
 ## Status
 
-| PR    | Theme                                                          | State                         |
-| ----- | -------------------------------------------------------------- | ----------------------------- |
-| PR-0  | Bootstrap                                                      | ✅ merged                     |
-| PR-DS | Design-system token foundation (0081–0082)                     | ✅ merged                     |
-| PR-1  | Foundational domain ADRs (0083–0086)                           | ✅ merged                     |
-| PR-2  | Tenancy: org/project/membership RLS + RBAC                     | ✅ **merged (PR #6)**         |
-| PR-3  | Events + profiles + ingest + seed generator                    | 🔧 **PR → dev (human merge)** |
-| PR-4  | Trends (in-DB aggregation → visx charts)                       | ⬅️ **next**                   |
-| PR-5+ | Funnels → Retention → Segmentation → Dashboards → AI → Landing | ⏳                            |
+| PR    | Theme                                                | State                                       |
+| ----- | ---------------------------------------------------- | ------------------------------------------- |
+| PR-0  | Bootstrap                                            | ✅ merged                                   |
+| PR-DS | Design-system token foundation (0081–0082)           | ✅ merged                                   |
+| PR-1  | Foundational domain ADRs (0083–0086)                 | ✅ merged                                   |
+| PR-2  | Tenancy: org/project/membership RLS + RBAC           | ✅ **merged (PR #6)**                       |
+| PR-3  | Events + profiles + ingest + seed generator          | ✅ **merged (PR #7)**                       |
+| PR-4  | Trends (in-DB aggregation → visx charts)             | 🔧 **this PR (feat/trends-explorer → dev)** |
+| PR-5  | Funnels                                              | ⬅️ **next**                                 |
+| PR-6+ | Retention → Segmentation → Dashboards → AI → Landing | ⏳                                          |
 
 Accepted ADRs run 0001–0086. PR-3 needed **no new ADR** (0083 identity/event model,
 0084 aggregation, 0085 ingestion contract are all accepted).
@@ -111,12 +112,50 @@ properties jsonb, ts`; three `project_id`-leading indexes (`ts`, `event_name`,
     carries a small deterministic fixture set so the RLS e2e is hermetic without the bulk
     generator.
 
-## Next: PR-4 — Trends (in-DB aggregation → visx charts)
+## What PR-4 shipped (PR-5 builds on this)
 
-First aggregation surface (ADR 0084): a trends view/`SECURITY INVOKER` set-returning
-function reducing `events` by time bucket under the caller's RLS, typed via `gen:types`,
-consumed by a presentational visx chart widget (ADR 0086) fed token values only. The dense
-`seed:events` data gives it real signal. No new ADR (0084/0086 accepted).
+First aggregation surface (ADR 0084) + first charts (ADR 0086), end-to-end on real RLS.
+
+- **Migration `create_event_trends`:** two `SECURITY INVOKER`, `search_path`-pinned
+  set-returning functions — `fn_event_trends(p_project_id, p_event_name, p_from, p_to,
+p_interval, p_breakdown_key?, p_breakdown_limit?)` (zero-filled buckets via
+  `generate_series`; single series, or top-N `properties->>key` + an `'Other'` rollup) and
+  `fn_top_events(p_project_id, p_from, p_to, p_limit?)` (ranked desc). `INVOKER` (not the
+  PR-2 helpers' `DEFINER`) so the membership-join RLS scopes what they read; `EXECUTE`
+  granted to `authenticated` only. `#variable_conflict use_column` resolves the
+  RETURNS-TABLE column/variable clash. `gen:types` regenerated.
+- **Entities:** `entities/event` gained `EventTrendBucket` / `TopEvent` / `*Args` types
+  (from the generated RPC `Returns`/`Args`) and `fetchEventTrends` / `fetchTopEvents` —
+  thin `.rpc()` calls, no client-side reduction (ADR 0084).
+- **Widget `trends-explorer`:** the first client-side `useQuery` consumer. nuqs URL-state
+  (event / range / interval / breakdown — a shareable link, ADR 0027) drives TanStack
+  hooks over the RPCs; internal visx chart segments (`TrendsChart` line, `TopEventsBar`
+  bar) are presentational, token-only SVG (ADR 0086). **FSD note:** the roadmap's
+  "feature + two chart widgets" split is invalid under FSD (a feature cannot import the
+  higher `widgets` layer; sibling widgets cannot import each other) — so it is **one
+  widget slice** with the charts as internal `ui/` segments. Steiger (`check:fsd`) is the
+  gate that caught it.
+- **Token gate now covers widgets:** `eslint.config.mjs` token block + the `check:tokens`
+  script both extended to `src/widgets/**` (ADR 0086 confirmation made operative). Both
+  the config glob AND the script are required — the glob alone never runs eslint over
+  widgets.
+- **Page:** `/(app)/p/[projectId]/trends` (RLS-404 like the overview), linked from the
+  overview. `Trends` i18n namespace added. Coverage excludes the new route in
+  `vitest.config.mts` (one segment deeper than the overview glob).
+- **Tests:** `e2e/trends.spec.ts` proves zero-fill, breakdown top-N+`'Other'`, ranking,
+  the interval guard, and cross-tenant **empty-not-error** (non-member RPC → `[]`,
+  `error === null`) — query an **explicit** window over a pinned
+  `SEED_EVENTS_ANCHOR=2026-06-24T12:00:00.000Z` so assertions don't drift with the clock.
+  Unit: RPC fetcher shapes, nuqs url-state round-trip, the `TrendsExplorer` component
+  (real hooks via `NuqsTestingAdapter`), and widget stories (empty/loading/error/overflow
+  under axe). Coverage 94.85%. No new ADR (0084/0086 accepted).
+
+## Next: PR-5 — Funnels
+
+Ordered-step conversion in SQL (with a conversion window), reusing this PR's
+`SECURITY INVOKER` RPC + token-visx-widget pattern; **ADR 0087** precedes it only if the
+step semantics warrant a recorded decision. Feature/widget `funnel-builder` +
+`funnel-chart`, nuqs-encoded step config.
 
 ## Conventions (don't re-derive)
 

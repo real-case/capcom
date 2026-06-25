@@ -62,7 +62,32 @@
     "organization": "Organization",
     "yourRole": "Your role",
     "placeholderTitle": "Project overview",
-    "placeholderBody": "Trends, funnels, retention, and segmentation land in upcoming slices — see the roadmap."
+    "placeholderBody": "Trends, funnels, retention, and segmentation land in upcoming slices — see the roadmap.",
+    "openTrends": "Open trends"
+  },
+  "Trends": {
+    "title": "Trends",
+    "controlsLegend": "Trend filters",
+    "eventLabel": "Event",
+    "rangeLabel": "Date range",
+    "intervalLabel": "Interval",
+    "breakdownLabel": "Breakdown",
+    "range_7d": "Last 7 days",
+    "range_30d": "Last 30 days",
+    "range_90d": "Last 90 days",
+    "interval_hour": "Hour",
+    "interval_day": "Day",
+    "interval_week": "Week",
+    "interval_month": "Month",
+    "breakdown_none": "None",
+    "breakdown_device": "Device",
+    "breakdown_plan": "Plan",
+    "breakdown_country": "Country",
+    "breakdown_path": "Path",
+    "breakdown_referrer": "Referrer",
+    "trendSectionLabel": "{event} over time",
+    "trendChartLabel": "{event} count by time bucket",
+    "topEventsLabel": "Top events in range"
   },
   "Error": {
     "title": "Something went wrong",

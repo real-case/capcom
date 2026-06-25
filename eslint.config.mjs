@@ -52,11 +52,18 @@ const eslintConfig = defineConfig([
   // `no-restricted-syntax` replaces the `src/**` one above for these files, so the ADR
   // 0018 env-destructuring guard is re-included here.
   {
-    files: ["src/components/**/*.{ts,tsx}"],
+    // Components AND widgets: chart widgets (ADR 0086) draw SVG and must take color
+    // from the token layer only, so the token gate covers src/widgets/** too — ADR
+    // 0086's confirmation made operative. The check:tokens script passes both dirs to
+    // eslint (this glob alone does not run the linter over widgets).
+    files: ["src/components/**/*.{ts,tsx}", "src/widgets/**/*.{ts,tsx}"],
     ignores: [
       "src/components/**/*.test.{ts,tsx}",
       "src/components/**/*.stories.{ts,tsx}",
       "src/components/**/__snapshots__/**",
+      "src/widgets/**/*.test.{ts,tsx}",
+      "src/widgets/**/*.stories.{ts,tsx}",
+      "src/widgets/**/__snapshots__/**",
     ],
     rules: {
       "no-restricted-syntax": [

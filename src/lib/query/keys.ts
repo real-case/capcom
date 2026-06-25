@@ -26,11 +26,16 @@
 // keep each return value `as const`. Add sibling entities (e.g. `profile`) the
 // same way as the app grows.
 export const queryKeys = {
-  notes: {
-    all: ["notes"] as const,
-    // lists: () => [...queryKeys.notes.all, "list"] as const,
-    // list: (filters: NoteFilters) => [...queryKeys.notes.lists(), filters] as const,
-    // details: () => [...queryKeys.notes.all, "detail"] as const,
-    // detail: (id: string) => [...queryKeys.notes.details(), id] as const,
+  // The first real entity (PR-4 trends, ADR 0084/0086). Both aggregations are keyed
+  // by the exact RPC argument bag, so changing any control (event / window / interval /
+  // breakdown) is a distinct cache entry, and a broad `trends.all` invalidate cascades.
+  trends: {
+    all: ["trends"] as const,
+    /** A trends-series query, keyed by its `fn_event_trends` argument bag. */
+    series: (args: Record<string, unknown>) =>
+      [...queryKeys.trends.all, "series", args] as const,
+    /** A top-events query, keyed by its `fn_top_events` argument bag. */
+    top: (args: Record<string, unknown>) =>
+      [...queryKeys.trends.all, "top", args] as const,
   },
 } as const;
