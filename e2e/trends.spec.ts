@@ -60,7 +60,7 @@ test.describe("fn_event_trends (ADR 0084)", () => {
       p_event_name: "page_view",
       p_from: FROM,
       p_to: TO,
-      p_interval: "week",
+      p_interval: "day",
     });
     expect(error).toBeNull();
     const rows = (data ?? []) as Bucket[];
@@ -72,16 +72,19 @@ test.describe("fn_event_trends (ADR 0084)", () => {
     expect(rows.reduce((sum, r) => sum + Number(r.count), 0)).toBeGreaterThan(
       0,
     );
-    // Contiguous weekly buckets: every step is exactly 7 days — no gaps, which is
-    // the proof the empty buckets were zero-filled rather than dropped.
-    const WEEK = 7 * 86_400_000;
+    // Contiguous daily buckets: every step is exactly 1 day — no gaps, which is the
+    // proof the empty buckets were zero-filled rather than dropped.
+    const DAY = 86_400_000;
     const ts = rows
       .map((r) => new Date(r.bucket).getTime())
       .sort((a, b) => a - b);
     for (let i = 1; i < ts.length; i++) {
-      expect(ts[i]! - ts[i - 1]!).toBe(WEEK);
+      expect(ts[i]! - ts[i - 1]!).toBe(DAY);
     }
-    // Zero-fill means at least one bucket can legitimately be 0; none is negative.
+    // No trailing all-zero bucket at the (boundary-aligned, half-open) window edge:
+    // the match window is `ts < p_to`, so the last bucket must be strictly before p_to.
+    expect(Math.max(...ts)).toBeLessThan(new Date(TO).getTime());
+    // Zero-fill means a bucket can legitimately be 0; none is negative.
     expect(rows.every((r) => Number(r.count) >= 0)).toBe(true);
   });
 

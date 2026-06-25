@@ -32,6 +32,15 @@ function multiSeries(n: number, names: string[]): EventTrendBucket[] {
   );
 }
 
+/** N daily buckets all at count 0 — a populated-but-empty window (zero-fill). */
+function zeroFilled(n: number, series = "page_view"): EventTrendBucket[] {
+  return Array.from({ length: n }, (_, i) => ({
+    bucket: new Date(START + i * DAY).toISOString(),
+    series,
+    count: 0,
+  }));
+}
+
 const meta = {
   component: TrendsChart,
   parameters: { layout: "padded" },
@@ -85,6 +94,18 @@ export const Overflow: Story = {
     ]),
     label: "page_view by device (dense)",
   },
+};
+
+// data-edge: a single bucket — the time domain is padded so the lone point still
+// renders (a zero-width domain would otherwise collapse the line to x=0).
+export const SingleBucket: Story = {
+  args: { data: singleSeries(1), label: "page_view over time (one bucket)" },
+};
+
+// data-edge: a populated window where every bucket is 0 (the cross-tenant / no-signal
+// shape) — distinct from Empty (no rows at all); the axis + flat line should render.
+export const AllZero: Story = {
+  args: { data: zeroFilled(14), label: "page_view over time (no signal)" },
 };
 
 export const Dark: Story = {

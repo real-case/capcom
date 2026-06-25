@@ -57,10 +57,15 @@ begin
   return query
   with buckets as (
     -- One row per interval across the (truncated) window — the zero-fill spine.
+    -- The upper bound truncates `p_to - 1 microsecond`, not `p_to`: the match
+    -- window is half-open (`ts < p_to`), so a `p_to` landing exactly on an interval
+    -- boundary (every nuqs window floors `to` to midnight) would otherwise emit a
+    -- trailing bucket that can never hold an event. Stepping one tick short keeps
+    -- the spine aligned with the rows it zero-fills.
     select g as bucket
     from generate_series(
       date_trunc(p_interval, p_from),
-      date_trunc(p_interval, p_to),
+      date_trunc(p_interval, p_to - interval '1 microsecond'),
       ('1 ' || p_interval)::interval
     ) as g
   ),

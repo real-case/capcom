@@ -124,13 +124,23 @@ export function TrendsChart({
     return <Message tone="muted" text="No events in this range." />;
 
   const series = toSeries(data);
-  const allDates = data.map((d) => new Date(d.bucket));
+  const bucketTimes = [
+    ...new Set(data.map((d) => new Date(d.bucket).getTime())),
+  ];
   const maxCount = Math.max(1, ...data.map((d) => Number(d.count)));
-  const minDate = new Date(Math.min(...allDates.map((d) => d.getTime())));
-  const maxDate = new Date(Math.max(...allDates.map((d) => d.getTime())));
+  const minTime = Math.min(...bucketTimes);
+  const maxTime = Math.max(...bucketTimes);
+  // A single-bucket window has a zero-width time domain, which collapses the line to
+  // an invisible point at x=0. Pad the domain by one bucket's span (or a day for the
+  // lone-point case) so the point renders mid-axis.
+  const span =
+    bucketTimes.length > 1
+      ? (maxTime - minTime) / (bucketTimes.length - 1)
+      : 86_400_000;
+  const domainMax = minTime === maxTime ? maxTime + span : maxTime;
 
   const xScale = scaleTime({
-    domain: [minDate, maxDate],
+    domain: [new Date(minTime), new Date(domainMax)],
     range: [0, INNER_W],
   });
   const yScale = scaleLinear({
@@ -149,7 +159,7 @@ export function TrendsChart({
         width="100%"
         height="100%"
         role="img"
-        aria-label={`${label}. ${series.length} series across ${allDates.length} points.`}
+        aria-label={`${label}. ${series.length} series across ${bucketTimes.length} time buckets.`}
         preserveAspectRatio="xMidYMid meet"
       >
         <title>{label}</title>
