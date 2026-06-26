@@ -1,5 +1,8 @@
 "use client";
 
+import { Group } from "@visx/group";
+import { Bar } from "@visx/shape";
+
 import type { RetentionCell } from "@/entities/event";
 
 import type { Period } from "../model/url-state";
@@ -10,10 +13,11 @@ import type { Period } from "../model/url-state";
  * (ADR 0084/0088); the widget decides what to query. Each cell's retention **percentage**
  * is derived here from `retained_users / cohort_size` — a ratio of two already-reduced
  * counts is display formatting, not event reduction, so it stays out of SQL (ADR 0088).
- * Every color comes from the generated token allowlist (ADR 0058/0081) via
- * `var(--color-*)` — the sequential data-viz palette for the cells, no raw fill/stroke.
- * A `viewBox` sized deterministically from the data dimensions keeps the render stable
- * for Chromatic (ADR 0043) while CSS scales the SVG to its container.
+ * Cells are visx `<Bar>` shapes grouped under `<Group>` (the shared primitive layer the
+ * trends/funnel charts use); every color comes from the generated token allowlist
+ * (ADR 0058/0081) via `var(--color-*)` — the sequential data-viz palette, no raw
+ * fill/stroke value. A `viewBox` sized deterministically from the data dimensions keeps
+ * the render stable for Chromatic (ADR 0043) while CSS scales the SVG to its container.
  */
 
 // Layout, in viewBox units. Named (not inline literals) so the provenance is reviewable
@@ -55,6 +59,8 @@ export type CohortGridProps = {
   data: RetentionCell[];
   /** Cohort/period granularity — drives the date labels and the header unit. */
   period?: Period;
+  /** Active app locale for the date labels (ADR 0030); date math stays UTC. */
+  locale?: string;
   isLoading?: boolean;
   isError?: boolean;
   /** Accessible description of what the grid shows. */
@@ -108,21 +114,22 @@ function bin(rate: number): number {
 
 const pct = (rate: number) => `${Math.round(rate * 100)}%`;
 
-const weekFmt = new Intl.DateTimeFormat("en-US", {
-  timeZone: "UTC",
-  month: "short",
-  day: "numeric",
-});
-const monthFmt = new Intl.DateTimeFormat("en-US", {
-  timeZone: "UTC",
-  month: "short",
-  year: "numeric",
-});
-
-/** Format a cohort period for the row label (deterministic: fixed locale + UTC). */
-function formatCohort(period: string, granularity: Period): string {
+/**
+ * Format a cohort period for the row label. The label follows the active app locale
+ * (ADR 0030) — passed down from the widget — while the date math stays pinned to UTC so
+ * the calendar bucket the SQL produced (ADR 0088) is never shifted by the viewer's zone.
+ */
+function formatCohort(
+  period: string,
+  granularity: Period,
+  locale: string,
+): string {
   const d = new Date(period);
-  return granularity === "month" ? monthFmt.format(d) : weekFmt.format(d);
+  const opts: Intl.DateTimeFormatOptions =
+    granularity === "month"
+      ? { timeZone: "UTC", month: "short", year: "numeric" }
+      : { timeZone: "UTC", month: "short", day: "numeric" };
+  return new Intl.DateTimeFormat(locale, opts).format(d);
 }
 
 function Message({ tone, text }: { tone: "muted" | "error"; text: string }) {
@@ -142,6 +149,7 @@ function Message({ tone, text }: { tone: "muted" | "error"; text: string }) {
 export function CohortGrid({
   data,
   period = "week",
+  locale = "en-US",
   isLoading = false,
   isError = false,
   label = "Retention by cohort",
@@ -200,7 +208,7 @@ export function CohortGrid({
         {cohorts.map((cohort, r) => {
           const rowTop = HEADER_H + r * CELL_H;
           return (
-            <g key={cohort.period}>
+            <Group key={cohort.period}>
               {/* Row label: cohort date + size. */}
               <text
                 x={PAD}
@@ -208,7 +216,7 @@ export function CohortGrid({
                 fontSize={LABEL_FONT_SIZE}
                 fill="var(--color-foreground)"
               >
-                {formatCohort(cohort.period, period)}
+                {formatCohort(cohort.period, period, locale)}
               </text>
               <text
                 x={PAD}
@@ -227,8 +235,8 @@ export function CohortGrid({
                 const b = bin(rate);
                 const x = LABEL_W + c * CELL_W;
                 return (
-                  <g key={`${cohort.period}-${c}`}>
-                    <rect
+                  <Group key={`${cohort.period}-${c}`}>
+                    <Bar
                       x={x}
                       y={rowTop}
                       width={CELL_W - GAP}
@@ -247,10 +255,10 @@ export function CohortGrid({
                     >
                       {pct(rate)}
                     </text>
-                  </g>
+                  </Group>
                 );
               })}
-            </g>
+            </Group>
           );
         })}
       </svg>

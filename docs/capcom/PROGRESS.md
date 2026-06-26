@@ -221,8 +221,10 @@ RLS.
   - distinct `(user, active_period)` set + a generated triangular offset **spine** (zero-filled,
     like the PR-4 trend spine). Week offsets use date subtraction (`/7`), month offsets the
     `year*12+month` index diff — both DST-robust (no epoch arithmetic). `SECURITY INVOKER` +
-    pinned `search_path` + `#variable_conflict use_column`; guards reject a non-week/month period
-    and a non-positive window; `EXECUTE` to `authenticated` only. `gen:types` regenerated.
+    pinned `search_path` + `set timezone = 'UTC'` (deterministic calendar buckets) +
+    `#variable_conflict use_column`; guards reject NULL arguments, a non-week/month period, and
+    an empty/inverted date range (`p_to ≤ p_from`); `EXECUTE` to `authenticated` only.
+    `gen:types` regenerated.
     **`supabase-rls-reviewer` ran clean** (live non-member/member/anon probes; injection probe on
     `p_period`; no SQL change).
 - **Entity:** `entities/event` gained `RetentionCell` / `RetentionArgs` (generated RPC types)

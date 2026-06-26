@@ -54,12 +54,24 @@ create function public.fn_retention(
   language plpgsql
   stable
   security invoker
+  -- Pin the session timezone so date_trunc('week'|'month', …) buckets on UTC calendar
+  -- boundaries regardless of the caller's session tz — the cohort grid stays
+  -- deterministic and aligned with the UTC-anchored seed (ADR 0088), like search_path.
   set search_path = ''
+  set timezone = 'UTC'
 as $$
 -- The RETURNS TABLE columns are also in scope as plpgsql variables; resolve any bare
 -- reference to the COLUMN, never the out-variable.
 #variable_conflict use_column
 begin
+  -- Reject NULL arguments outright: with a NULL p_period the `not in (...)` guard below
+  -- evaluates to NULL (not true) and would otherwise fall through to a silent empty
+  -- result; the same holds for a NULL window bound. A typed, strict contract for the
+  -- caller (matches the 22023 error class used by the other guards).
+  if p_project_id is null or p_from is null or p_to is null or p_period is null then
+    raise exception 'fn_retention requires non-null project, from, to, and period'
+      using errcode = '22023';
+  end if;
   -- Constrain the granularity to a known set: a typed contract for the caller and no
   -- arbitrary text reaching date_trunc (daily is a stated ADR 0088 scope boundary).
   if p_period not in ('week', 'month') then

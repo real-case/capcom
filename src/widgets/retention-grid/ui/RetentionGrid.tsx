@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
 
 import { useRetention } from "../api/use-retention";
@@ -28,6 +28,7 @@ import { CohortGrid } from "./CohortGrid";
  */
 export function RetentionGrid({ projectId }: { projectId: string }) {
   const t = useTranslations("Retention");
+  const locale = useLocale();
   const [raw, setQuery] = useQueryStates(retentionParsers);
 
   // The Zod schema is the validation authority (ADR 0017): run the nuqs-parsed values
@@ -89,6 +90,7 @@ export function RetentionGrid({ projectId }: { projectId: string }) {
         <CohortGrid
           data={retention.data ?? []}
           period={query.period}
+          locale={locale}
           isLoading={retention.isPending}
           isError={retention.isError}
           label={t("gridChartLabel")}
