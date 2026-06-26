@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
+import { Link } from "@/i18n/navigation";
 import { fetchMyMemberships } from "@/entities/membership";
 import { fetchOrganization } from "@/entities/organization";
 import { fetchProject } from "@/entities/project";
@@ -63,6 +64,12 @@ export default async function ProjectOverviewPage({
         <p className="mt-1 text-sm text-muted-foreground">
           {t("placeholderBody")}
         </p>
+        <Link
+          href={`/p/${projectId}/trends`}
+          className="mt-4 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {t("openTrends")}
+        </Link>
       </div>
     </div>
   );

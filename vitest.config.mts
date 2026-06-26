@@ -139,6 +139,12 @@ export default defineConfig({
         "src/app/[locale]/*/layout.tsx",
         "src/app/[locale]/*/p/page.tsx",
         "src/app/[locale]/*/p/*/page.tsx",
+        // PR-4 (ADR 0084): the trends route is one segment deeper than the
+        // overview page above, so it needs its own entry — same rationale (an
+        // async Server Component that resolves the project under RLS, exercised by
+        // `next build` + e2e). Its interactive client feature, the entity RPC
+        // fetchers, the nuqs url-state, and the chart widgets are tested directly.
+        "src/app/[locale]/*/p/*/trends/page.tsx",
         "src/features/auth-by-email/api/actions.ts",
         // PR-3 (ADR 0085): the ingest route handler imports the server-only
         // service-role client and builds NextResponse on the Node runtime — it

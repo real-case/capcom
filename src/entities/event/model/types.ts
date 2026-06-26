@@ -1,4 +1,4 @@
-import type { Tables } from "@/lib/supabase/database.types";
+import type { Database, Tables } from "@/lib/supabase/database.types";
 
 /**
  * An analytics event — one immutable, append-only fact in a project's stream
@@ -7,3 +7,28 @@ import type { Tables } from "@/lib/supabase/database.types";
  * Generated row shape (ADR 0015).
  */
 export type AnalyticsEvent = Tables<"events">;
+
+/**
+ * One reduced row from the `fn_event_trends` aggregation (ADR 0084): a single
+ * time `bucket`, the `series` it belongs to (the event name, or a breakdown value /
+ * 'Other'), and the `count` for that pair. Derived from the generated RPC return
+ * type — never hand-written (ADR 0015) — so a signature change surfaces here at
+ * compile time.
+ */
+export type EventTrendBucket =
+  Database["public"]["Functions"]["fn_event_trends"]["Returns"][number];
+
+/**
+ * One reduced row from the `fn_top_events` aggregation (ADR 0084): an `event_name`
+ * and its `count` over the window. Generated RPC return type (ADR 0015).
+ */
+export type TopEvent =
+  Database["public"]["Functions"]["fn_top_events"]["Returns"][number];
+
+/** The argument bag for the `fn_event_trends` RPC (generated, ADR 0015). */
+export type EventTrendsArgs =
+  Database["public"]["Functions"]["fn_event_trends"]["Args"];
+
+/** The argument bag for the `fn_top_events` RPC (generated, ADR 0015). */
+export type TopEventsArgs =
+  Database["public"]["Functions"]["fn_top_events"]["Args"];

@@ -1,0 +1,3 @@
+- [CAPCOM token gate mechanics](capcom-token-gate-mechanics.md) — check:tokens is 3 regex eslint selectors (hex / css-color-fn / TW-numbered-palette); no inline-style or SVG-attr selector, so var() tokens always pass.
+- [CAPCOM AC-oracle drop risk](capcom-ac-oracle-drop-risk.md) — marvin specs bind each AC to a named test oracle; verify that exact test file exists in the diff — a dropped F-item can leave an AC unproven while gates stay green.
+- [CAPCOM FSD widget-over-feature](capcom-fsd-widget-layer.md) — Steiger forbids a feature importing widgets and sibling widgets importing each other; the legit fix is one widget slice with charts as internal ui/ segments.

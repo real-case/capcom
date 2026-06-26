@@ -241,6 +241,34 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      fn_event_trends: {
+        Args: {
+          p_breakdown_key?: string;
+          p_breakdown_limit?: number;
+          p_event_name: string;
+          p_from: string;
+          p_interval: string;
+          p_project_id: string;
+          p_to: string;
+        };
+        Returns: {
+          bucket: string;
+          count: number;
+          series: string;
+        }[];
+      };
+      fn_top_events: {
+        Args: {
+          p_from: string;
+          p_limit?: number;
+          p_project_id: string;
+          p_to: string;
+        };
+        Returns: {
+          count: number;
+          event_name: string;
+        }[];
+      };
       has_org_role: {
         Args: {
           p_min_role: Database["public"]["Enums"]["app_role"];

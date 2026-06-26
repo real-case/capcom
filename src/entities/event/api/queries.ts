@@ -2,7 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/lib/supabase/database.types";
 
-import type { AnalyticsEvent } from "../model/types";
+import type {
+  AnalyticsEvent,
+  EventTrendBucket,
+  EventTrendsArgs,
+  TopEvent,
+  TopEventsArgs,
+} from "../model/types";
 
 /**
  * Read access for the event entity (ADR 0013). Reads run as the signed-in user
@@ -24,6 +30,32 @@ export async function fetchRecentEvents(
     .eq("project_id", projectId)
     .order("ts", { ascending: false })
     .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * Trends aggregation (ADR 0084). Calls the `fn_event_trends` set-returning function
+ * as RPC; because that function is `SECURITY INVOKER`, the reduction runs under the
+ * caller's RLS and a non-member receives zero rows (ADR 0083). The function owns all
+ * aggregation — this fetcher only forwards the typed argument bag and returns the
+ * already-reduced rows; it performs no client-side reduction.
+ */
+export async function fetchEventTrends(
+  supabase: SupabaseClient<Database>,
+  args: EventTrendsArgs,
+): Promise<EventTrendBucket[]> {
+  const { data, error } = await supabase.rpc("fn_event_trends", args);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Most-frequent events in a window (ADR 0084), via the `fn_top_events` RPC. */
+export async function fetchTopEvents(
+  supabase: SupabaseClient<Database>,
+  args: TopEventsArgs,
+): Promise<TopEvent[]> {
+  const { data, error } = await supabase.rpc("fn_top_events", args);
   if (error) throw error;
   return data ?? [];
 }
