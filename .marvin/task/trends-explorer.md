@@ -37,23 +37,22 @@ chart** on real multi-tenant RLS. No new ADR (0084/0086 accepted).
   only, no fetching/aggregation), SVG carries explicit a11y roles and renders
   deterministically for Chromatic (0043).
 - Related patterns: the membership-join helpers and `SECURITY DEFINER`/pinned-`search_path`
-  function idiom in [create_tenancy.sql:135](supabase/migrations/20260623115135_create_tenancy.sql)
+  function idiom in `supabase/migrations/20260623115135_create_tenancy.sql:135`
   (the aggregation fns here are `SECURITY INVOKER` instead — they run _as_ the caller so
   RLS applies); the events schema + the `(project_id, ts)` / `(project_id, event_name)`
-  indexes the trend/top-events scans use ([create_events_profiles.sql:87](supabase/migrations/20260624045654_create_events_profiles.sql));
+  indexes the trend/top-events scans use (`supabase/migrations/20260624045654_create_events_profiles.sql:87`);
   the RLS-scoped entity-fetcher + query-shape-test pattern in
-  [entities/event/api/queries.ts](src/entities/event/api/queries.ts) and
-  [queries.test.ts](src/entities/event/api/queries.test.ts); the browser client
-  factory [client.ts:14](src/lib/supabase/client.ts) (this slice's first client-side
+  `src/entities/event/api/queries.ts` and `src/entities/event/api/queries.test.ts`; the
+  browser client factory `src/lib/supabase/client.ts:14` (this slice's first client-side
   `useQuery` consumer); the wired-but-unused TanStack + nuqs providers
-  ([providers.tsx](src/app/providers.tsx)); the `queryKeys` factory template
-  ([keys.ts:28](src/lib/query/keys.ts)); the RLS-isolation e2e pattern in
-  [e2e/rls-events.spec.ts](e2e/rls-events.spec.ts); the RSC project page that this slice
-  adds a sibling route beside ([page.tsx](<src/app/[locale]/(app)/p/[projectId]/page.tsx>)).
+  (`src/app/providers.tsx`); the `queryKeys` factory template
+  (`src/lib/query/keys.ts:28`); the RLS-isolation e2e pattern in
+  `e2e/rls-events.spec.ts`; the RSC project page that this slice
+  adds a sibling route beside (`src/app/[locale]/(app)/p/[projectId]/page.tsx`).
 - Callers / reverse-deps: the new RPCs have no callers but the new entity fetchers; the
   trends page is a new route (no inbound links except the one added from the project
   overview). `eslint.config.mjs` token-lint block currently scopes `src/components/**`
-  ([eslint.config.mjs:55](eslint.config.mjs)) — extended here to also cover `src/widgets/**`.
+  (`eslint.config.mjs:55`) — extended here to also cover `src/widgets/**`.
 - Constraints: Supabase baseline = Postgres + RLS + Auth only, no external OLAP, no
   Realtime (ADR 0012/0079 — poll/refetch); migrations are plain SQL with RLS versioned
   together (ADR 0014); types generated not written (ADR 0015); aggregation never lives in
@@ -483,11 +482,10 @@ so that discipline is gate-enforced (ADR 0086/0058).
   states (stories double as the a11y/axe + render tests, ADR 0035/0039); `e2e/trends.spec.ts`
   for the in-DB function behavior + cross-tenant RLS.
 - Conventions: the recording query-builder mock from
-  [entities/event/api/queries.test.ts](src/entities/event/api/queries.test.ts) (assert the
-  call shape, not just the value) — extended with an `.rpc(name, args)` recorder; the
-  sign-in-as-seeded-user + assert-exact-outcome shape from
-  [e2e/rls-events.spec.ts](e2e/rls-events.spec.ts) (data rows + zero-row RLS denials);
-  deterministic fixtures in stories (no time/random) for Chromatic stability.
+  `src/entities/event/api/queries.test.ts` (assert the call shape, not just the value) —
+  extended with an `.rpc(name, args)` recorder; the sign-in-as-seeded-user +
+  assert-exact-outcome shape from `e2e/rls-events.spec.ts` (data rows + zero-row RLS
+  denials); deterministic fixtures in stories (no time/random) for Chromatic stability.
 
 ## Definition of Done
 
