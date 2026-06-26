@@ -310,6 +310,13 @@ still-proposed._
   distributions are Postgres views / `SECURITY INVOKER` set-returning functions invoked as RPC
   under the caller's RLS — never reduced in application code; results are typed via `gen:types`
   and refreshed by poll (no realtime). Features and widgets consume already-reduced rows.
+- Funnel conversion semantics are fixed (0087, refining 0084): a funnel is an ordered list of
+  `event_name` steps counted over **distinct users** (`distinct_id`), entered at each user's
+  **first-touch** step-1 occurrence in `[from, to)`, each later step the **earliest at-or-after**
+  occurrence (ordered, non-strict), with the whole path inside a **single total conversion window**
+  measured from step 1. Step counts are non-increasing by construction; conversion **rates** are
+  presentation (a ratio of two already-reduced counts), not SQL reduction. Per-step property
+  filters, breakdowns, and multi-attempt counting are stated scope boundaries.
 - Event ingestion is a single `POST /api/ingest` route handler on the Node runtime (0085): a Zod
   `[ingest]` batch authenticated by a per-project ingest key (hashed at rest) that resolves
   server-side to one `project_id`; the write runs in a confined trusted server-only context
