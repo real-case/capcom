@@ -111,19 +111,35 @@ function generateUser(project, index) {
 
   const firstSeenDaysAgo = intBetween(rng, 1, DAYS_WINDOW);
   const events = [];
-  const push = (eventName, daysAgo, properties = {}) =>
+  // Push with an explicit timestamp. Used directly for the acquisition pair so the
+  // canonical funnel steps are emitted in strict time order (ADR 0087), and wrapped
+  // by `push` (random intra-day ts) for everything else.
+  const pushAt = (eventName, ts, properties = {}) =>
     events.push({
       project_id: project.id,
       event_name: eventName,
       distinct_id: distinctId,
       properties: { plan, country, device, ...properties },
-      ts: isoDaysAgo(rng, daysAgo),
+      ts,
     });
+  const push = (eventName, daysAgo, properties = {}) =>
+    pushAt(eventName, isoDaysAgo(rng, daysAgo), properties);
 
-  // Acquisition: a landing page_view on the first day; most sign up.
-  push("page_view", firstSeenDaysAgo, { path: pick(rng, PAGES), referrer });
+  // Acquisition: a landing page_view, then — for most — a sign_up MOMENTS LATER in
+  // the same first session. Emitting sign_up strictly after the landing view (rather
+  // than with independent same-day jitter) makes the canonical funnel
+  // page_view → sign_up measure genuine ordered conversion, not timestamp noise: the
+  // funnel's at-or-after rule (ADR 0087) would otherwise drop ~half of sign-ups whose
+  // jittered ts happened to fall before their own landing view.
+  const landingTs = isoDaysAgo(rng, firstSeenDaysAgo);
+  pushAt("page_view", landingTs, { path: pick(rng, PAGES), referrer });
   const signedUp = chance(rng, 0.72);
-  if (signedUp) push("sign_up", firstSeenDaysAgo, { referrer });
+  if (signedUp) {
+    const signUpTs = new Date(
+      new Date(landingTs).getTime() + intBetween(rng, 1, 120) * 60_000,
+    ).toISOString();
+    pushAt("sign_up", signUpTs, { referrer });
+  }
 
   // Activation + retention: return visits over subsequent days, each a small
   // burst of in-app events. Non-signups churn fast; signups stick longer.
