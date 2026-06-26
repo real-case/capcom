@@ -32,3 +32,16 @@ export type EventTrendsArgs =
 /** The argument bag for the `fn_top_events` RPC (generated, ADR 0015). */
 export type TopEventsArgs =
   Database["public"]["Functions"]["fn_top_events"]["Args"];
+
+/**
+ * One reduced row from the `fn_funnel` aggregation (ADR 0087, under the 0084
+ * strategy): a 1-based `step_index`, the `step_event` name at that position, and the
+ * count of distinct `users` who reached it. Counts are non-increasing down the steps
+ * by construction. Derived from the generated RPC return type — never hand-written
+ * (ADR 0015) — so a signature change surfaces here at compile time.
+ */
+export type FunnelStep =
+  Database["public"]["Functions"]["fn_funnel"]["Returns"][number];
+
+/** The argument bag for the `fn_funnel` RPC (generated, ADR 0015). */
+export type FunnelArgs = Database["public"]["Functions"]["fn_funnel"]["Args"];

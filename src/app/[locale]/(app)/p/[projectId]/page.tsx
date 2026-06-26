@@ -64,12 +64,20 @@ export default async function ProjectOverviewPage({
         <p className="mt-1 text-sm text-muted-foreground">
           {t("placeholderBody")}
         </p>
-        <Link
-          href={`/p/${projectId}/trends`}
-          className="mt-4 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
-        >
-          {t("openTrends")}
-        </Link>
+        <div className="mt-4 flex flex-wrap gap-4">
+          <Link
+            href={`/p/${projectId}/trends`}
+            className="inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("openTrends")}
+          </Link>
+          <Link
+            href={`/p/${projectId}/funnels`}
+            className="inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("openFunnels")}
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -90,3 +90,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0084](0084-aggregation-strategy.md) | Aggregation strategy: in-database SQL functions | accepted | 2026-06-22 |
 | [0085](0085-event-ingestion-contract.md) | Event ingestion contract | accepted | 2026-06-22 |
 | [0086](0086-charting-primitive-layer-visx.md) | Charting primitive layer: visx + design tokens | accepted | 2026-06-22 |
+| [0087](0087-funnel-conversion-semantics.md) | Funnel conversion semantics: ordered, first-touch, total conversion window | accepted | 2026-06-26 |

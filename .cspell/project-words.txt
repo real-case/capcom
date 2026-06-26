@@ -79,6 +79,7 @@ unmandated
 unreviewed
 viewports
 WCAG
+widenable
 Yurii
 # CAPCOM demo — product-analytics domain vocabulary
 CAPCOM
@@ -96,6 +97,7 @@ realtime
 distinctid
 timestamptz
 plpgsql
+setof
 rollups
 backpressure
 infographics

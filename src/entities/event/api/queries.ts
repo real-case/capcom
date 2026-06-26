@@ -6,6 +6,8 @@ import type {
   AnalyticsEvent,
   EventTrendBucket,
   EventTrendsArgs,
+  FunnelArgs,
+  FunnelStep,
   TopEvent,
   TopEventsArgs,
 } from "../model/types";
@@ -56,6 +58,24 @@ export async function fetchTopEvents(
   args: TopEventsArgs,
 ): Promise<TopEvent[]> {
   const { data, error } = await supabase.rpc("fn_top_events", args);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * Funnel aggregation (ADR 0087, under the 0084 strategy). Calls the `fn_funnel`
+ * set-returning function as RPC; because that function is `SECURITY INVOKER`, the
+ * ordered-step conversion runs under the caller's RLS and a non-member receives zero
+ * rows (ADR 0083). The function owns the entire computation — first-touch entry,
+ * at-or-after ordering, the total conversion window — and this fetcher only forwards
+ * the typed argument bag and returns the already-reduced per-step rows; it performs
+ * no client-side reduction.
+ */
+export async function fetchFunnel(
+  supabase: SupabaseClient<Database>,
+  args: FunnelArgs,
+): Promise<FunnelStep[]> {
+  const { data, error } = await supabase.rpc("fn_funnel", args);
   if (error) throw error;
   return data ?? [];
 }
