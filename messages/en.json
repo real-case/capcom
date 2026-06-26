@@ -62,8 +62,9 @@
     "organization": "Organization",
     "yourRole": "Your role",
     "placeholderTitle": "Project overview",
-    "placeholderBody": "Funnels, retention, and segmentation land in upcoming slices — see the roadmap.",
-    "openTrends": "Open trends"
+    "placeholderBody": "Retention and segmentation land in upcoming slices — see the roadmap.",
+    "openTrends": "Open trends",
+    "openFunnels": "Open funnels"
   },
   "Trends": {
     "title": "Trends",
@@ -93,6 +94,30 @@
     "trendError": "Couldn’t load the trend.",
     "topLoading": "Loading top events…",
     "topError": "Couldn’t load top events."
+  },
+  "Funnels": {
+    "title": "Funnels",
+    "controlsLegend": "Funnel filters",
+    "rangeLabel": "Entry range",
+    "windowLabel": "Conversion window",
+    "range_7d": "Last 7 days",
+    "range_30d": "Last 30 days",
+    "range_90d": "Last 90 days",
+    "window_1d": "1 day",
+    "window_7d": "7 days",
+    "window_14d": "14 days",
+    "window_30d": "30 days",
+    "stepsLegend": "Steps",
+    "stepLabel": "Step {n}",
+    "stepEventLabel": "Event for step {n}",
+    "remove": "Remove",
+    "removeStep": "Remove step {n}",
+    "addStep": "Add step",
+    "funnelSectionLabel": "Conversion by step",
+    "funnelChartLabel": "Funnel conversion by step",
+    "loading": "Loading funnel…",
+    "error": "Couldn’t load the funnel.",
+    "noData": "No data for these steps."
   },
   "Error": {
     "title": "Something went wrong",

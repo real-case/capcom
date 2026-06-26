@@ -145,6 +145,11 @@ export default defineConfig({
         // `next build` + e2e). Its interactive client feature, the entity RPC
         // fetchers, the nuqs url-state, and the chart widgets are tested directly.
         "src/app/[locale]/*/p/*/trends/page.tsx",
+        // PR-5 (ADR 0087): the funnels route, same shape as trends above — an async
+        // Server Component resolving the project under RLS, covered by `next build` +
+        // e2e. Its builder client, the `fetchFunnel` RPC fetcher, the nuqs url-state,
+        // and the FunnelChart widget are tested directly.
+        "src/app/[locale]/*/p/*/funnels/page.tsx",
         "src/features/auth-by-email/api/actions.ts",
         // PR-3 (ADR 0085): the ingest route handler imports the server-only
         // service-role client and builds NextResponse on the Node runtime — it

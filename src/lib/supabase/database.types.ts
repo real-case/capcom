@@ -257,6 +257,20 @@ export type Database = {
           series: string;
         }[];
       };
+      fn_funnel: {
+        Args: {
+          p_from: string;
+          p_project_id: string;
+          p_steps: string[];
+          p_to: string;
+          p_window: string;
+        };
+        Returns: {
+          step_event: string;
+          step_index: number;
+          users: number;
+        }[];
+      };
       fn_top_events: {
         Args: {
           p_from: string;

@@ -38,4 +38,13 @@ export const queryKeys = {
     top: (args: Record<string, unknown>) =>
       [...queryKeys.trends.all, "top", args] as const,
   },
+  // PR-5 funnel conversion (ADR 0087/0084/0086). Keyed by the exact `fn_funnel`
+  // argument bag, so changing any control (steps / window / range) is a distinct
+  // cache entry, and a broad `funnel.all` invalidate cascades.
+  funnel: {
+    all: ["funnel"] as const,
+    /** A funnel-conversion query, keyed by its `fn_funnel` argument bag. */
+    conversion: (args: Record<string, unknown>) =>
+      [...queryKeys.funnel.all, "conversion", args] as const,
+  },
 } as const;

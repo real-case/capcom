@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
-import { fetchEventTrends, fetchRecentEvents, fetchTopEvents } from "./queries";
+import {
+  fetchEventTrends,
+  fetchFunnel,
+  fetchRecentEvents,
+  fetchTopEvents,
+} from "./queries";
 
 type Result = { data: unknown; error: unknown };
 
@@ -148,5 +153,40 @@ describe("fetchTopEvents", () => {
   it("throws when the RPC errors", async () => {
     const { client } = rpcReturning({ data: null, error: new Error("boom") });
     await expect(fetchTopEvents(client, args)).rejects.toThrow();
+  });
+});
+
+describe("fetchFunnel", () => {
+  const args = {
+    p_project_id: "proj-42",
+    p_steps: ["page_view", "sign_up", "purchase"],
+    p_from: "2026-05-01T00:00:00.000Z",
+    p_to: "2026-06-01T00:00:00.000Z",
+    p_window: "7 days",
+  };
+
+  it("calls the fn_funnel RPC with the exact name and argument bag", async () => {
+    const { client, calls } = rpcReturning({ data: [], error: null });
+    await fetchFunnel(client, args);
+    expect(calls.rpc).toEqual([["fn_funnel", args]]);
+  });
+
+  it("returns the rows on success and [] when data is null", async () => {
+    const rows = [
+      { step_index: 1, step_event: "page_view", users: 100 },
+      { step_index: 2, step_event: "sign_up", users: 60 },
+      { step_index: 3, step_event: "purchase", users: 20 },
+    ];
+    expect(
+      await fetchFunnel(rpcReturning({ data: rows, error: null }).client, args),
+    ).toEqual(rows);
+    expect(
+      await fetchFunnel(rpcReturning({ data: null, error: null }).client, args),
+    ).toEqual([]);
+  });
+
+  it("throws when the RPC errors", async () => {
+    const { client } = rpcReturning({ data: null, error: new Error("boom") });
+    await expect(fetchFunnel(client, args)).rejects.toThrow();
   });
 });
