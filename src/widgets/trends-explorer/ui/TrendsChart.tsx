@@ -21,6 +21,9 @@ const VIEW_H = 280;
 const MARGIN = { top: 16, right: 16, bottom: 32, left: 44 };
 const INNER_W = VIEW_W - MARGIN.left - MARGIN.right;
 const INNER_H = VIEW_H - MARGIN.top - MARGIN.bottom;
+// Axis tick label size, in viewBox units. Named (not an inline literal) so the
+// provenance is reviewable — SVG font-size has no token utility (ADR 0058/0081).
+const AXIS_FONT_SIZE = 10;
 
 // Categorical data-viz tokens (ADR 0081), cycled per series; 'Other' takes a neutral
 // token so the rollup reads as distinct from the named series.
@@ -47,6 +50,10 @@ export type TrendsChartProps = {
   isError?: boolean;
   /** Accessible description of what the chart shows (e.g. the event + range). */
   label?: string;
+  /** User-facing state copy, supplied (localized) by the feature; ADR 0030. */
+  loadingLabel?: string;
+  errorLabel?: string;
+  emptyLabel?: string;
 };
 
 type Point = { date: Date; count: number };
@@ -117,11 +124,13 @@ export function TrendsChart({
   isLoading = false,
   isError = false,
   label = "Event trend over time",
+  loadingLabel = "Loading…",
+  errorLabel = "Couldn’t load the chart.",
+  emptyLabel = "No data in this range.",
 }: TrendsChartProps) {
-  if (isError) return <Message tone="error" text="Couldn’t load the trend." />;
-  if (isLoading) return <Message tone="muted" text="Loading trend…" />;
-  if (data.length === 0)
-    return <Message tone="muted" text="No events in this range." />;
+  if (isError) return <Message tone="error" text={errorLabel} />;
+  if (isLoading) return <Message tone="muted" text={loadingLabel} />;
+  if (data.length === 0) return <Message tone="muted" text={emptyLabel} />;
 
   const series = toSeries(data);
   const bucketTimes = [
@@ -171,7 +180,7 @@ export function TrendsChart({
             tickStroke={axisColor}
             tickLabelProps={() => ({
               fill: tickColor,
-              fontSize: 10,
+              fontSize: AXIS_FONT_SIZE,
               textAnchor: "end",
               dx: -4,
               dy: 3,
@@ -185,7 +194,7 @@ export function TrendsChart({
             tickStroke={axisColor}
             tickLabelProps={() => ({
               fill: tickColor,
-              fontSize: 10,
+              fontSize: AXIS_FONT_SIZE,
               textAnchor: "middle",
             })}
           />

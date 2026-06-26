@@ -78,9 +78,12 @@ test.describe("fn_event_trends (ADR 0084)", () => {
     const ts = rows
       .map((r) => new Date(r.bucket).getTime())
       .sort((a, b) => a - b);
-    for (let i = 1; i < ts.length; i++) {
-      expect(ts[i]! - ts[i - 1]!).toBe(DAY);
-    }
+    // Pairwise step check via reduce (no index access / non-null assertions): each
+    // consecutive pair must be exactly one day apart.
+    ts.reduce((prev, cur) => {
+      expect(cur - prev).toBe(DAY);
+      return cur;
+    });
     // No trailing all-zero bucket at the (boundary-aligned, half-open) window edge:
     // the match window is `ts < p_to`, so the last bucket must be strictly before p_to.
     expect(Math.max(...ts)).toBeLessThan(new Date(TO).getTime());

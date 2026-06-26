@@ -20,6 +20,9 @@ const MARGIN = { top: 8, right: 48, bottom: 8, left: 120 };
 const INNER_W = VIEW_W - MARGIN.left - MARGIN.right;
 
 const BAR_COLOR = "var(--color-viz-categorical-1)";
+// Bar label / value size, in viewBox units. Named (not an inline literal) so the
+// provenance is reviewable — SVG font-size has no token utility (ADR 0058/0081).
+const LABEL_FONT_SIZE = 11;
 
 export type TopEventsBarProps = {
   /** Reduced rows from fn_top_events (event_name, count), pre-ranked desc. */
@@ -27,6 +30,10 @@ export type TopEventsBarProps = {
   isLoading?: boolean;
   isError?: boolean;
   label?: string;
+  /** User-facing state copy, supplied (localized) by the feature; ADR 0030. */
+  loadingLabel?: string;
+  errorLabel?: string;
+  emptyLabel?: string;
 };
 
 function Message({ tone, text }: { tone: "muted" | "error"; text: string }) {
@@ -48,11 +55,13 @@ export function TopEventsBar({
   isLoading = false,
   isError = false,
   label = "Top events in range",
+  loadingLabel = "Loading…",
+  errorLabel = "Couldn’t load top events.",
+  emptyLabel = "No data in this range.",
 }: TopEventsBarProps) {
-  if (isError) return <Message tone="error" text="Couldn’t load top events." />;
-  if (isLoading) return <Message tone="muted" text="Loading top events…" />;
-  if (data.length === 0)
-    return <Message tone="muted" text="No events in this range." />;
+  if (isError) return <Message tone="error" text={errorLabel} />;
+  if (isLoading) return <Message tone="muted" text={loadingLabel} />;
+  if (data.length === 0) return <Message tone="muted" text={emptyLabel} />;
 
   const innerH = data.length * ROW_H;
   const viewH = innerH + MARGIN.top + MARGIN.bottom;
@@ -91,7 +100,7 @@ export function TopEventsBar({
                   y={y + h / 2}
                   textAnchor="end"
                   dominantBaseline="middle"
-                  fontSize={11}
+                  fontSize={LABEL_FONT_SIZE}
                   fill={labelColor}
                 >
                   {d.event_name}
@@ -101,10 +110,10 @@ export function TopEventsBar({
                   x={w + 6}
                   y={y + h / 2}
                   dominantBaseline="middle"
-                  fontSize={11}
+                  fontSize={LABEL_FONT_SIZE}
                   fill={valueColor}
                 >
-                  {Number(d.count).toLocaleString("en-US")}
+                  {Number(d.count).toLocaleString()}
                 </text>
               </Group>
             );

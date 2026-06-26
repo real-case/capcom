@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -6,6 +7,22 @@ import { TrendsExplorer } from "@/widgets/trends-explorer";
 import { routing } from "@/i18n/routing";
 import { getCurrentUser, getServerClient } from "@/lib/supabase/server";
 import { fetchProject } from "@/entities/project";
+
+/**
+ * Route-level metadata (ADR 0031): the localized "Trends" title, which the locale
+ * layout's title template wraps (e.g. "Trends · CAPCOM — Product Analytics") for
+ * tabs, shares, and search previews — instead of inheriting the generic layout title.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; projectId: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) return {};
+  const t = await getTranslations({ locale, namespace: "Trends" });
+  return { title: t("title") };
+}
 
 /**
  * Trends route (PR-4) — the first flagship aggregation surface. The project is

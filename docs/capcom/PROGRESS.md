@@ -6,16 +6,16 @@
 
 ## Status
 
-| PR    | Theme                                                | State                                       |
-| ----- | ---------------------------------------------------- | ------------------------------------------- |
-| PR-0  | Bootstrap                                            | ✅ merged                                   |
-| PR-DS | Design-system token foundation (0081–0082)           | ✅ merged                                   |
-| PR-1  | Foundational domain ADRs (0083–0086)                 | ✅ merged                                   |
-| PR-2  | Tenancy: org/project/membership RLS + RBAC           | ✅ **merged (PR #6)**                       |
-| PR-3  | Events + profiles + ingest + seed generator          | ✅ **merged (PR #7)**                       |
-| PR-4  | Trends (in-DB aggregation → visx charts)             | 🔧 **this PR (feat/trends-explorer → dev)** |
-| PR-5  | Funnels                                              | ⬅️ **next**                                 |
-| PR-6+ | Retention → Segmentation → Dashboards → AI → Landing | ⏳                                          |
+| PR    | Theme                                                | State                          |
+| ----- | ---------------------------------------------------- | ------------------------------ |
+| PR-0  | Bootstrap                                            | ✅ merged                      |
+| PR-DS | Design-system token foundation (0081–0082)           | ✅ merged                      |
+| PR-1  | Foundational domain ADRs (0083–0086)                 | ✅ merged                      |
+| PR-2  | Tenancy: org/project/membership RLS + RBAC           | ✅ **merged (PR #6)**          |
+| PR-3  | Events + profiles + ingest + seed generator          | ✅ **merged (PR #7)**          |
+| PR-4  | Trends (in-DB aggregation → visx charts)             | 🔧 **in review — PR #8 → dev** |
+| PR-5  | Funnels                                              | ⬅️ **next**                    |
+| PR-6+ | Retention → Segmentation → Dashboards → AI → Landing | ⏳                             |
 
 Accepted ADRs run 0001–0086. PR-3 needed **no new ADR** (0083 identity/event model,
 0084 aggregation, 0085 ingestion contract are all accepted).

@@ -1,5 +1,6 @@
-"use client";
-
+// No "use client" here: this hook module is only imported by the interactive leaf
+// (TrendsExplorer.tsx), which owns the client boundary — the directive belongs at the
+// leaf, not widened across the hook module (ADR 0002).
 import { useQuery } from "@tanstack/react-query";
 
 import {

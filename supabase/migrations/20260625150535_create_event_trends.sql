@@ -90,8 +90,10 @@ begin
     from matched m
     where p_breakdown_key is not null
     group by m.raw_series
+    -- Clamp the caller-supplied limit server-side: any authenticated client can call
+    -- this RPC, so cap the series count (50) to bound the result set regardless of input.
     order by count(*) desc, m.raw_series
-    limit greatest(p_breakdown_limit, 0)
+    limit least(greatest(p_breakdown_limit, 0), 50)
   ),
   normalized as (
     -- Collapse non-top breakdown values into 'Other'.
@@ -153,7 +155,9 @@ as $$
     and e.ts < p_to
   group by e.event_name
   order by count(*) desc, e.event_name
-  limit greatest(p_limit, 0);
+  -- Clamp the caller-supplied limit server-side (cap 100) — bounds the result set for
+  -- any authenticated caller regardless of the requested value.
+  limit least(greatest(p_limit, 0), 100);
 $$;
 
 comment on function public.fn_top_events(uuid, timestamptz, timestamptz, int) is

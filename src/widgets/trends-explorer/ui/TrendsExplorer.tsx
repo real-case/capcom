@@ -6,11 +6,13 @@ import { useQueryStates } from "nuqs";
 import { useEventTrends, useTopEvents } from "../api/use-trends";
 import {
   BREAKDOWN_KEYS,
+  DEFAULT_TRENDS_QUERY,
   INTERVALS,
   RANGES,
   toTopEventsArgs,
   toTrendsArgs,
   trendsParsers,
+  trendsQuerySchema,
 } from "../model/url-state";
 
 import { TopEventsBar } from "./TopEventsBar";
@@ -27,7 +29,12 @@ import { TrendsChart } from "./TrendsChart";
  */
 export function TrendsExplorer({ projectId }: { projectId: string }) {
   const t = useTranslations("Trends");
-  const [query, setQuery] = useQueryStates(trendsParsers);
+  const [raw, setQuery] = useQueryStates(trendsParsers);
+
+  // The Zod schema is the validation authority (ADR 0017): run the nuqs-parsed values
+  // through it before deriving RPC args. nuqs already constrains the enum params; this
+  // also bounds the free-text `event`, falling back to the defaults on a malformed URL.
+  const query = trendsQuerySchema.catch(DEFAULT_TRENDS_QUERY).parse(raw);
 
   // resolveWindow floors `to` to the UTC day, so these args are stable within a day
   // and the TanStack query keys don't thrash across re-renders.
@@ -64,11 +71,10 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
           <select
             className={selectClass}
             value={query.range}
-            onChange={(e) =>
-              void setQuery({
-                range: e.target.value as (typeof RANGES)[number],
-              })
-            }
+            onChange={(e) => {
+              const range = pick(RANGES, e.target.value);
+              if (range) void setQuery({ range });
+            }}
           >
             {RANGES.map((r) => (
               <option key={r} value={r}>
@@ -82,11 +88,10 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
           <select
             className={selectClass}
             value={query.interval}
-            onChange={(e) =>
-              void setQuery({
-                interval: e.target.value as (typeof INTERVALS)[number],
-              })
-            }
+            onChange={(e) => {
+              const interval = pick(INTERVALS, e.target.value);
+              if (interval) void setQuery({ interval });
+            }}
           >
             {INTERVALS.map((i) => (
               <option key={i} value={i}>
@@ -100,11 +105,10 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
           <select
             className={selectClass}
             value={query.breakdown}
-            onChange={(e) =>
-              void setQuery({
-                breakdown: e.target.value as (typeof BREAKDOWN_KEYS)[number],
-              })
-            }
+            onChange={(e) => {
+              const breakdown = pick(BREAKDOWN_KEYS, e.target.value);
+              if (breakdown) void setQuery({ breakdown });
+            }}
           >
             {BREAKDOWN_KEYS.map((b) => (
               <option key={b} value={b}>
@@ -127,6 +131,9 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
           isLoading={trends.isPending}
           isError={trends.isError}
           label={t("trendChartLabel", { event: query.event })}
+          loadingLabel={t("trendLoading")}
+          errorLabel={t("trendError")}
+          emptyLabel={t("noEvents")}
         />
       </section>
 
@@ -142,6 +149,9 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
           isLoading={top.isPending}
           isError={top.isError}
           label={t("topEventsLabel")}
+          loadingLabel={t("topLoading")}
+          errorLabel={t("topError")}
+          emptyLabel={t("noEvents")}
         />
       </section>
     </div>
@@ -150,6 +160,18 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
 
 const selectClass =
   "rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
+
+/**
+ * Narrow a raw `<select>` value to one of an allowed const tuple — runtime check, no
+ * `as` cast: `find` returns the tuple's element type or undefined, so the URL state
+ * stays in lockstep with the parser enums (the value can only be one of the options).
+ */
+function pick<const T extends readonly string[]>(
+  allowed: T,
+  value: string,
+): T[number] | undefined {
+  return allowed.find((option) => option === value);
+}
 
 function Field({
   label,
