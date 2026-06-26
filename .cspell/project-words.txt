@@ -104,3 +104,5 @@ infographics
 gridlines
 upsert
 upserts
+cohorting
+trunc
