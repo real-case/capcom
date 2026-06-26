@@ -8,6 +8,8 @@ import type {
   EventTrendsArgs,
   FunnelArgs,
   FunnelStep,
+  RetentionArgs,
+  RetentionCell,
   TopEvent,
   TopEventsArgs,
 } from "../model/types";
@@ -76,6 +78,24 @@ export async function fetchFunnel(
   args: FunnelArgs,
 ): Promise<FunnelStep[]> {
   const { data, error } = await supabase.rpc("fn_funnel", args);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * Retention aggregation (ADR 0088, under the 0084 strategy). Calls the `fn_retention`
+ * set-returning function as RPC; because that function is `SECURITY INVOKER`, the
+ * acquisition-cohort retention runs under the caller's RLS and a non-member receives
+ * zero rows — no cohorts (ADR 0083). The function owns the entire computation —
+ * acquisition cohorting, calendar periods, active-in-period counting, the triangular
+ * zero-filled grid — and this fetcher only forwards the typed argument bag and returns
+ * the already-reduced cells; it performs no client-side reduction.
+ */
+export async function fetchRetention(
+  supabase: SupabaseClient<Database>,
+  args: RetentionArgs,
+): Promise<RetentionCell[]> {
+  const { data, error } = await supabase.rpc("fn_retention", args);
   if (error) throw error;
   return data ?? [];
 }

@@ -5,6 +5,7 @@ import {
   fetchEventTrends,
   fetchFunnel,
   fetchRecentEvents,
+  fetchRetention,
   fetchTopEvents,
 } from "./queries";
 
@@ -188,5 +189,54 @@ describe("fetchFunnel", () => {
   it("throws when the RPC errors", async () => {
     const { client } = rpcReturning({ data: null, error: new Error("boom") });
     await expect(fetchFunnel(client, args)).rejects.toThrow();
+  });
+});
+
+describe("fetchRetention", () => {
+  const args = {
+    p_project_id: "proj-42",
+    p_from: "2026-03-01T00:00:00.000Z",
+    p_to: "2026-06-01T00:00:00.000Z",
+    p_period: "week",
+  };
+
+  it("calls the fn_retention RPC with the exact name and argument bag", async () => {
+    const { client, calls } = rpcReturning({ data: [], error: null });
+    await fetchRetention(client, args);
+    expect(calls.rpc).toEqual([["fn_retention", args]]);
+  });
+
+  it("returns the rows on success and [] when data is null", async () => {
+    const rows = [
+      {
+        cohort_period: "2026-03-23T00:00:00+00:00",
+        cohort_size: 10,
+        period_offset: 0,
+        retained_users: 10,
+      },
+      {
+        cohort_period: "2026-03-23T00:00:00+00:00",
+        cohort_size: 10,
+        period_offset: 1,
+        retained_users: 4,
+      },
+    ];
+    expect(
+      await fetchRetention(
+        rpcReturning({ data: rows, error: null }).client,
+        args,
+      ),
+    ).toEqual(rows);
+    expect(
+      await fetchRetention(
+        rpcReturning({ data: null, error: null }).client,
+        args,
+      ),
+    ).toEqual([]);
+  });
+
+  it("throws when the RPC errors", async () => {
+    const { client } = rpcReturning({ data: null, error: new Error("boom") });
+    await expect(fetchRetention(client, args)).rejects.toThrow();
   });
 });

@@ -77,6 +77,12 @@ export default async function ProjectOverviewPage({
           >
             {t("openFunnels")}
           </Link>
+          <Link
+            href={`/p/${projectId}/retention`}
+            className="inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("openRetention")}
+          </Link>
         </div>
       </div>
     </div>

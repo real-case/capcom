@@ -62,9 +62,10 @@
     "organization": "Organization",
     "yourRole": "Your role",
     "placeholderTitle": "Project overview",
-    "placeholderBody": "Retention and segmentation land in upcoming slices — see the roadmap.",
+    "placeholderBody": "Segmentation and dashboards land in upcoming slices — see the roadmap.",
     "openTrends": "Open trends",
-    "openFunnels": "Open funnels"
+    "openFunnels": "Open funnels",
+    "openRetention": "Open retention"
   },
   "Trends": {
     "title": "Trends",
@@ -118,6 +119,24 @@
     "loading": "Loading funnel…",
     "error": "Couldn’t load the funnel.",
     "noData": "No data for these steps."
+  },
+  "Retention": {
+    "title": "Retention",
+    "controlsLegend": "Retention filters",
+    "rangeLabel": "Analysis range",
+    "periodLabel": "Cohort by",
+    "range_30d": "Last 30 days",
+    "range_90d": "Last 90 days",
+    "range_180d": "Last 180 days",
+    "period_week": "Week",
+    "period_month": "Month",
+    "gridSectionLabel": "Retention by cohort",
+    "gridChartLabel": "Retention cohort grid",
+    "loading": "Loading retention…",
+    "error": "Couldn’t load retention.",
+    "noData": "No cohorts in this range.",
+    "legendLow": "Lower",
+    "legendHigh": "Higher"
   },
   "Error": {
     "title": "Something went wrong",

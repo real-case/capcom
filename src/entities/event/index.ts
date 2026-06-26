@@ -8,6 +8,8 @@ export type {
   EventTrendsArgs,
   FunnelArgs,
   FunnelStep,
+  RetentionArgs,
+  RetentionCell,
   TopEvent,
   TopEventsArgs,
 } from "./model/types";
@@ -15,5 +17,6 @@ export {
   fetchEventTrends,
   fetchFunnel,
   fetchRecentEvents,
+  fetchRetention,
   fetchTopEvents,
 } from "./api/queries";
