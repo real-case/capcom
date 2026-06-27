@@ -6,26 +6,28 @@
 
 ## Status
 
-| PR    | Theme                                       | State                            |
-| ----- | ------------------------------------------- | -------------------------------- |
-| PR-0  | Bootstrap                                   | ✅ merged                        |
-| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                        |
-| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                        |
-| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**            |
-| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**            |
-| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**            |
-| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**            |
-| PR-6  | Retention cohort grid (ADR 0088)            | 🔧 **ready on `feat/retention`** |
-| PR-7+ | Segmentation → Dashboards → AI → Landing    | ⏳                               |
+| PR    | Theme                                       | State                               |
+| ----- | ------------------------------------------- | ----------------------------------- |
+| PR-0  | Bootstrap                                   | ✅ merged                           |
+| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                           |
+| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                           |
+| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**               |
+| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**               |
+| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**               |
+| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**               |
+| PR-6  | Retention cohort grid (ADR 0088)            | ✅ **merged (PR #10/#11)**          |
+| PR-7  | Segmentation (ADR 0089)                     | 🔧 **ready on `feat/segmentation`** |
+| PR-8+ | Dashboards → AI → Landing                   | ⏳                                  |
 
-Accepted ADRs run 0001–**0087**. PR-6 drafted **ADR 0088** (retention cohort semantics) as
-**`proposed`** — it awaits the human acceptance gate before this branch merges (the one gate
-the agent cannot pass; CLAUDE.md is **not** synced for 0088 until then). 0083 identity/event
-model, 0084 aggregation, 0085 ingestion contract, 0086 charting, and 0087 funnel semantics
-remain the accepted foundation. **Note the numbering shift:** the roadmap pencilled 0088 for
-segmentation, but retention's semantics warranted a record first — so PR-7 segmentation is now
-**0089**, PR-9 AI **0090** (numbers are the next free ID from `adr.py next`, not the roadmap's
-indicative mapping).
+Accepted ADRs run 0001–**0087** and **0089**. PR-7 drafted **ADR 0089** (segment-definition
+model) and it was **human-accepted** (CLAUDE.md synced). **ADR 0088** (retention cohort
+semantics) remains **`proposed`** — its acceptance was deliberately deferred, so 0089 was
+accepted ahead of it; 0088's `proposed → accepted` flip + its CLAUDE.md sync are still
+outstanding human steps (the retention code merged in PR #10/#11 already depends on it). 0083
+identity/event model, 0084 aggregation, 0085 ingestion contract, 0086 charting, and 0087 funnel
+semantics remain the accepted foundation. **Note the numbering shift:** the roadmap pencilled
+0088 for segmentation, but retention's semantics took 0088 first — so segmentation is **0089**,
+and PR-9 AI will be the next free ID from `adr.py next`, not the roadmap's indicative mapping.
 
 ## How to resume (environment — read first)
 
@@ -252,13 +254,64 @@ RLS.
   under axe). **Coverage 95.64%.** All gates green; the heatmap was visually verified (dense
   triangle, light + dark) before handoff.
 
-## Next: PR-7 — Segmentation
+## What PR-7 shipped (PR-8 builds on this)
 
-**ADR 0089** (not 0088 — retention took that) records the segment-definition model (attribute
-predicates + behavioral rules). Migration `create_segments` stores the rule JSON; a
-`SECURITY INVOKER` SQL function computes segment size and distribution, reusing the same RPC +
-token-visx-widget pattern. Feature/widget `segment-builder` + `widgets/segment-distribution`
-(one slice under FSD).
+Fourth aggregation surface — user-authored segmentation — the first to take a **user-authored
+rule** as input, reusing the PR-4/5/6 `SECURITY INVOKER` RPC + token-visx-widget pattern,
+end-to-end on real RLS.
+
+- **ADR 0089 (accepted):** the **segment-definition model** 0084 left open — a closed `jsonb`
+  rule of **attribute** predicates over `profiles.traits` (`eq | neq | in`) + **behavioural**
+  predicates over `events` (`at_least | at_most` a count in the window), **AND-composition only**
+  (`match: "all"`). Drafted `proposed` → `app.adr-review` (READY) → **human-accepted** →
+  `CLAUDE.md` synced (one Conventions + one Restrictions line). OR/nested logic, per-predicate
+  windows, numeric `properties` predicates, and **saved/named segment persistence (deferred to
+  PR-8)** are stated scope boundaries.
+- **Migration `create_segments`:** `fn_segment_size(project, rule jsonb, from, to) → bigint`
+  and `fn_segment_distribution(project, rule jsonb, dimension, from, to) → setof (bucket, users)`.
+  A closed `case <op>` interpreter walks the rule with `jsonb_array_elements` — **no dynamic
+  SQL**, rule values compared as `jsonb`/text literals, so the grammar's closure is the injection
+  boundary. Three-valued logic is explicit (`not exists (… where not coalesce(<pred>, false))`):
+  a NULL predicate (absent trait) is a failure, excluding the user. Guards reject non-object
+  rules, non-array predicate lists, **non-numeric counts**, and an inverted window with `22023`;
+  `SECURITY INVOKER` + pinned `search_path` + `EXECUTE` to `authenticated` only. `gen:types`
+  regenerated. **`supabase-rls-reviewer` ran clean** (live cross-tenant + injection probes on
+  both `profiles` and `events`; confirmed no dynamic SQL; invoker posture is the inverse of the
+  PR-2 definer helpers).
+- **Entity `entities/segment`:** the `[segment]` Zod rule schema (the ADR 0017 validation
+  authority + ADR 0089 definition, with `TRAIT_KEYS` / `SEGMENT_EVENTS` vocabularies), the
+  generated RPC types, and the `fetchSegmentSize` / `fetchSegmentDistribution` fetchers — a
+  **first-class domain entity** (Steiger flags `insignificant-slice` until PR-8 persistence
+  consumes it, exactly as `entities/event` was flagged in PR-3). The rule shape fixed here is
+  what a PR-8 `segments.definition` column will store.
+- **Widget `segment-builder`:** nuqs URL-state (the whole rule as one json-encodable value +
+  dimension + range — a shareable segment link, ADR 0027) drives TanStack hooks over the RPCs;
+  `SegmentBuilder` authors the rule with **always-valid** select/checkbox controls (no
+  transient-invalid state that would revert a shared link), and the internal visx
+  `SegmentDistribution` segment paints a token-only **categorical** bar chart (ADR 0086/0081)
+  with the share-of-segment percentage derived in the widget (display, not SQL — ADR 0089). One
+  widget slice (FSD: a feature can't import widgets), same as trends/funnels/retention.
+- **Page:** `/(app)/p/[projectId]/segments` (RLS-404), linked from the overview alongside
+  trends/funnels/retention. `Segments` i18n namespace + `ProjectOverview.openSegments` added;
+  coverage excludes the new route in `vitest.config.mts` (mirrors retention).
+- **Tests:** `e2e/segments.spec.ts` proves the empty/eq/neq/in/at_least/at_most **partitions**
+  (eq+neq and performed+never each sum to the population; `in` = union of disjoint eq),
+  **AND-intersection monotonicity**, **distribution-sums-to-size**, the **injection boundary**
+  (a value carrying SQL metacharacters matches 0, raises nothing, tables intact), and cross-tenant
+  **empty-not-error** — same pinned `SEED_EVENTS_ANCHOR=2026-06-24T12:00:00.000Z` discipline.
+  Unit: the `[segment]` rule schema (discriminated union, defaults, bounds), both fetchers, the
+  nuqs url-state round-trip, the `SegmentBuilder` component (real hooks via `NuqsTestingAdapter`,
+  incl. the `in`-checkbox toggle seeded via initial `searchParams`), and `SegmentDistribution`
+  stories (empty/loading/error/overflow/dark under axe). **Coverage 94.74%.** All gates green;
+  build emits the segments route. `.cspell` gained `behavioural`, `metacharacters`.
+
+## Next: PR-8 — Dashboards & saved reports
+
+Migration for `reports` / `dashboards` (saved chart configs + a simple layout) — **the home for
+the deferred `segments` persistence (ADR 0089)**. **Server Actions** (ADR 0020) persist reports
+and segments with the optimistic-mutation default (ADR 0025). Feature `dashboard` + a layout
+widget; reports reopen straight from their nuqs URL state. 🎨 Design checkpoint (the dashboard
+composition) — the latest point to provide a Figma source (read-only, token-conformant).
 
 ## Conventions (don't re-derive)
 
