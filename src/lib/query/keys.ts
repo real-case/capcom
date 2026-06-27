@@ -56,4 +56,17 @@ export const queryKeys = {
     cohorts: (args: Record<string, unknown>) =>
       [...queryKeys.retention.all, "cohorts", args] as const,
   },
+  // PR-7 segmentation (ADR 0089/0084/0086). The size and the distribution are distinct
+  // cache entries, each keyed by its exact RPC argument bag (the jsonb rule included),
+  // so any control change (rule / dimension / range) is a fresh entry, and a broad
+  // `segment.all` invalidate cascades.
+  segment: {
+    all: ["segment"] as const,
+    /** A segment-size query, keyed by its `fn_segment_size` argument bag. */
+    size: (args: Record<string, unknown>) =>
+      [...queryKeys.segment.all, "size", args] as const,
+    /** A segment-distribution query, keyed by its `fn_segment_distribution` argument bag. */
+    distribution: (args: Record<string, unknown>) =>
+      [...queryKeys.segment.all, "distribution", args] as const,
+  },
 } as const;

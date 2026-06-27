@@ -83,6 +83,12 @@ export default async function ProjectOverviewPage({
           >
             {t("openRetention")}
           </Link>
+          <Link
+            href={`/p/${projectId}/segments`}
+            className="inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("openSegments")}
+          </Link>
         </div>
       </div>
     </div>

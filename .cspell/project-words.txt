@@ -106,3 +106,5 @@ upsert
 upserts
 cohorting
 trunc
+behavioural
+metacharacters

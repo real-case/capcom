@@ -155,6 +155,11 @@ export default defineConfig({
         // e2e. Its grid client, the `fetchRetention` RPC fetcher, the nuqs url-state,
         // and the CohortGrid widget are tested directly.
         "src/app/[locale]/*/p/*/retention/page.tsx",
+        // PR-7 (ADR 0089): the segments route, same shape as retention above — an async
+        // Server Component resolving the project under RLS, covered by `next build` +
+        // e2e. Its builder client, the `fetchSegment*` RPC fetchers, the nuqs url-state,
+        // the `[segment]` rule schema, and the SegmentDistribution widget are tested directly.
+        "src/app/[locale]/*/p/*/segments/page.tsx",
         "src/features/auth-by-email/api/actions.ts",
         // PR-3 (ADR 0085): the ingest route handler imports the server-only
         // service-role client and builds NextResponse on the Node runtime — it
