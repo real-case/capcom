@@ -317,6 +317,17 @@ still-proposed._
   measured from step 1. Step counts are non-increasing by construction; conversion **rates** are
   presentation (a ratio of two already-reduced counts), not SQL reduction. Per-step property
   filters, breakdowns, and multi-attempt counting are stated scope boundaries.
+- The segment-definition model is fixed (0089, refining 0084): a segment is a closed `jsonb` rule
+  of **attribute** predicates over `profiles.traits` (`key` with `eq | neq | in`) and
+  **behavioural** predicates over `events` (`event` with `at_least | at_most` a count in the
+  analysis window — `at_most 0` expresses "never"), combined by **AND only** (`match: "all"`).
+  It is evaluated in-database by `SECURITY INVOKER` `fn_segment_size` / `fn_segment_distribution`
+  functions with **no dynamic SQL** — the closed grammar is the injection boundary; rule values are
+  compared as `jsonb`/parameters, never concatenated. Output is a distinct-user **size** + a
+  **distribution** by one trait dimension (absent traits folded into `(unknown)`); percentages are
+  presentation, not SQL reduction. The rule is one nuqs-encodable value (a shareable segment link,
+  0027). OR/nested logic, per-predicate windows, numeric `properties` predicates, and **saved/named
+  segment persistence (deferred to PR-8 Server Actions)** are stated scope boundaries.
 - Event ingestion is a single `POST /api/ingest` route handler on the Node runtime (0085): a Zod
   `[ingest]` batch authenticated by a per-project ingest key (hashed at rest) that resolves
   server-side to one `project_id`; the write runs in a confined trusted server-only context
@@ -392,6 +403,11 @@ still-proposed._
   and `auth.users` (member) is never conflated with `profiles` (tracked end-user) (0083).
   Aggregation/reduction logic never lives in application code, and no second datastore / external
   OLAP is introduced — aggregations stay in Postgres (0084).
+- Segment rules are user-authored data evaluated by a closed in-database interpreter — **never**
+  built into SQL with dynamic-SQL/`EXECUTE`; the bounded predicate grammar is the injection
+  boundary, evaluation stays `SECURITY INVOKER` under the caller's RLS, and segment composition is
+  AND-only (genuine OR/nesting is a deferred boundary). No `segments` table or write path in PR-7 —
+  persistence is deferred to PR-8 (0089).
 - The ingest-key write path is server-only and never reaches client code; it is confined to the
   resolved `project_id`, the key is compared against a hash (never logged), and its rotation is a
   human-only action (0085, 0013/0046). No ingestion SDK, queue, or high-volume pipeline — the
