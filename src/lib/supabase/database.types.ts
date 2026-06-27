@@ -285,6 +285,28 @@ export type Database = {
           retained_users: number;
         }[];
       };
+      fn_segment_distribution: {
+        Args: {
+          p_dimension: string;
+          p_from: string;
+          p_project_id: string;
+          p_rule: Json;
+          p_to: string;
+        };
+        Returns: {
+          bucket: string;
+          users: number;
+        }[];
+      };
+      fn_segment_size: {
+        Args: {
+          p_from: string;
+          p_project_id: string;
+          p_rule: Json;
+          p_to: string;
+        };
+        Returns: number;
+      };
       fn_top_events: {
         Args: {
           p_from: string;
