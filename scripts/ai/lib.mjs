@@ -24,6 +24,11 @@ import { execSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 
 export const MODEL = process.env.AI_MODEL || "";
+// Output-token budget. Kept conservative by default (some models cap their max output),
+// but tunable per provider via the AI_MAX_TOKENS variable — a REASONING model spends this
+// budget on hidden thinking before any visible content, so a small cap can yield an empty
+// `content` (finish_reason "length"). Raise it for such models; `advise()` logs the
+// finish_reason on an empty completion so the operator can tell when this is the cause.
 const MAX_TOKENS = Number(process.env.AI_MAX_TOKENS || 8000);
 
 /** True only when a non-empty key is present (ADR 0046 — human-provisioned). */
@@ -110,16 +115,8 @@ const SYSTEM_INSTRUCTIONS =
   "actionable; prefer a short bulleted list over prose. If you find nothing worth raising, say " +
   "so in one line rather than inventing findings.";
 
-/**
- * Run one advisory turn against any OpenAI-compatible Chat Completions endpoint (ADR 0075).
- * Grounding + instructions go in the system message; `task` + `payload` are the user turn.
- * Returns the final text. Non-streaming — advisory outputs are small and posted as a comment.
- *
- * Note: a few compat layers differ at the edges — e.g. OpenAI's o-series wants
- * `max_completion_tokens` instead of `max_tokens`. The common subset (Gemini, OpenAI chat
- * models, OpenRouter, Groq, Anthropic-compat) accepts what is sent here.
- */
-export async function advise({ grounding, task, payload }) {
+/** One non-streaming completion turn. Throws on a non-2xx; returns the choice details. */
+async function completionTurn({ grounding, task, payload }) {
   const baseUrl = process.env.AI_BASE_URL.replace(/\/+$/, "");
   const res = await fetch(`${baseUrl}/chat/completions`, {
     method: "POST",
@@ -146,8 +143,47 @@ export async function advise({ grounding, task, payload }) {
     );
   }
   const json = await res.json();
-  const text = json.choices?.[0]?.message?.content;
-  return (typeof text === "string" ? text : "").trim();
+  const choice = json.choices?.[0];
+  const content = choice?.message?.content;
+  return {
+    text: (typeof content === "string" ? content : "").trim(),
+    finishReason: choice?.finish_reason,
+    usage: json.usage,
+  };
+}
+
+/**
+ * Run one advisory turn against any OpenAI-compatible Chat Completions endpoint (ADR 0075).
+ * Grounding + instructions go in the system message; `task` + `payload` are the user turn.
+ * Returns the final text — or `""` when the provider returns a 200 with no content (a
+ * reasoning model exhausting `max_tokens`, a content filter, or a throttled free gateway
+ * all surface this way). On empty it logs the finish_reason + usage so the cause is
+ * diagnosable from the job log, and retries once (a transient empty is common on free
+ * gateways); the caller then decides whether to skip posting. Non-streaming — advisory
+ * outputs are small and posted as a comment.
+ *
+ * Note: a few compat layers differ at the edges — e.g. OpenAI's o-series wants
+ * `max_completion_tokens` instead of `max_tokens`. The common subset (Gemini, OpenAI chat
+ * models, OpenRouter, Groq, Anthropic-compat) accepts what is sent here.
+ */
+export async function advise(args) {
+  const attempts = 2;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    const { text, finishReason, usage } = await completionTurn(args);
+    if (text) return text;
+    console.warn(
+      `advise: empty completion (attempt ${attempt}/${attempts}, ` +
+        `finish_reason=${finishReason ?? "?"}, usage=${JSON.stringify(usage ?? {})}). ` +
+        (finishReason === "length"
+          ? "The model hit max_tokens before emitting content — raise AI_MAX_TOKENS (reasoning models need headroom). "
+          : "") +
+        (attempt < attempts
+          ? "Retrying once…"
+          : "Giving up; the caller will skip posting."),
+    );
+    if (attempt < attempts) await new Promise((r) => setTimeout(r, 1500));
+  }
+  return "";
 }
 
 /** Post a comment on a PR via the gh CLI (advisory — no required-check status). */
