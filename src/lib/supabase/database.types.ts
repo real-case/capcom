@@ -307,6 +307,7 @@ export type Database = {
         };
         Returns: number;
       };
+      fn_segment_validate_rule: { Args: { p_rule: Json }; Returns: undefined };
       fn_top_events: {
         Args: {
           p_from: string;

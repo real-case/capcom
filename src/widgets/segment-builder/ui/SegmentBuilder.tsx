@@ -12,7 +12,6 @@ import {
   type AttributePredicate,
   type BehaviorOp,
   type BehaviorPredicate,
-  type SegmentEvent,
   type SegmentRule,
   type TraitKey,
 } from "@/entities/segment";
@@ -152,9 +151,10 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
                 className={selectClass}
                 aria-label={t("traitLabel", { n: i + 1 })}
                 value={pred.key}
-                onChange={(e) =>
-                  setAttribute(i, withKey(pred, e.target.value as TraitKey))
-                }
+                onChange={(e) => {
+                  const key = pick(DIMENSIONS, e.target.value);
+                  if (key) setAttribute(i, withKey(pred, key));
+                }}
               >
                 {DIMENSIONS.map((k) => (
                   <option key={k} value={k}>
@@ -166,9 +166,10 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
                 className={selectClass}
                 aria-label={t("opLabel", { n: i + 1 })}
                 value={pred.op}
-                onChange={(e) =>
-                  setAttribute(i, withOp(pred, e.target.value as AttributeOp))
-                }
+                onChange={(e) => {
+                  const op = pick(ATTRIBUTE_OPS, e.target.value);
+                  if (op) setAttribute(i, withOp(pred, op));
+                }}
               >
                 {ATTRIBUTE_OPS.map((op) => (
                   <option key={op} value={op}>
@@ -213,12 +214,10 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
                 className={selectClass}
                 aria-label={t("eventLabel", { n: i + 1 })}
                 value={pred.event}
-                onChange={(e) =>
-                  setBehavior(i, {
-                    ...pred,
-                    event: e.target.value as SegmentEvent,
-                  })
-                }
+                onChange={(e) => {
+                  const event = pick(SEGMENT_EVENTS, e.target.value);
+                  if (event) setBehavior(i, { ...pred, event });
+                }}
               >
                 {SEGMENT_EVENTS.map((ev) => (
                   <option key={ev} value={ev}>
@@ -230,9 +229,10 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
                 className={selectClass}
                 aria-label={t("behaviorOpLabel", { n: i + 1 })}
                 value={pred.op}
-                onChange={(e) =>
-                  setBehavior(i, { ...pred, op: e.target.value as BehaviorOp })
-                }
+                onChange={(e) => {
+                  const op = pick(BEHAVIOR_OPS, e.target.value);
+                  if (op) setBehavior(i, { ...pred, op });
+                }}
               >
                 {BEHAVIOR_OPS.map((op) => (
                   <option key={op} value={op}>

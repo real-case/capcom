@@ -62,9 +62,13 @@ const predicateValue = z
  * against in SQL (ADR 0089).
  */
 export const attributePredicateSchema = z.discriminatedUnion("op", [
-  z.object({ key: traitKey, op: z.literal("eq"), value: predicateValue }),
-  z.object({ key: traitKey, op: z.literal("neq"), value: predicateValue }),
-  z.object({
+  z.strictObject({ key: traitKey, op: z.literal("eq"), value: predicateValue }),
+  z.strictObject({
+    key: traitKey,
+    op: z.literal("neq"),
+    value: predicateValue,
+  }),
+  z.strictObject({
     key: traitKey,
     op: z.literal("in"),
     value: z
@@ -79,7 +83,7 @@ export const attributePredicateSchema = z.discriminatedUnion("op", [
  * times in the analysis window (ADR 0089). `at_least 1` means "performed"; `at_most 0`
  * means "never performed" — so absence needs no separate negation operator.
  */
-export const behaviorPredicateSchema = z.object({
+export const behaviorPredicateSchema = z.strictObject({
   event: z.enum(SEGMENT_EVENTS),
   op: z.enum(BEHAVIOR_OPS),
   count: z
@@ -93,8 +97,12 @@ export const behaviorPredicateSchema = z.object({
  * A complete segment rule. `match` is recorded but fixed to `"all"` (AND) for now, so a
  * future `"any"` (OR) is an additive value, not a schema change (ADR 0089). Both
  * predicate lists default to empty — an empty rule matches every tracked user.
+ *
+ * `strictObject` here (and on every predicate arm above) rejects unknown keys rather than
+ * silently stripping them — the rule crosses a JSON/URL boundary, so an unexpected field is
+ * an error to surface, not data to drop (ADR 0017).
  */
-export const segmentRuleSchema = z.object({
+export const segmentRuleSchema = z.strictObject({
   match: z.literal("all").default("all"),
   attributes: z.array(attributePredicateSchema).max(MAX_PREDICATES).default([]),
   behaviors: z.array(behaviorPredicateSchema).max(MAX_PREDICATES).default([]),

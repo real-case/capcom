@@ -127,7 +127,6 @@ function Chart({
   total: number;
   label: string;
 }) {
-  const maxUsers = Math.max(...data.map((row) => Number(row.users)), 1);
   const viewW = PAD + LABEL_W + BAR_AREA + VALUE_W + PAD;
   const viewH = PAD + data.length * ROW_H + PAD;
 
@@ -146,8 +145,11 @@ function Chart({
         const users = Number(row.users);
         const rowTop = PAD + i * ROW_H;
         const barY = rowTop + (ROW_H - BAR_H) / 2;
-        const width = Math.max(MIN_BAR, (users / maxUsers) * BAR_AREA);
+        // Bar length is the bucket's share of the segment — the same ratio the value text
+        // shows and the aria-label announces, so the visual and the number always agree.
         const share = total > 0 ? users / total : 0;
+        const width =
+          users > 0 && total > 0 ? Math.max(MIN_BAR, share * BAR_AREA) : 0;
         return (
           <g key={row.bucket}>
             {/* Bucket label (the trait value, or "(unknown)"). */}

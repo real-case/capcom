@@ -42,6 +42,18 @@ describe("segmentRuleSchema", () => {
     const bad = { behaviors: [{ event: "login", op: "at_least", count: 1 }] };
     expect(segmentRuleSchema.safeParse(bad).success).toBe(false);
   });
+
+  it("rejects unknown keys instead of silently stripping them (strict)", () => {
+    // An unexpected top-level field is an error to surface at the JSON boundary, not data
+    // to drop (ADR 0017) — strictObject rather than the key-stripping default.
+    expect(segmentRuleSchema.safeParse({ matchh: "all" }).success).toBe(false);
+    // ...and on a predicate arm.
+    expect(
+      segmentRuleSchema.safeParse({
+        attributes: [{ key: "plan", op: "eq", value: "pro", extra: 1 }],
+      }).success,
+    ).toBe(false);
+  });
 });
 
 describe("attributePredicateSchema (discriminated on op)", () => {

@@ -238,3 +238,46 @@ test.describe("cross-tenant isolation (ADR 0083, inherited via SECURITY INVOKER)
     expect(ownSize).toBeGreaterThan(0);
   });
 });
+
+test.describe("grammar enforcement at the RPC boundary (ADR 0089)", () => {
+  test("the database rejects malformed rules a direct caller could send past Zod", async () => {
+    const bob = await signIn("bob@capcom.dev");
+    // Each raw rule violates the closed grammar; fn_segment_validate_rule must raise 22023
+    // (Zod guards the client, but a direct RPC bypasses it — the DB is the real boundary).
+    const badRules: Rule[] = [
+      { match: "any", attributes: [], behaviors: [] }, // OR is a deferred boundary
+      { attributes: [{ op: "eq", value: "pro" }] }, // missing key
+      { attributes: [{ key: "plan", op: "between", value: "pro" }] }, // unknown op
+      { attributes: [{ key: "plan", op: "in", value: "pro" }] }, // in value not an array
+      { behaviors: [{ event: "purchase", op: "at_least", count: -1 }] }, // negative count
+      { behaviors: [{ event: "purchase", op: "at_least", count: 1.5 }] }, // non-integer count
+      { behaviors: [{ event: "purchase", op: "exactly", count: 1 }] }, // unknown op
+    ];
+    for (const rule of badRules) {
+      const { error } = await bob.rpc("fn_segment_size", {
+        p_project_id: AURORA_WEB_PROJECT,
+        p_rule: rule,
+        p_from: FROM,
+        p_to: TO,
+      });
+      expect(
+        error,
+        `expected a rejection for ${JSON.stringify(rule)}`,
+      ).not.toBeNull();
+      expect(error?.code).toBe("22023");
+    }
+  });
+
+  test("fn_segment_distribution rejects an unsupported dimension", async () => {
+    const bob = await signIn("bob@capcom.dev");
+    const { error } = await bob.rpc("fn_segment_distribution", {
+      p_project_id: AURORA_WEB_PROJECT,
+      p_rule: {},
+      p_dimension: "bogus", // not a real trait dimension
+      p_from: FROM,
+      p_to: TO,
+    });
+    expect(error).not.toBeNull();
+    expect(error?.code).toBe("22023");
+  });
+});

@@ -299,10 +299,14 @@ describe("SegmentBuilder", () => {
     renderBuilder(vi.fn(), { rule: segmentParsers.rule.serialize(seeded) });
     const pro = await screen.findByRole("checkbox", { name: "pro" });
     expect(pro).toBeChecked();
+    await waitFor(() => expect(fetchSegmentSize).toHaveBeenCalled());
+    fetchSegmentSize.mockClear();
 
     await userEvent.click(pro); // attempt to uncheck the only value
-    // The guard short-circuits: "pro" remains checked, the predicate is unchanged.
-    expect(pro).toBeChecked();
+    // The guard short-circuits: re-query the (possibly remounted) checkbox — it stays
+    // checked — and no new query is driven, so the predicate is genuinely unchanged.
+    expect(screen.getByRole("checkbox", { name: "pro" })).toBeChecked();
+    expect(fetchSegmentSize).not.toHaveBeenCalled();
   });
 
   it("switches an 'in' predicate back to eq, taking the first value", async () => {

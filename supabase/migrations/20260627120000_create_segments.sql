@@ -49,6 +49,96 @@
 -- Actions. PR-7 ships NO table: a segment is an ephemeral, URL-state-shareable rule.
 
 -- ---------------------------------------------------------------------------
+-- fn_segment_validate_rule — enforce the closed ADR 0089 grammar on a segment rule.
+--
+-- The rule is USER-AUTHORED data; the Zod `[segment]` schema validates it on the client,
+-- but a direct RPC caller bypasses that, so the DATABASE re-validates the whole grammar
+-- before either aggregation interprets it: `match` is "all" (OR/nesting is a deferred
+-- boundary), every attribute predicate is {key:string, op:eq|neq|in, value:string | (for
+-- `in`) a non-empty array of strings}, every behavioural predicate is {event:string,
+-- op:at_least|at_most, count: a non-negative integer}. Any deviation raises 22023. The
+-- function only INSPECTS its argument — no table reads, no dynamic SQL — hence `immutable`.
+-- Shared by both aggregations so the closed grammar lives in exactly one place.
+-- ---------------------------------------------------------------------------
+create function public.fn_segment_validate_rule(p_rule jsonb)
+  returns void
+  language plpgsql
+  immutable
+  security invoker
+  set search_path = ''
+as $$
+-- Every comparison is NULL-safe: an ABSENT field yields SQL NULL, and `x <> 'string'`
+-- on NULL is NULL (not true), which would let a malformed predicate slip through. So type
+-- checks use `is distinct from`, operator membership uses `coalesce(..., '')`, and the
+-- shape-dependent checks use CASE so a cast/`jsonb_array_elements` only runs once the type
+-- is confirmed (a non-array `in` value or a non-number count never reaches a raising cast).
+begin
+  if jsonb_typeof(p_rule) is distinct from 'object' then
+    raise exception 'segment rule must be a json object' using errcode = '22023';
+  end if;
+  -- AND-only composition: `match`, when present, must be "all" (ADR 0089).
+  if coalesce(p_rule ->> 'match', 'all') <> 'all' then
+    raise exception 'segment rule "match" must be "all"' using errcode = '22023';
+  end if;
+  if p_rule ? 'attributes' and jsonb_typeof(p_rule -> 'attributes') <> 'array' then
+    raise exception 'segment rule "attributes" must be an array' using errcode = '22023';
+  end if;
+  if p_rule ? 'behaviors' and jsonb_typeof(p_rule -> 'behaviors') <> 'array' then
+    raise exception 'segment rule "behaviors" must be an array' using errcode = '22023';
+  end if;
+  -- Every attribute predicate: an object with a string key, a known op, and a value whose
+  -- shape matches the op (a string for eq/neq; a non-empty array of strings for `in`).
+  if exists (
+    select 1
+    from jsonb_array_elements(coalesce(p_rule -> 'attributes', '[]'::jsonb)) as ap
+    where jsonb_typeof(ap) is distinct from 'object'
+      or jsonb_typeof(ap -> 'key') is distinct from 'string'
+      or coalesce(ap ->> 'op', '') not in ('eq', 'neq', 'in')
+      or (
+        coalesce(ap ->> 'op', '') in ('eq', 'neq')
+        and jsonb_typeof(ap -> 'value') is distinct from 'string'
+      )
+      or (
+        coalesce(ap ->> 'op', '') = 'in'
+        and case jsonb_typeof(ap -> 'value')
+          when 'array' then
+            jsonb_array_length(ap -> 'value') = 0
+            or exists (
+              select 1 from jsonb_array_elements(ap -> 'value') as v
+              where jsonb_typeof(v) is distinct from 'string'
+            )
+          else true -- absent or non-array `in` value is invalid
+        end
+      )
+  ) then
+    raise exception 'segment rule contains an invalid attribute predicate'
+      using errcode = '22023';
+  end if;
+  -- Every behavioural predicate: an object with a string event, a known op, and a
+  -- non-negative integer count (so the matching block's `::bigint` cast is always safe).
+  if exists (
+    select 1
+    from jsonb_array_elements(coalesce(p_rule -> 'behaviors', '[]'::jsonb)) as bp
+    where jsonb_typeof(bp) is distinct from 'object'
+      or jsonb_typeof(bp -> 'event') is distinct from 'string'
+      or coalesce(bp ->> 'op', '') not in ('at_least', 'at_most')
+      or case jsonb_typeof(bp -> 'count')
+        when 'number' then
+          (bp ->> 'count')::numeric < 0
+          or (bp ->> 'count')::numeric <> trunc((bp ->> 'count')::numeric)
+        else true -- absent or non-number count is invalid
+      end
+  ) then
+    raise exception 'segment rule contains an invalid behaviour predicate'
+      using errcode = '22023';
+  end if;
+end;
+$$;
+
+comment on function public.fn_segment_validate_rule(jsonb) is
+  'Enforce the closed ADR 0089 segment-rule grammar (match=all, predicate shapes/ops, non-negative integer counts); raises 22023 on any deviation. Inspects the argument only — no table reads, no dynamic SQL.';
+
+-- ---------------------------------------------------------------------------
 -- fn_segment_size — count of distinct tracked users matching a segment rule (ADR 0089).
 --
 -- The base population is `profiles` (the tracked users keyed by (project_id,
@@ -81,40 +171,12 @@ begin
     raise exception 'fn_segment_size requires non-null project, rule, from, and to'
       using errcode = '22023';
   end if;
-  -- The rule must be a json object, and its predicate lists (when present) arrays —
-  -- so jsonb_array_elements below never errors on a scalar. A typed contract; the Zod
-  -- `[segment]` schema (ADR 0017) is the client-side authority, this is the DB guard.
-  if jsonb_typeof(p_rule) <> 'object' then
-    raise exception 'segment rule must be a json object' using errcode = '22023';
-  end if;
-  if p_rule ? 'attributes' and jsonb_typeof(p_rule -> 'attributes') <> 'array' then
-    raise exception 'segment rule "attributes" must be an array' using errcode = '22023';
-  end if;
-  if p_rule ? 'behaviors' and jsonb_typeof(p_rule -> 'behaviors') <> 'array' then
-    raise exception 'segment rule "behaviors" must be an array' using errcode = '22023';
-  end if;
-  -- Each behavioural predicate's `count` must be a number, so the `::bigint` cast in
-  -- the matching block yields a clean 22023 rather than a 22P02 cast error on a
-  -- hand-crafted non-numeric value — the Zod `[segment]` schema (ADR 0017) is the
-  -- client-side authority; this keeps the DB guard's error class uniform.
-  if exists (
-    select 1 from jsonb_array_elements(coalesce(p_rule -> 'behaviors', '[]'::jsonb)) as bp
-    where jsonb_typeof(bp -> 'count') is distinct from 'number'
-  ) then
-    raise exception 'segment behaviour predicate "count" must be a number'
-      using errcode = '22023';
-  end if;
-  -- An `in` attribute predicate's `value` must be an array, so jsonb_array_elements_text
-  -- in the matching block yields a clean 22023 rather than a raw scalar-extraction error
-  -- — symmetric with the count guard above (the Zod `[segment]` schema is the client
-  -- authority).
-  if exists (
-    select 1 from jsonb_array_elements(coalesce(p_rule -> 'attributes', '[]'::jsonb)) as ap
-    where ap ->> 'op' = 'in' and jsonb_typeof(ap -> 'value') is distinct from 'array'
-  ) then
-    raise exception 'segment attribute "in" predicate value must be an array'
-      using errcode = '22023';
-  end if;
+  -- Enforce the closed ADR 0089 grammar at the RPC boundary (match + every predicate's
+  -- shape/operator/operand). The Zod `[segment]` schema is the client authority; this
+  -- makes the DATABASE the real enforcement point for a grammar a direct RPC caller could
+  -- otherwise bypass — no SQL is ever built from the rule, so this is validation, not
+  -- interpretation. Raises 22023 on any malformed rule.
+  perform public.fn_segment_validate_rule(p_rule);
   -- The behavioural window must be non-empty (half-open [from, to)).
   if p_to <= p_from then
     raise exception 'analysis window must be non-empty: from % must precede to %', p_from, p_to
@@ -205,37 +267,15 @@ begin
     raise exception 'fn_segment_distribution requires non-null project, rule, dimension, from, and to'
       using errcode = '22023';
   end if;
-  if jsonb_typeof(p_rule) <> 'object' then
-    raise exception 'segment rule must be a json object' using errcode = '22023';
-  end if;
-  if p_rule ? 'attributes' and jsonb_typeof(p_rule -> 'attributes') <> 'array' then
-    raise exception 'segment rule "attributes" must be an array' using errcode = '22023';
-  end if;
-  if p_rule ? 'behaviors' and jsonb_typeof(p_rule -> 'behaviors') <> 'array' then
-    raise exception 'segment rule "behaviors" must be an array' using errcode = '22023';
-  end if;
-  -- Each behavioural predicate's `count` must be a number, so the `::bigint` cast in
-  -- the matching block yields a clean 22023 rather than a 22P02 cast error on a
-  -- hand-crafted non-numeric value — the Zod `[segment]` schema (ADR 0017) is the
-  -- client-side authority; this keeps the DB guard's error class uniform.
-  if exists (
-    select 1 from jsonb_array_elements(coalesce(p_rule -> 'behaviors', '[]'::jsonb)) as bp
-    where jsonb_typeof(bp -> 'count') is distinct from 'number'
-  ) then
-    raise exception 'segment behaviour predicate "count" must be a number'
+  -- `p_dimension` is one trait dimension (ADR 0089) — reject anything else rather than
+  -- silently collapsing every matched user into the `(unknown)` bucket and returning
+  -- misleading data.
+  if p_dimension not in ('plan', 'country', 'device', 'referrer') then
+    raise exception 'segment distribution dimension must be one of plan, country, device, referrer'
       using errcode = '22023';
   end if;
-  -- An `in` attribute predicate's `value` must be an array, so jsonb_array_elements_text
-  -- in the matching block yields a clean 22023 rather than a raw scalar-extraction error
-  -- — symmetric with the count guard above (the Zod `[segment]` schema is the client
-  -- authority).
-  if exists (
-    select 1 from jsonb_array_elements(coalesce(p_rule -> 'attributes', '[]'::jsonb)) as ap
-    where ap ->> 'op' = 'in' and jsonb_typeof(ap -> 'value') is distinct from 'array'
-  ) then
-    raise exception 'segment attribute "in" predicate value must be an array'
-      using errcode = '22023';
-  end if;
+  -- Enforce the closed ADR 0089 grammar at the RPC boundary (see fn_segment_validate_rule).
+  perform public.fn_segment_validate_rule(p_rule);
   if p_to <= p_from then
     raise exception 'analysis window must be non-empty: from % must precede to %', p_from, p_to
       using errcode = '22023';
@@ -292,6 +332,11 @@ comment on function public.fn_segment_distribution(uuid, jsonb, text, timestampt
 -- non-member already sees nothing; restricting EXECUTE keeps anon out of the call
 -- surface entirely, matching the PR-2 helper and PR-4/5/6 aggregation idiom.
 -- ---------------------------------------------------------------------------
+-- The shared validator is called by the SECURITY INVOKER aggregations as the invoking
+-- member, so `authenticated` needs EXECUTE on it too; anon stays out of the call surface.
+revoke execute on function public.fn_segment_validate_rule(jsonb) from public;
+grant execute on function public.fn_segment_validate_rule(jsonb) to authenticated;
+
 revoke execute on function
   public.fn_segment_size(uuid, jsonb, timestamptz, timestamptz)
 from public;
