@@ -55,6 +55,9 @@ jobs:
           # AI_MODEL = the provider's model id (e.g. gemini-2.5-flash). ADR 0075.
           AI_BASE_URL: ${{ vars.AI_BASE_URL }}
           AI_MODEL: ${{ vars.AI_MODEL }}
+          # Optional per-provider output-token budget; raise for reasoning models so the
+          # hidden thinking doesn't exhaust it and return empty content (ADR 0075).
+          AI_MAX_TOKENS: ${{ vars.AI_MAX_TOKENS }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           DIFF_BASE: ${{ github.event.pull_request.base.ref }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,6 +67,9 @@ jobs:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           AI_BASE_URL: ${{ vars.AI_BASE_URL }}
           AI_MODEL: ${{ vars.AI_MODEL }}
+          # Optional per-provider output-token budget; raise for reasoning models so the
+          # hidden thinking doesn't exhaust it and return empty content (ADR 0075).
+          AI_MAX_TOKENS: ${{ vars.AI_MAX_TOKENS }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           DIFF_BASE: ${{ github.event.pull_request.base.ref }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -89,6 +95,9 @@ jobs:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           AI_BASE_URL: ${{ vars.AI_BASE_URL }}
           AI_MODEL: ${{ vars.AI_MODEL }}
+          # Optional per-provider output-token budget; raise for reasoning models so the
+          # hidden thinking doesn't exhaust it and return empty content (ADR 0075).
+          AI_MAX_TOKENS: ${{ vars.AI_MAX_TOKENS }}
           CHANGELOG_RANGE: origin/main..HEAD
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -32,6 +32,14 @@ const review = await advise({
   payload: `\`\`\`diff\n${diff.slice(0, 180000)}\n\`\`\``,
 });
 
+if (!review) {
+  console.log(
+    "ai-pr-review: model returned no content — skipping the advisory comment " +
+      "(see the finish_reason logged above). No empty comment is posted.",
+  );
+  process.exit(0);
+}
+
 const body = `### 🤖 [AI] Advisory general review\n\n${review}`;
 postPrComment(process.env.PR_NUMBER, body);
 console.log("ai-pr-review: advisory posted.");

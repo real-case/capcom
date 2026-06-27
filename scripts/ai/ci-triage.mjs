@@ -34,6 +34,14 @@ const triage = await advise({
   payload: `Failing CI log (tail):\n\`\`\`\n${log.slice(-120000)}\n\`\`\``,
 });
 
+if (!triage) {
+  console.log(
+    "ai-ci-triage: model returned no content — skipping the advisory comment " +
+      "(see the finish_reason logged above). No empty comment is posted.",
+  );
+  process.exit(0);
+}
+
 const body = `### 🤖 [AI] Advisory CI-failure triage\n\n${triage}`;
 postPrComment(process.env.PR_NUMBER, body);
 console.log("ai-ci-triage: advisory posted.");

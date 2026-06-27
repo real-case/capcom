@@ -45,6 +45,14 @@ const draft = await advise({
   payload: `Commits in ${range}:\n${commits}`,
 });
 
+if (!draft) {
+  console.log(
+    "ai-changelog: model returned no content — skipping the draft and comment " +
+      "(see the finish_reason logged above). No empty draft is written or posted.",
+  );
+  process.exit(0);
+}
+
 writeFileSync("CHANGELOG.draft.md", `${draft}\n`);
 const body = `### 🤖 [AI] Advisory changelog draft\n\n${draft}`;
 postPrComment(process.env.PR_NUMBER, body);
