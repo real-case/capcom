@@ -47,4 +47,13 @@ export const queryKeys = {
     conversion: (args: Record<string, unknown>) =>
       [...queryKeys.funnel.all, "conversion", args] as const,
   },
+  // PR-6 retention cohorts (ADR 0088/0084/0086). Keyed by the exact `fn_retention`
+  // argument bag, so changing any control (range / period) is a distinct cache entry,
+  // and a broad `retention.all` invalidate cascades.
+  retention: {
+    all: ["retention"] as const,
+    /** A retention-cohort query, keyed by its `fn_retention` argument bag. */
+    cohorts: (args: Record<string, unknown>) =>
+      [...queryKeys.retention.all, "cohorts", args] as const,
+  },
 } as const;

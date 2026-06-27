@@ -6,21 +6,26 @@
 
 ## Status
 
-| PR    | Theme                                       | State                          |
-| ----- | ------------------------------------------- | ------------------------------ |
-| PR-0  | Bootstrap                                   | ✅ merged                      |
-| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                      |
-| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                      |
-| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**          |
-| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**          |
-| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**          |
-| PR-5  | Funnels (ordered-step conversion, ADR 0087) | 🔧 **ready on `feat/funnels`** |
-| PR-6  | Retention cohort grid                       | ⬅️ **next**                    |
-| PR-7+ | Segmentation → Dashboards → AI → Landing    | ⏳                             |
+| PR    | Theme                                       | State                            |
+| ----- | ------------------------------------------- | -------------------------------- |
+| PR-0  | Bootstrap                                   | ✅ merged                        |
+| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                        |
+| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                        |
+| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**            |
+| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**            |
+| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**            |
+| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**            |
+| PR-6  | Retention cohort grid (ADR 0088)            | 🔧 **ready on `feat/retention`** |
+| PR-7+ | Segmentation → Dashboards → AI → Landing    | ⏳                               |
 
-Accepted ADRs run 0001–**0087**. PR-5 added **ADR 0087** (funnel conversion semantics,
-accepted) — the residual decision 0084 left open. 0083 identity/event model, 0084
-aggregation, 0085 ingestion contract, 0086 charting remain the accepted foundation.
+Accepted ADRs run 0001–**0087**. PR-6 drafted **ADR 0088** (retention cohort semantics) as
+**`proposed`** — it awaits the human acceptance gate before this branch merges (the one gate
+the agent cannot pass; CLAUDE.md is **not** synced for 0088 until then). 0083 identity/event
+model, 0084 aggregation, 0085 ingestion contract, 0086 charting, and 0087 funnel semantics
+remain the accepted foundation. **Note the numbering shift:** the roadmap pencilled 0088 for
+segmentation, but retention's semantics warranted a record first — so PR-7 segmentation is now
+**0089**, PR-9 AI **0090** (numbers are the next free ID from `adr.py next`, not the roadmap's
+indicative mapping).
 
 ## How to resume (environment — read first)
 
@@ -196,13 +201,64 @@ p_window interval)` → `setof (step_index, step_event, users)`. A `with recursi
   (empty/loading/error/overflow under axe). **Coverage 94.81%.** All gates green; build via
   the e2e webServer.
 
-## Next: PR-6 — Retention cohort grid
+## What PR-6 shipped (PR-7 builds on this)
 
-SQL function for cohort retention (cohort by first-seen period; retained in period _N_),
-reusing the `SECURITY INVOKER` RPC + token-visx-widget pattern. `widgets/cohort-grid`
-renders the **heatmap** — the densest infographic in the demo — with a token-driven
-sequential color scale (`--color-viz-sequential-*`). Feature/widget `retention`. No new ADR
-expected (0084/0086 cover it) unless the cohort/period semantics warrant one (then ADR 0088).
+Third aggregation surface — acquisition-cohort retention — the signature dense heatmap,
+reusing the PR-4/PR-5 `SECURITY INVOKER` RPC + token-visx-widget pattern, end-to-end on real
+RLS.
+
+- **ADR 0088 (proposed — awaits human acceptance):** the retention **cohort semantics** 0084
+  left open — **acquisition cohorts** (calendar period of a user's global first-touch, included
+  only if that first-touch is in `[from, to)`; pre-existing users not re-counted),
+  **calendar-aligned** week/month periods, **classic active-in-period** retention (active in
+  that exact period; reappearance allowed; curve not necessarily monotonic), counting
+  **distinct users**, any event as a return. Drafted `proposed` → `adr.py lint`/`index` green.
+  Rolling "through-N", per-user rolling windows, a specific return event, and daily granularity
+  are stated scope boundaries. **The `proposed → accepted` flip + the CLAUDE.md sync are the
+  outstanding human steps before merge** (mirrors the PR-5 0087 flow).
+- **Migration `create_retention`:** `fn_retention(p_project_id, p_from, p_to, p_period text)` →
+  `setof (cohort_period, cohort_size, period_offset, retained_users)`. Per-user `min(ts)` cohort
+  - distinct `(user, active_period)` set + a generated triangular offset **spine** (zero-filled,
+    like the PR-4 trend spine). Week offsets use date subtraction (`/7`), month offsets the
+    `year*12+month` index diff — both DST-robust (no epoch arithmetic). `SECURITY INVOKER` +
+    pinned `search_path` + `set timezone = 'UTC'` (deterministic calendar buckets) +
+    `#variable_conflict use_column`; guards reject NULL arguments, a non-week/month period, and
+    an empty/inverted date range (`p_to ≤ p_from`); `EXECUTE` to `authenticated` only.
+    `gen:types` regenerated.
+    **`supabase-rls-reviewer` ran clean** (live non-member/member/anon probes; injection probe on
+    `p_period`; no SQL change).
+- **Entity:** `entities/event` gained `RetentionCell` / `RetentionArgs` (generated RPC types)
+  and `fetchRetention` — a thin `.rpc()` call, no client-side reduction (ADR 0084).
+- **Widget `retention-grid`:** nuqs URL-state (analysis `range` + cohort `period` — a shareable
+  link, ADR 0027) drives a TanStack hook over the RPC; internal visx-token `CohortGrid` segment
+  is presentational, token-only SVG (ADR 0086), and derives the cell **percentage**
+  (`retained/cohort_size`) in the widget (display, not SQL reduction — ADR 0088) with the
+  **sequential** data-viz palette (`--color-viz-sequential-*`, ADR 0081) bucketed to 5 bins and
+  per-bin text contrast. One widget slice (FSD: a feature can't import widgets), same as
+  trends/funnels. **Naming:** slice `retention-grid` → `<RetentionGrid>` (wiring) →
+  `<CohortGrid>` (heatmap); the roadmap's `widgets/cohort-grid` + separate `feature retention`
+  split is invalid under FSD, identical to the PR-4/PR-5 reconciliation.
+- **Page:** `/(app)/p/[projectId]/retention` (RLS-404), linked from the overview alongside
+  trends/funnels. `Retention` i18n namespace + `ProjectOverview.openRetention` added; coverage
+  excludes the new route in `vitest.config.mts` (mirrors funnels).
+- **Tests:** `e2e/retention.spec.ts` proves the offset-0 = cohort-size baseline, the subset
+  bound, the triangular+contiguous shape, distinct-user cohorting (via exact `profiles`/`events`
+  head counts — no PostgREST page-cap trap) and first-touch exclusion (narrowing the window
+  shrinks the cohort population), the week/month + guard behaviour, and cross-tenant
+  **empty-not-error** (non-member → zero rows, `error === null`) — same pinned
+  `SEED_EVENTS_ANCHOR=2026-06-24T12:00:00.000Z` window discipline as trends/funnels. Unit:
+  `fetchRetention` shape, nuqs url-state round-trip, the `RetentionGrid` component (real hooks
+  via `NuqsTestingAdapter`), and `CohortGrid` stories (empty/loading/error/overflow/monthly/dark
+  under axe). **Coverage 95.64%.** All gates green; the heatmap was visually verified (dense
+  triangle, light + dark) before handoff.
+
+## Next: PR-7 — Segmentation
+
+**ADR 0089** (not 0088 — retention took that) records the segment-definition model (attribute
+predicates + behavioral rules). Migration `create_segments` stores the rule JSON; a
+`SECURITY INVOKER` SQL function computes segment size and distribution, reusing the same RPC +
+token-visx-widget pattern. Feature/widget `segment-builder` + `widgets/segment-distribution`
+(one slice under FSD).
 
 ## Conventions (don't re-derive)
 

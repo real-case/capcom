@@ -271,6 +271,20 @@ export type Database = {
           users: number;
         }[];
       };
+      fn_retention: {
+        Args: {
+          p_from: string;
+          p_period: string;
+          p_project_id: string;
+          p_to: string;
+        };
+        Returns: {
+          cohort_period: string;
+          cohort_size: number;
+          period_offset: number;
+          retained_users: number;
+        }[];
+      };
       fn_top_events: {
         Args: {
           p_from: string;
