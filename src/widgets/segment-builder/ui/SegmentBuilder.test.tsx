@@ -136,8 +136,11 @@ describe("SegmentBuilder", () => {
     await waitFor(() => expect(fetchSegmentSize).toHaveBeenCalled());
     fetchSegmentSize.mockClear();
 
-    // The single attribute predicate's trait select (aria-label "Trait").
-    await userEvent.selectOptions(screen.getByLabelText("Trait"), "Country");
+    // The single attribute predicate's trait select (aria-label indexed per row).
+    await userEvent.selectOptions(
+      screen.getByLabelText("Trait for attribute 1"),
+      "Country",
+    );
 
     // withKey resets the value to the first country option (US), keeping the rule valid.
     await waitFor(() =>
@@ -158,7 +161,7 @@ describe("SegmentBuilder", () => {
 
     // eq → in: withOp wraps the single value "pro" into ["pro"].
     await userEvent.selectOptions(
-      screen.getByLabelText("Condition"),
+      screen.getByLabelText("Condition for attribute 1"),
       "is any of",
     );
     await waitFor(() =>
@@ -206,7 +209,7 @@ describe("SegmentBuilder", () => {
     fetchSegmentSize.mockClear();
 
     await userEvent.selectOptions(
-      screen.getByLabelText("Frequency"),
+      screen.getByLabelText("Frequency for behavior 1"),
       "at most",
     );
     await waitFor(() =>
@@ -227,7 +230,7 @@ describe("SegmentBuilder", () => {
     fetchSegmentSize.mockClear();
 
     // A single deterministic change event (clampCount parses it to an int).
-    fireEvent.change(screen.getByLabelText("Count"), {
+    fireEvent.change(screen.getByLabelText("Count for behavior 1"), {
       target: { value: "3" },
     });
     await waitFor(() =>
@@ -279,6 +282,50 @@ describe("SegmentBuilder", () => {
           p_rule: expect.objectContaining({
             attributes: [],
             behaviors: [{ event: "purchase", op: "at_least", count: 1 }],
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("keeps the last 'in' value checked (the min-1 guard is a no-op)", async () => {
+    // Seed an in-rule with exactly one value; unchecking it must be a no-op so the rule
+    // stays schema-valid (an in-predicate needs ≥ 1 value, ADR 0089).
+    const seeded: SegmentRule = {
+      match: "all",
+      attributes: [{ key: "plan", op: "in", value: ["pro"] }],
+      behaviors: [],
+    };
+    renderBuilder(vi.fn(), { rule: segmentParsers.rule.serialize(seeded) });
+    const pro = await screen.findByRole("checkbox", { name: "pro" });
+    expect(pro).toBeChecked();
+
+    await userEvent.click(pro); // attempt to uncheck the only value
+    // The guard short-circuits: "pro" remains checked, the predicate is unchanged.
+    expect(pro).toBeChecked();
+  });
+
+  it("switches an 'in' predicate back to eq, taking the first value", async () => {
+    // Seed an in-rule with two values; eq can hold only one, so withOp keeps the first.
+    const seeded: SegmentRule = {
+      match: "all",
+      attributes: [{ key: "plan", op: "in", value: ["pro", "enterprise"] }],
+      behaviors: [],
+    };
+    renderBuilder(vi.fn(), { rule: segmentParsers.rule.serialize(seeded) });
+    await waitFor(() => expect(fetchSegmentSize).toHaveBeenCalled());
+    fetchSegmentSize.mockClear();
+
+    await userEvent.selectOptions(
+      screen.getByLabelText("Condition for attribute 1"),
+      "is",
+    );
+    await waitFor(() =>
+      expect(fetchSegmentSize).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          p_rule: expect.objectContaining({
+            attributes: [{ key: "plan", op: "eq", value: "pro" }],
           }),
         }),
       ),

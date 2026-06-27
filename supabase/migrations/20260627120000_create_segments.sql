@@ -104,6 +104,17 @@ begin
     raise exception 'segment behaviour predicate "count" must be a number'
       using errcode = '22023';
   end if;
+  -- An `in` attribute predicate's `value` must be an array, so jsonb_array_elements_text
+  -- in the matching block yields a clean 22023 rather than a raw scalar-extraction error
+  -- — symmetric with the count guard above (the Zod `[segment]` schema is the client
+  -- authority).
+  if exists (
+    select 1 from jsonb_array_elements(coalesce(p_rule -> 'attributes', '[]'::jsonb)) as ap
+    where ap ->> 'op' = 'in' and jsonb_typeof(ap -> 'value') is distinct from 'array'
+  ) then
+    raise exception 'segment attribute "in" predicate value must be an array'
+      using errcode = '22023';
+  end if;
   -- The behavioural window must be non-empty (half-open [from, to)).
   if p_to <= p_from then
     raise exception 'analysis window must be non-empty: from % must precede to %', p_from, p_to
@@ -212,6 +223,17 @@ begin
     where jsonb_typeof(bp -> 'count') is distinct from 'number'
   ) then
     raise exception 'segment behaviour predicate "count" must be a number'
+      using errcode = '22023';
+  end if;
+  -- An `in` attribute predicate's `value` must be an array, so jsonb_array_elements_text
+  -- in the matching block yields a clean 22023 rather than a raw scalar-extraction error
+  -- — symmetric with the count guard above (the Zod `[segment]` schema is the client
+  -- authority).
+  if exists (
+    select 1 from jsonb_array_elements(coalesce(p_rule -> 'attributes', '[]'::jsonb)) as ap
+    where ap ->> 'op' = 'in' and jsonb_typeof(ap -> 'value') is distinct from 'array'
+  ) then
+    raise exception 'segment attribute "in" predicate value must be an array'
       using errcode = '22023';
   end if;
   if p_to <= p_from then

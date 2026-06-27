@@ -150,7 +150,7 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
             <li key={i} className="flex flex-wrap items-center gap-2">
               <select
                 className={selectClass}
-                aria-label={t("traitLabel")}
+                aria-label={t("traitLabel", { n: i + 1 })}
                 value={pred.key}
                 onChange={(e) =>
                   setAttribute(i, withKey(pred, e.target.value as TraitKey))
@@ -164,7 +164,7 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
               </select>
               <select
                 className={selectClass}
-                aria-label={t("opLabel")}
+                aria-label={t("opLabel", { n: i + 1 })}
                 value={pred.op}
                 onChange={(e) =>
                   setAttribute(i, withOp(pred, e.target.value as AttributeOp))
@@ -178,7 +178,7 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
               </select>
               <AttributeValue
                 pred={pred}
-                groupLabel={t("valueLabel")}
+                groupLabel={t("valueLabel", { n: i + 1 })}
                 onChange={(next) => setAttribute(i, next)}
               />
               <RemoveButton
@@ -211,7 +211,7 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
             <li key={i} className="flex flex-wrap items-center gap-2">
               <select
                 className={selectClass}
-                aria-label={t("eventLabel")}
+                aria-label={t("eventLabel", { n: i + 1 })}
                 value={pred.event}
                 onChange={(e) =>
                   setBehavior(i, {
@@ -228,7 +228,7 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
               </select>
               <select
                 className={selectClass}
-                aria-label={t("behaviorOpLabel")}
+                aria-label={t("behaviorOpLabel", { n: i + 1 })}
                 value={pred.op}
                 onChange={(e) =>
                   setBehavior(i, { ...pred, op: e.target.value as BehaviorOp })
@@ -244,7 +244,7 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
                 type="number"
                 min={0}
                 className={`${selectClass} w-20 tabular-nums`}
-                aria-label={t("countLabel")}
+                aria-label={t("countLabel", { n: i + 1 })}
                 value={pred.count}
                 onChange={(e) =>
                   setBehavior(i, { ...pred, count: clampCount(e.target.value) })
