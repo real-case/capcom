@@ -157,3 +157,98 @@ values
   ('0a000000-0000-0000-0000-0000000000a1', 'page_view', 'seed-aurora-web-2', '{"path":"/pricing"}', now() - interval '1 day'),
   ('0b000000-0000-0000-0000-0000000000b1', 'page_view', 'seed-globex-1', '{"path":"/"}', now() - interval '1 day'),
   ('0b000000-0000-0000-0000-0000000000b1', 'purchase', 'seed-globex-1', '{"amount":99}', now() - interval '3 hours');
+
+-- ── Saved analyses (PR-8 / ADR 0090) ──────────────────────────────────────────
+-- A fourth member, dave, is an ANALYST of Aurora Labs. He brackets the write-RBAC
+-- boundary precisely against bob (viewer of the same org): dave may create/edit/delete
+-- reports & dashboards, bob may only read them (e2e/dashboards.spec.ts). alice (owner)
+-- and carol (owner of Globex) keep proving "above the threshold" and "isolation".
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password,
+  email_confirmed_at, created_at, updated_at,
+  raw_app_meta_data, raw_user_meta_data
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    'dddd4444-4444-4444-4444-444444444444',
+    'authenticated', 'authenticated', 'dave@capcom.dev',
+    extensions.crypt('password123', extensions.gen_salt('bf')),
+    now(), now(), now(),
+    '{"provider":"email","providers":["email"]}', '{}'
+  );
+
+update auth.users
+set
+  confirmation_token = '',
+  recovery_token = '',
+  email_change = '',
+  email_change_token_new = '',
+  email_change_token_current = '',
+  phone_change = '',
+  phone_change_token = '',
+  reauthentication_token = ''
+where id = 'dddd4444-4444-4444-4444-444444444444';
+
+insert into auth.identities (
+  id, user_id, provider_id, provider, identity_data,
+  created_at, updated_at, last_sign_in_at
+)
+values
+  (
+    gen_random_uuid(),
+    'dddd4444-4444-4444-4444-444444444444',
+    'dddd4444-4444-4444-4444-444444444444', 'email',
+    '{"sub":"dddd4444-4444-4444-4444-444444444444","email":"dave@capcom.dev","email_verified":true}',
+    now(), now(), now()
+  );
+
+insert into public.memberships (user_id, organization_id, role)
+values
+  ('dddd4444-4444-4444-4444-444444444444', '0a000000-0000-0000-0000-000000000001', 'analyst');
+
+-- A few saved reports in Aurora Web (a1), owned by alice. config is each widget's
+-- URL-state (ADR 0027) — the same shapes the widgets' Zod schemas validate (ADR 0017);
+-- stored opaque here. Fixed ids so the dashboard composition and e2e are deterministic.
+insert into public.reports (id, project_id, owner_id, name, kind, config)
+values
+  (
+    'd0000000-0000-0000-0000-000000000001',
+    '0a000000-0000-0000-0000-0000000000a1',
+    'aaaa1111-1111-1111-1111-111111111111',
+    'Daily page views',
+    'trends',
+    '{"event":"page_view","range":"30d","interval":"day","breakdown":"none"}'::jsonb
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000002',
+    '0a000000-0000-0000-0000-0000000000a1',
+    'aaaa1111-1111-1111-1111-111111111111',
+    'Acquisition funnel',
+    'funnel',
+    '{"steps":["page_view","sign_up","feature_used","purchase"],"range":"90d","window":"30d"}'::jsonb
+  ),
+  (
+    'd0000000-0000-0000-0000-000000000003',
+    '0a000000-0000-0000-0000-0000000000a1',
+    'aaaa1111-1111-1111-1111-111111111111',
+    'Paying purchasers by country',
+    'segment',
+    '{"rule":{"match":"all","attributes":[{"key":"plan","op":"eq","value":"pro"}],"behaviors":[{"event":"purchase","op":"at_least","count":1}]},"dimension":"country","range":"90d"}'::jsonb
+  );
+
+-- One dashboard composing the trends + funnel reports (positions 0, 1). The segment
+-- report stays uncomposed so the e2e can prove add/remove against a known baseline.
+insert into public.dashboards (id, project_id, owner_id, name)
+values
+  (
+    'da000000-0000-0000-0000-000000000001',
+    '0a000000-0000-0000-0000-0000000000a1',
+    'aaaa1111-1111-1111-1111-111111111111',
+    'Acquisition overview'
+  );
+
+insert into public.dashboard_reports (project_id, dashboard_id, report_id, position)
+values
+  ('0a000000-0000-0000-0000-0000000000a1', 'da000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 0),
+  ('0a000000-0000-0000-0000-0000000000a1', 'da000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000002', 1);

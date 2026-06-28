@@ -22,4 +22,23 @@ describe("queryKeys", () => {
     const b = queryKeys.trends.series({ p_interval: "week" });
     expect(a).not.toEqual(b);
   });
+
+  // PR-8 (ADR 0090): the writable entities are list/detail-shaped, so an optimistic
+  // mutation invalidates the project's list and a broad root invalidate cascades.
+  it("nests report list/detail under the report root", () => {
+    expect(queryKeys.report.all).toEqual(["report"]);
+    expect(queryKeys.report.list("p1")).toEqual(["report", "list", "p1"]);
+    expect(queryKeys.report.detail("r1")).toEqual(["report", "detail", "r1"]);
+    expect(queryKeys.report.list("p1")[0]).toBe(queryKeys.report.all[0]);
+  });
+
+  it("nests dashboard list/detail under the dashboard root", () => {
+    expect(queryKeys.dashboard.all).toEqual(["dashboard"]);
+    expect(queryKeys.dashboard.list("p1")).toEqual(["dashboard", "list", "p1"]);
+    expect(queryKeys.dashboard.detail("d1")).toEqual([
+      "dashboard",
+      "detail",
+      "d1",
+    ]);
+  });
 });

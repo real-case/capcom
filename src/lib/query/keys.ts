@@ -69,4 +69,31 @@ export const queryKeys = {
     distribution: (args: Record<string, unknown>) =>
       [...queryKeys.segment.all, "distribution", args] as const,
   },
+  // PR-8 saved analyses (ADR 0090) — the first WRITABLE entities, so the keys are
+  // list/detail-shaped (not RPC-arg-shaped) and an optimistic mutation invalidates the
+  // affected list. A broad `report.all` / `dashboard.all` invalidate cascades.
+  report: {
+    all: ["report"] as const,
+    /** All report lists. */
+    lists: () => [...queryKeys.report.all, "list"] as const,
+    /** One project's saved reports. */
+    list: (projectId: string) =>
+      [...queryKeys.report.lists(), projectId] as const,
+    /** All report details. */
+    details: () => [...queryKeys.report.all, "detail"] as const,
+    /** One report by id. */
+    detail: (id: string) => [...queryKeys.report.details(), id] as const,
+  },
+  dashboard: {
+    all: ["dashboard"] as const,
+    /** All dashboard lists. */
+    lists: () => [...queryKeys.dashboard.all, "list"] as const,
+    /** One project's dashboards (each with its composed reports). */
+    list: (projectId: string) =>
+      [...queryKeys.dashboard.lists(), projectId] as const,
+    /** All dashboard details. */
+    details: () => [...queryKeys.dashboard.all, "detail"] as const,
+    /** One dashboard by id. */
+    detail: (id: string) => [...queryKeys.dashboard.details(), id] as const,
+  },
 } as const;

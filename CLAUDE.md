@@ -317,6 +317,14 @@ still-proposed._
   measured from step 1. Step counts are non-increasing by construction; conversion **rates** are
   presentation (a ratio of two already-reduced counts), not SQL reduction. Per-step property
   filters, breakdowns, and multi-attempt counting are stated scope boundaries.
+- Retention cohort semantics are fixed (0088, refining 0084): **acquisition cohorts** (the calendar
+  period of a user's **global first-touch**, counted only if that first-touch falls in `[from, to)`;
+  pre-existing users are not re-counted), **calendar-aligned** week/month periods, **classic
+  active-in-period** retention (active in that exact period; reappearance allowed, so the curve is
+  not necessarily monotonic), counting **distinct users**, any event a return. Cells are zero-filled
+  over a triangular offset spine; the **percentage** (`retained/cohort_size`) is presentation, not
+  SQL reduction. Rolling through-N, per-user rolling windows, a specific return event, and daily
+  granularity are stated scope boundaries.
 - The segment-definition model is fixed (0089, refining 0084): a segment is a closed `jsonb` rule
   of **attribute** predicates over `profiles.traits` (`key` with `eq | neq | in`) and
   **behavioural** predicates over `events` (`event` with `at_least | at_most` a count in the
@@ -326,8 +334,9 @@ still-proposed._
   compared as `jsonb`/parameters, never concatenated. Output is a distinct-user **size** + a
   **distribution** by one trait dimension (absent traits folded into `(unknown)`); percentages are
   presentation, not SQL reduction. The rule is one nuqs-encodable value (a shareable segment link,
-  0027). OR/nested logic, per-predicate windows, numeric `properties` predicates, and **saved/named
-  segment persistence (deferred to PR-8 Server Actions)** are stated scope boundaries.
+  0027). OR/nested logic, per-predicate windows, and numeric `properties` predicates are stated
+  scope boundaries; **saved/named segment persistence**, deferred here, is realized in PR-8 as a
+  `kind='segment'` report (0090).
 - Event ingestion is a single `POST /api/ingest` route handler on the Node runtime (0085): a Zod
   `[ingest]` batch authenticated by a per-project ingest key (hashed at rest) that resolves
   server-side to one `project_id`; the write runs in a confined trusted server-only context
@@ -338,6 +347,15 @@ still-proposed._
   chart widgets are presentational — they receive reduced rows as props (TanStack Query over the
   0084 RPCs) and own no fetching or aggregation; SVG carries explicit a11y roles and renders
   deterministically for Chromatic.
+- Saved analyses are persisted data (0090): a **report** is one `reports(kind, config jsonb)` row
+  storing the originating widget's **URL-state** (0027) validated by that widget's Zod schema (0017)
+  — `kind ∈ trends | funnel | retention | segment`, opened by hydrating nuqs state; a **dashboard**
+  composes reports through an ordered `dashboard_reports` join (a **simple layout** — ordering only,
+  no grid geometry); a **saved segment** persists as a `kind='segment'` report, realizing 0089's
+  deferred persistence with no extra table. Persistence is written through **Server Actions under
+  the caller's RLS** (0013/0020) returning a discriminated result, with the **optimistic-mutation
+  default** (0025) — the first member write path. Owner-scoped editing, rich grid layout, and a
+  reusable cross-analysis segment table are stated scope boundaries.
 
 ## Restrictions
 
@@ -407,7 +425,14 @@ still-proposed._
   built into SQL with dynamic-SQL/`EXECUTE`; the bounded predicate grammar is the injection
   boundary, evaluation stays `SECURITY INVOKER` under the caller's RLS, and segment composition is
   AND-only (genuine OR/nesting is a deferred boundary). No `segments` table or write path in PR-7 —
-  persistence is deferred to PR-8 (0089).
+  persistence is deferred to PR-8, where it lands as a `kind='segment'` report (0089, 0090).
+- The `reports` / `dashboards` / `dashboard_reports` tables are the first member-writable domain
+  tables (0090): RLS deny-by-default, `SELECT` scoped by `is_member(project_id)`, and
+  `INSERT/UPDATE/DELETE` gated at `has_role(project_id, 'analyst')` so **viewer is read-only**;
+  `owner_id` is stamped from `auth.uid()` and never asserted by the client, `project_id` is checked
+  through the membership join, and there is **no service-role write path** — writes are Server
+  Actions under the caller's RLS (0013/0020/0025). Edit is role-based (not owner-scoped), the layout
+  is ordering-only, and a reusable cross-analysis segment table are stated scope boundaries.
 - The ingest-key write path is server-only and never reaches client code; it is confined to the
   resolved `project_id`, the key is compared against a hash (never logged), and its rotation is a
   human-only action (0085, 0013/0046). No ingestion SDK, queue, or high-volume pipeline — the

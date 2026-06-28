@@ -17,6 +17,7 @@ export const buttonIntent = {
       "src/features/auth-by-email/ui/SignInForm.tsx",
       "src/features/auth-by-email/ui/SignOutButton.tsx",
       "src/features/auth-by-email/ui/SignUpForm.tsx",
+      "src/widgets/dashboard/ui/DashboardBoard.tsx",
     ],
   },
   usageRole: "action-trigger",

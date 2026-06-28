@@ -160,7 +160,17 @@ export default defineConfig({
         // e2e. Its builder client, the `fetchSegment*` RPC fetchers, the nuqs url-state,
         // the `[segment]` rule schema, and the SegmentDistribution widget are tested directly.
         "src/app/[locale]/*/p/*/segments/page.tsx",
+        // PR-8 (ADR 0090): the dashboards route, same shape as segments above — an async
+        // Server Component resolving the project under RLS, covered by `next build` +
+        // e2e. Its manager client, the report/dashboard fetchers, the optimistic mutation
+        // hooks, and the DashboardBoard widget are tested directly.
+        "src/app/[locale]/*/p/*/dashboards/page.tsx",
         "src/features/auth-by-email/api/actions.ts",
+        // PR-8 (ADR 0090): the saved-analysis Server Actions ("use server") run on the
+        // Node runtime under the caller's RLS and can't execute under jsdom — covered by
+        // `next build` + the dashboards e2e (write-RBAC + composition). Their input
+        // schemas (the [report] envelope) are unit-tested directly.
+        "src/features/report-actions/api/actions.ts",
         // PR-3 (ADR 0085): the ingest route handler imports the server-only
         // service-role client and builds NextResponse on the Node runtime — it
         // can't execute under jsdom. It is exercised by `next build` + the ingest

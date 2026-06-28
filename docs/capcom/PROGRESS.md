@@ -6,28 +6,30 @@
 
 ## Status
 
-| PR    | Theme                                       | State                               |
-| ----- | ------------------------------------------- | ----------------------------------- |
-| PR-0  | Bootstrap                                   | ✅ merged                           |
-| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                           |
-| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                           |
-| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**               |
-| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**               |
-| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**               |
-| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**               |
-| PR-6  | Retention cohort grid (ADR 0088)            | ✅ **merged (PR #10/#11)**          |
-| PR-7  | Segmentation (ADR 0089)                     | 🔧 **ready on `feat/segmentation`** |
-| PR-8+ | Dashboards → AI → Landing                   | ⏳                                  |
+| PR    | Theme                                       | State                             |
+| ----- | ------------------------------------------- | --------------------------------- |
+| PR-0  | Bootstrap                                   | ✅ merged                         |
+| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                         |
+| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                         |
+| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**             |
+| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**             |
+| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**             |
+| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**             |
+| PR-6  | Retention cohort grid (ADR 0088)            | ✅ **merged (PR #10/#11)**        |
+| PR-7  | Segmentation (ADR 0089)                     | ✅ **merged (PR #12)**            |
+| PR-8  | Dashboards & saved reports (ADR 0090)       | 🔧 **ready on `feat/dashboards`** |
+| PR-9+ | AI query → Public landing                   | ⏳                                |
 
-Accepted ADRs run 0001–**0087** and **0089**. PR-7 drafted **ADR 0089** (segment-definition
-model) and it was **human-accepted** (CLAUDE.md synced). **ADR 0088** (retention cohort
-semantics) remains **`proposed`** — its acceptance was deliberately deferred, so 0089 was
-accepted ahead of it; 0088's `proposed → accepted` flip + its CLAUDE.md sync are still
-outstanding human steps (the retention code merged in PR #10/#11 already depends on it). 0083
-identity/event model, 0084 aggregation, 0085 ingestion contract, 0086 charting, and 0087 funnel
-semantics remain the accepted foundation. **Note the numbering shift:** the roadmap pencilled
-0088 for segmentation, but retention's semantics took 0088 first — so segmentation is **0089**,
-and PR-9 AI will be the next free ID from `adr.py next`, not the roadmap's indicative mapping.
+Accepted ADRs now run **0001–0090, all accepted** (the corpus has no open `proposed` record).
+PR-8 drafted **ADR 0090** (saved-analysis persistence + member-write RBAC) — `app.adr-review`
+READY → **human-accepted** → CLAUDE.md synced. The same human step also cleared the PR-6 tail:
+**ADR 0088** (retention cohort semantics) was **accepted** alongside 0090, and the one CLAUDE.md
+sync covered both. 0083 identity/event model, 0084 aggregation, 0085 ingestion contract, 0086
+charting, 0087 funnel semantics, 0088 retention semantics, and 0089 segment model remain the
+accepted foundation. **Numbering:** the roadmap pencilled 0088 for segmentation, but retention
+took 0088, segmentation became 0089, and dashboards-persistence took **0090** (the roadmap had
+no ADR for PR-8 — but the first writable-table RBAC decision warranted one, matching how PR-5/6/7
+each recorded their semantics). PR-9 AI takes the next free id from `adr.py next` **if** it needs one.
 
 ## How to resume (environment — read first)
 
@@ -305,13 +307,69 @@ end-to-end on real RLS.
   stories (empty/loading/error/overflow/dark under axe). **Coverage 94.74%.** All gates green;
   build emits the segments route. `.cspell` gained `behavioural`, `metacharacters`.
 
-## Next: PR-8 — Dashboards & saved reports
+## What PR-8 shipped (PR-9 builds on this)
 
-Migration for `reports` / `dashboards` (saved chart configs + a simple layout) — **the home for
-the deferred `segments` persistence (ADR 0089)**. **Server Actions** (ADR 0020) persist reports
-and segments with the optimistic-mutation default (ADR 0025). Feature `dashboard` + a layout
-widget; reports reopen straight from their nuqs URL state. 🎨 Design checkpoint (the dashboard
-composition) — the latest point to provide a Figma source (read-only, token-conformant).
+The first member-**writable** surface — saved reports composed onto dashboards — proving Server
+Actions + the optimistic-mutation default on real RLS, end to end. Code-first (no Figma; the 🎨
+checkpoint was declined). All gates green; coverage 87% statements / 89% lines (≥80, ADR 0008).
+
+- **ADR 0090 (accepted):** the **saved-analysis persistence model + write-RBAC** the roadmap left
+  unrecorded. A **report** is one `reports(kind, config jsonb)` row storing the originating widget's
+  URL-state (ADR 0027), validated by that widget's Zod schema (ADR 0017) and stored **opaque** at
+  rest; a **dashboard** composes reports through an ordered `dashboard_reports` join (a "simple
+  layout" — ordering only); writes are RBAC-gated. Drafted `proposed` → `app.adr-review` READY →
+  **human-accepted** → CLAUDE.md synced (2 Conventions + 1 Restrictions line; the retention 0088
+  line landed in the same sync). **Refines 0089**: the deferred segment persistence lands as a
+  `kind='segment'` report's config, not a dedicated `segments.definition` column (no extra table).
+- **Migration `create_reports_dashboards`:** `reports`, `dashboards`, `dashboard_reports` (+ the
+  `report_kind` enum). **First member-writable tables** — the inverse of events/profiles: members
+  WRITE directly, gated by RLS over the isolation (ADR 0090): `select` = `is_member(project_id)`,
+  `insert/update/delete` = `has_role(project_id,'analyst')` so **viewer is read-only**; `owner_id`
+  defaults to and is `with check`-pinned to `auth.uid()` (unspoofable); **no service-role write
+  path**. Same-project composition is a **structural** guarantee — `dashboard_reports` carries
+  `project_id` with composite FKs to `dashboards(id,project_id)` / `reports(id,project_id)`, so a
+  board can never compose another tenant's report. `gen:types` regenerated. **`supabase-rls-reviewer`
+  ran clean** (11 live impersonation probes as alice/bob/carol/dave/anon, all rolled back).
+- **Entities:** `entities/report` (the config contract — `[report]` envelope, `reportKindRoute`,
+  the `config → URLSearchParams` reopen serializer mirroring each widget's nuqs encoding, per-kind
+  defaults, RLS-scoped fetchers) and `entities/dashboard` (composed `DashboardWithReports` fetch +
+  position sort). **FSD note:** config stays **opaque jsonb** at the entity (the owning surface
+  widget validates its grammar on reopen, exactly as ADR 0090 specifies) — so the entity never
+  imports the higher `widgets` layer; `entities/dashboard` derives its row types from
+  `@/lib/supabase`, not the sibling `entities/report` (same-layer isolation).
+- **Server Actions (`features/report-actions`):** `"use server"` create/rename/delete report +
+  dashboard, add/remove/reorder — the first UI write path. Zod-validated (uuid-**shape** regex, not
+  strict v4 — the seed uses uuid-shaped ids), request-scoped `createClient()` under the caller's
+  RLS, discriminated `{ ok }` results (never throws); 42501 → `forbidden`, an RLS-filtered 0-row
+  update/delete → `not_found`. Coverage-excluded (Node-runtime); its input schemas are unit-tested.
+- **Widget `widgets/dashboard`:** `DashboardManager` (container) wires the reads + **optimistic
+  mutation hooks** (`onMutate` cache update → rollback on error → `onSettled` invalidate, ADR 0025)
+  to a presentational `DashboardBoard` (RHF create forms, token-only, a11y; the `status-critical`
+  tokens for the rejected-write banner so it clears AA contrast). **Self-contained write surface:**
+  the four analysis widgets are **untouched** — reports reopen by deep-linking `/<surface>?<config>`
+  which they already hydrate from URL-state. A per-surface "Save this analysis" button is a noted
+  follow-up boundary. One widget slice (FSD), like trends/funnels/retention/segments.
+- **Page:** `/(app)/p/[projectId]/dashboards` (RLS-404), linked from the overview; `Dashboards`
+  i18n namespace + `ProjectOverview.openDashboards` (and the overview placeholder copy refreshed);
+  coverage excludes the route + the actions in `vitest.config.mts`.
+- **Tests:** `e2e/dashboards.spec.ts` (7) proves write-RBAC (analyst `dave` writes; viewer `bob`
+  INSERT → 42501, UPDATE/DELETE → 0 rows, seed intact), owner-spoof rejection, cross-tenant
+  isolation (`carol` sees no Aurora rows / 42501), composition + **reorder** persistence, and
+  cross-project composition rejected — same seeded-impersonation discipline as the RLS specs. Unit:
+  the config serializer + `[report]`/action/form schemas, both entity fetchers, the query keys, and
+  the `DashboardManager` container (real optimistic hooks via mocked actions/fetchers, incl. the
+  rejected-write rollback). Stories (empty/loading/error/action-error/overflow/dark + create/delete
+  & reorder **play** functions) under axe. **Seed:** added `dave` (analyst@Aurora) + 3 saved reports
+  - an "Acquisition overview" dashboard. `.cspell` gained spoofable/unspoofable/unvalidated/introspectable.
+
+## Next: PR-9 — AI natural-language query
+
+Feature `ai-query`: a natural-language prompt → a Zod query-spec → the existing aggregation RPCs →
+a chart, on the **provider-agnostic advisory-AI client** (ADR 0075); it **sleeps without
+`AI_API_KEY`** with a graceful fallback. **ADR 00xx** (next free id from `adr.py next`) records the
+NL → query-spec contract **if** the mapping needs a decision. After PR-9 comes PR-10 (public landing
+
+- i18n/SEO + README case study; re-enable the DEV-001/DEV-002 CI suites before the first `dev → main`).
 
 ## Conventions (don't re-derive)
 
