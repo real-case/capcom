@@ -14,6 +14,7 @@ export const buttonIntent = {
     compositionSignature: [],
     composedOf: [],
     usedIn: [
+      "src/features/ai-query/ui/AiQueryPanel.tsx",
       "src/features/auth-by-email/ui/SignInForm.tsx",
       "src/features/auth-by-email/ui/SignOutButton.tsx",
       "src/features/auth-by-email/ui/SignUpForm.tsx",

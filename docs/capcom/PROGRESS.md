@@ -6,21 +6,24 @@
 
 ## Status
 
-| PR    | Theme                                       | State                             |
-| ----- | ------------------------------------------- | --------------------------------- |
-| PR-0  | Bootstrap                                   | ✅ merged                         |
-| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                         |
-| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                         |
-| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**             |
-| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**             |
-| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**             |
-| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**             |
-| PR-6  | Retention cohort grid (ADR 0088)            | ✅ **merged (PR #10/#11)**        |
-| PR-7  | Segmentation (ADR 0089)                     | ✅ **merged (PR #12)**            |
-| PR-8  | Dashboards & saved reports (ADR 0090)       | 🔧 **ready on `feat/dashboards`** |
-| PR-9+ | AI query → Public landing                   | ⏳                                |
+| PR    | Theme                                       | State                           |
+| ----- | ------------------------------------------- | ------------------------------- |
+| PR-0  | Bootstrap                                   | ✅ merged                       |
+| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                       |
+| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                       |
+| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**           |
+| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**           |
+| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**           |
+| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**           |
+| PR-6  | Retention cohort grid (ADR 0088)            | ✅ **merged (PR #10/#11)**      |
+| PR-7  | Segmentation (ADR 0089)                     | ✅ **merged (PR #12)**          |
+| PR-8  | Dashboards & saved reports (ADR 0090)       | ✅ **merged (PR #13)**          |
+| PR-9  | AI natural-language query (ADR 0091)        | 🔧 **ready on `feat/ai-query`** |
+| PR-10 | Public landing + i18n/SEO + README          | ⏳                              |
 
-Accepted ADRs now run **0001–0090, all accepted** (the corpus has no open `proposed` record).
+Accepted ADRs now run **0001–0091, all accepted** (the corpus has no open `proposed` record).
+PR-9 drafted **ADR 0091** (AI NL→query-spec contract) — `app.adr-review` READY → **human-accepted**
+→ CLAUDE.md synced (1 Stack + 1 Conventions + 1 Restrictions line).
 PR-8 drafted **ADR 0090** (saved-analysis persistence + member-write RBAC) — `app.adr-review`
 READY → **human-accepted** → CLAUDE.md synced. The same human step also cleared the PR-6 tail:
 **ADR 0088** (retention cohort semantics) was **accepted** alongside 0090, and the one CLAUDE.md
@@ -362,14 +365,51 @@ checkpoint was declined). All gates green; coverage 87% statements / 89% lines (
   & reorder **play** functions) under axe. **Seed:** added `dave` (analyst@Aurora) + 3 saved reports
   - an "Acquisition overview" dashboard. `.cspell` gained spoofable/unspoofable/unvalidated/introspectable.
 
-## Next: PR-9 — AI natural-language query
+## What PR-9 shipped (PR-10 builds on this)
 
-Feature `ai-query`: a natural-language prompt → a Zod query-spec → the existing aggregation RPCs →
-a chart, on the **provider-agnostic advisory-AI client** (ADR 0075); it **sleeps without
-`AI_API_KEY`** with a graceful fallback. **ADR 00xx** (next free id from `adr.py next`) records the
-NL → query-spec contract **if** the mapping needs a decision. After PR-9 comes PR-10 (public landing
+The AI natural-language query surface — a free-text prompt translated **server-side** into a closed,
+Zod-validated query-spec that **deep-links** to an existing analysis surface. No migration, no new
+SQL, no new chart code: PR-9 is purely the NL→spec translation layer over PR-4–8's surfaces. All
+gates green; coverage 90.88% statements / 93.43% lines (≥80, ADR 0008). Code-first (no Figma).
 
-- i18n/SEO + README case study; re-enable the DEV-001/DEV-002 CI suites before the first `dev → main`).
+- **ADR 0091 (accepted):** the **NL→query-spec contract** — the model returns a closed `{ kind, config }`
+  discriminated union (a report minus its name, reusing 0090's shape), validated by one `[ai-query]`
+  Zod schema that is the **injection boundary** (0089 extended to model output): bad output is
+  **rejected, never coerced**. Interpretation = **deep-link** via 0090's `reportKindRoute` +
+  `reportConfigToSearchParams`, so the slice never calls an RPC or renders a chart (FSD downward-only —
+  the deep-link sidesteps the `feature → widgets` tension). No-key fallback = a **deterministic offline
+  interpreter**. Drafted `proposed` → `app.adr-review` READY → **human-accepted** → CLAUDE.md synced.
+- **Runtime AI client (`src/lib/ai`):** the app-side sibling of `scripts/ai/lib.mjs` (ADR 0075) — a
+  provider-neutral, OpenAI-compatible `fetch` client, **server-only** (the `AI_*` vars live behind the
+  `env.server.ts` fence, ADR 0018); `isAiConfigured()` gates the live path. `AI_API_KEY`/`AI_BASE_URL`/
+  `AI_MODEL`/`AI_MAX_TOKENS` added to `env.server.ts`; `.env.example` notes the runtime use. No provider
+  is hardwired (the chosen "fully neutral" option).
+- **Feature `features/ai-query`:** `model/` holds the closed `[ai-query]` spec (discriminated union
+  reusing `entities/segment`'s rule + mirroring the three small trends/funnel/retention enums — the
+  0090 `defaultConfigForKind` mirror posture), the **deterministic offline interpreter** (a bounded
+  keyword mapper, NOT NLU — returns null on no intent), the model prompt + **safe parser**
+  (`safeParse`, drops extra keys), and the **pure `translate` orchestration** (the AI client is
+  **injected**, so it's unit-tested without server-only — the stubbed-AI happy path + the no-key happy
+  path). `api/actions.ts` is the `"use server"` translateQuery action (auth-gated token spend, no DB
+  work, coverage-excluded). `ui/` is the container + presentational panel (offline banner, prompt box,
+  example chips, interpreted-spec summary + "Open analysis →" deep-link). One feature slice; imports
+  only downward (`entities/report`, `entities/segment`, `@/lib/ai`) — `check:boundaries` clean.
+- **Page:** `/(app)/p/[projectId]/ask` (RLS-404 like the surfaces), linked from the overview; `AiQuery`
+  i18n namespace + `ProjectOverview.openAiQuery`; coverage excludes the route + the action + `src/lib/ai/**`.
+- **Tests:** `e2e/ai-query.spec.ts` — the **first browser UI journey beyond smoke**: UI sign-in →
+  `/ask` → server-side translate (offline interpreter, keyless) → follow the deep-link onto the trends
+  surface; robust to whether a key is provisioned (both engines map the fixture prompts the same).
+  Unit: the spec schema (accept/round-trip/reject — the injection-boundary shape), the interpreter
+  (the four example intents + the canonical fixture + unrecognized→null), the prompt safe-parser, the
+  translate orchestration (no-key + stubbed-model + fallback paths), and the panel + manager (real
+  hook, action mocked). Stories (default/offline/pending/trends/segment/unrecognized/dark + an Ask
+  play) under axe. `.cspell` gained `parameterizes`.
+
+## Next: PR-10 — Public landing, i18n/SEO, README case study
+
+The lead-gen surface: public landing + i18n/SEO polish + a README case study. **Re-enable the
+DEV-001/DEV-002 CI suites** (Playwright e2e + migration-replay; Storybook test-runner smoke) before
+the first `dev → main` production promotion. No new aggregation expected; mostly app-shell + content.
 
 ## Conventions (don't re-derive)
 
