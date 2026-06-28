@@ -95,6 +95,12 @@ export default async function ProjectOverviewPage({
           >
             {t("openDashboards")}
           </Link>
+          <Link
+            href={`/p/${projectId}/ask`}
+            className="inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("openAiQuery")}
+          </Link>
         </div>
       </div>
     </div>

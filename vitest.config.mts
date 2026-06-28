@@ -110,6 +110,13 @@ export default defineConfig({
         // server-only). They can't execute under jsdom and are exercised by
         // `next build` + e2e once feature routes land.
         "src/lib/supabase/**",
+        // PR-9 (ADR 0091): the runtime AI client imports the server-only env
+        // (the AI secret) — `server-only` throws under jsdom, so it can't be
+        // imported by a unit test; it's exercised by `next build` + the ai-query
+        // e2e. Its pure translation logic (spec/interpreter/prompt/translate) lives
+        // in the feature model layer and is unit-tested directly with a stubbed
+        // client (ADR 0018/0075/0091).
+        "src/lib/ai/**",
         // ADR 0019/0025/0027 Next-runtime wiring: the global error boundary
         // renders its own <html>, the localized not-found and catch-all use the
         // router/Next request lifecycle, and the provider tree mounts
@@ -165,12 +172,23 @@ export default defineConfig({
         // e2e. Its manager client, the report/dashboard fetchers, the optimistic mutation
         // hooks, and the DashboardBoard widget are tested directly.
         "src/app/[locale]/*/p/*/dashboards/page.tsx",
+        // PR-9 (ADR 0091): the AI-query route, same shape as the surfaces above — an
+        // async Server Component resolving the project under RLS + reading
+        // `isAiConfigured()` (server-only), covered by `next build` + the ai-query
+        // e2e. Its manager client, the translation orchestration, and the panel are
+        // tested directly.
+        "src/app/[locale]/*/p/*/ask/page.tsx",
         "src/features/auth-by-email/api/actions.ts",
         // PR-8 (ADR 0090): the saved-analysis Server Actions ("use server") run on the
         // Node runtime under the caller's RLS and can't execute under jsdom — covered by
         // `next build` + the dashboards e2e (write-RBAC + composition). Their input
         // schemas (the [report] envelope) are unit-tested directly.
         "src/features/report-actions/api/actions.ts",
+        // PR-9 (ADR 0091): the translation Server Action ("use server") imports the
+        // server-only AI client + getCurrentUser — it can't execute under jsdom.
+        // Covered by `next build` + the ai-query e2e; the pure `translate`
+        // orchestration it wraps is unit-tested directly with a stubbed client.
+        "src/features/ai-query/api/actions.ts",
         // PR-3 (ADR 0085): the ingest route handler imports the server-only
         // service-role client and builds NextResponse on the Node runtime — it
         // can't execute under jsdom. It is exercised by `next build` + the ingest
