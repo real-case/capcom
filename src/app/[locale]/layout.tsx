@@ -58,11 +58,15 @@ export async function generateMetadata({
       description: t("description"),
       locale,
       url: alternates.canonical ?? undefined,
+      // Static OG card, resolved against metadataBase (ADR 0031). A committed asset
+      // rather than a dynamic next/og route (that would be its own decision).
+      images: [{ url: "/og.png", width: 1200, height: 630, alt: t("title") }],
     },
     twitter: {
       card: "summary_large_image",
       title: t("title"),
       description: t("description"),
+      images: ["/og.png"],
     },
   };
 }
