@@ -215,4 +215,81 @@ describe("DashboardManager", () => {
       await screen.findByText(/analyst access is required/i),
     ).toBeInTheDocument();
   });
+
+  it("creates a dashboard through the action", async () => {
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByText("Growth overview");
+
+    await user.type(screen.getByLabelText("Dashboard name"), "New board");
+    await user.click(screen.getByRole("button", { name: "Create dashboard" }));
+
+    await waitFor(() =>
+      expect(actions.createDashboard).toHaveBeenCalledWith({
+        projectId: "p1",
+        name: "New board",
+      }),
+    );
+  });
+
+  it("renames a report inline through the action", async () => {
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByRole("button", { name: "Delete report Daily sign-ups" });
+
+    await user.click(
+      screen.getByRole("button", { name: "Rename report Daily sign-ups" }),
+    );
+    const input = screen.getByRole("textbox", {
+      name: "Rename report Daily sign-ups",
+    });
+    await user.clear(input);
+    await user.type(input, "Daily views");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() =>
+      expect(actions.renameReport).toHaveBeenCalledWith({
+        id: "r1",
+        name: "Daily views",
+      }),
+    );
+  });
+
+  it("removes a composed report from a dashboard", async () => {
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByText("Growth overview");
+
+    await user.click(
+      screen.getByRole("button", {
+        name: "Remove Daily sign-ups from dashboard",
+      }),
+    );
+    await waitFor(() =>
+      expect(actions.removeReportFromDashboard).toHaveBeenCalledWith({
+        itemId: "i1",
+      }),
+    );
+  });
+
+  it("rolls back a rejected dashboard create (onError path of a dashboard hook)", async () => {
+    actions.createDashboard.mockResolvedValue({
+      ok: false,
+      error: "forbidden",
+    });
+    const user = userEvent.setup();
+    renderManager();
+    await screen.findByText("Growth overview");
+
+    await user.type(screen.getByLabelText("Dashboard name"), "Denied board");
+    await user.click(screen.getByRole("button", { name: "Create dashboard" }));
+
+    expect(
+      await screen.findByText(/analyst access is required/i),
+    ).toBeInTheDocument();
+    // The optimistic row was rolled back — only the seeded dashboard remains.
+    await waitFor(() =>
+      expect(screen.queryByText("Denied board")).not.toBeInTheDocument(),
+    );
+  });
 });

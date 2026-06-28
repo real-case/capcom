@@ -25,6 +25,8 @@ import {
 import { queryKeys } from "@/lib/query/keys";
 import type { Database, Json } from "@/lib/supabase/database.types";
 
+import { OPTIMISTIC_ID_PREFIX } from "../model/optimistic";
+
 /**
  * Optimistic mutation hooks for saved analyses (ADR 0025/0090) — the optimistic-mutation
  * default applied to the first member write path. Each follows the canonical shape:
@@ -62,7 +64,7 @@ function nowIso() {
 
 /** A throwaway client-side id for an optimistic row, replaced on settle by server truth. */
 function tempId() {
-  return `temp-${crypto.randomUUID()}`;
+  return `${OPTIMISTIC_ID_PREFIX}${crypto.randomUUID()}`;
 }
 
 // ── Reports ──────────────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ import {
   type DashboardFormValues,
   type ReportFormValues,
 } from "../model/forms";
+import { isOptimisticId } from "../model/optimistic";
 
 /**
  * Presentational dashboard board (ADR 0086 split): it renders saved reports and
@@ -374,7 +375,11 @@ function DashboardCard({
 }) {
   const itemIds = dashboard.items.map((i) => i.id);
   const composedReportIds = new Set(dashboard.items.map((i) => i.report.id));
-  const available = reports.filter((r) => !composedReportIds.has(r.id));
+  // Exclude reports already on the board, and any not-yet-persisted optimistic row (its
+  // temp id has no `reports` row, so composing it would fail the FK — ADR 0025/0090).
+  const available = reports.filter(
+    (r) => !composedReportIds.has(r.id) && !isOptimisticId(r.id),
+  );
 
   const move = (index: number, delta: number) => {
     const next = [...itemIds];
