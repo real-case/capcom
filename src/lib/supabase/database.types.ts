@@ -34,6 +34,90 @@ export type Database = {
   };
   public: {
     Tables: {
+      dashboard_reports: {
+        Row: {
+          created_at: string;
+          dashboard_id: string;
+          id: string;
+          position: number;
+          project_id: string;
+          report_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          dashboard_id: string;
+          id?: string;
+          position?: number;
+          project_id: string;
+          report_id: string;
+        };
+        Update: {
+          created_at?: string;
+          dashboard_id?: string;
+          id?: string;
+          position?: number;
+          project_id?: string;
+          report_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "dashboard_reports_dashboard_id_project_id_fkey";
+            columns: ["dashboard_id", "project_id"];
+            isOneToOne: false;
+            referencedRelation: "dashboards";
+            referencedColumns: ["id", "project_id"];
+          },
+          {
+            foreignKeyName: "dashboard_reports_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "dashboard_reports_report_id_project_id_fkey";
+            columns: ["report_id", "project_id"];
+            isOneToOne: false;
+            referencedRelation: "reports";
+            referencedColumns: ["id", "project_id"];
+          },
+        ];
+      };
+      dashboards: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          owner_id: string | null;
+          project_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          owner_id?: string | null;
+          project_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          owner_id?: string | null;
+          project_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "dashboards_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       events: {
         Row: {
           created_at: string;
@@ -236,6 +320,47 @@ export type Database = {
           },
         ];
       };
+      reports: {
+        Row: {
+          config: Json;
+          created_at: string;
+          id: string;
+          kind: Database["public"]["Enums"]["report_kind"];
+          name: string;
+          owner_id: string | null;
+          project_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          config?: Json;
+          created_at?: string;
+          id?: string;
+          kind: Database["public"]["Enums"]["report_kind"];
+          name: string;
+          owner_id?: string | null;
+          project_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          config?: Json;
+          created_at?: string;
+          id?: string;
+          kind?: Database["public"]["Enums"]["report_kind"];
+          name?: string;
+          owner_id?: string | null;
+          project_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reports_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -343,6 +468,7 @@ export type Database = {
     };
     Enums: {
       app_role: "owner" | "admin" | "analyst" | "viewer";
+      report_kind: "trends" | "funnel" | "retention" | "segment";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -477,6 +603,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["owner", "admin", "analyst", "viewer"],
+      report_kind: ["trends", "funnel", "retention", "segment"],
     },
   },
 } as const;
