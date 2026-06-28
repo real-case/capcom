@@ -94,3 +94,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0088](0088-retention-cohort-semantics.md) | Retention cohort semantics: acquisition cohorts, calendar periods, active-in-period | accepted | 2026-06-28 |
 | [0089](0089-segment-definition-model.md) | Segment-definition model: bounded predicate grammar, AND-composition, in-database evaluation | accepted | 2026-06-27 |
 | [0090](0090-saved-analyses-persistence-and-write-rbac.md) | Saved analyses: report / dashboard persistence model and member-write RBAC | accepted | 2026-06-28 |
+| [0091](0091-ai-natural-language-query-contract.md) | AI natural-language query: closed query-spec contract and untrusted-output interpretation | accepted | 2026-06-28 |

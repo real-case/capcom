@@ -112,3 +112,4 @@ unspoofable
 spoofable
 unvalidated
 introspectable
+parameterizes

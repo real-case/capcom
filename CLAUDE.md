@@ -127,6 +127,13 @@ still-proposed._
 - **Provider-agnostic advisory-AI client** (0075): OpenAI-compatible Chat Completions over
   `fetch` (zero-dep), reaching any compatible key (Gemini, OpenAI, OpenRouter, …); inert until
   `AI_API_KEY` is provisioned.
+- **AI natural-language query** (0091): a runtime sibling of the 0075 client under `src/lib/ai`
+  (provider-neutral, OpenAI-compatible `fetch`, server-only, inert without `AI_API_KEY`) translates a
+  free-text prompt **server-side** into a **closed, Zod-validated `{ kind, config }` query-spec** —
+  a discriminated union over the four analysis kinds reusing the report shape (0090) — which is
+  **interpreted by deep-linking** through 0090's `reportConfigToSearchParams` to the existing
+  `SECURITY INVOKER` surface (no new SQL / aggregation / chart renderer), with a **deterministic
+  offline interpreter** as the no-key fallback so the demo never crashes.
 - **Guardrail layers** (the three-layer control model): edit-time **Claude Code hooks**
   (`PreToolUse` guard + `PostToolUse` checks, 0076); **skills + review-subagents** as the
   structural/recall layer (advisory, never a gate's source of truth, 0077); **self-testing
@@ -356,6 +363,18 @@ still-proposed._
   the caller's RLS** (0013/0020) returning a discriminated result, with the **optimistic-mutation
   default** (0025) — the first member write path. Owner-scoped editing, rich grid layout, and a
   reusable cross-analysis segment table are stated scope boundaries.
+- The AI natural-language query is an NL→spec translation, not a new query surface (0091): a
+  **server-only Server Action** over the `src/lib/ai` client (0075/0018) returns a **closed,
+  Zod-validated `[ai-query]` `{ kind, config }` spec** (a report minus its name, 0090) — a
+  discriminated union over `trends | funnel | retention | segment` reusing each surface's URL-state
+  grammar (0017/0027). Model output is **rejected, never coerced** on any mismatch — the closed spec
+  is the injection boundary (0089 extended to model output) — and a valid spec **deep-links** to the
+  existing surface via `reportKindRoute` + `reportConfigToSearchParams` (0090), so the slice never
+  calls an RPC, builds a query, or renders a chart (no aggregation in app code, 0084; FSD
+  downward-only, no `widgets` import, 0065/0066). Without `AI_API_KEY` (or on an AI error) a
+  **deterministic offline interpreter** produces the same spec for curated demo intents (labeled
+  offline-demo mode) so the surface never crashes (0075). Conversational refinement, multi-analysis
+  output, streaming, and model-driven save-as-report are stated scope boundaries.
 
 ## Restrictions
 
@@ -439,3 +458,10 @@ still-proposed._
   seeded-data posture is a recorded scope boundary (0085).
 - Chart widgets carry no baked palette and no raw SVG `fill`/`stroke` — visx primitives are fed
   token values only and stay presentational (no data fetching or aggregation) (0086, 0058).
+- The AI model never emits SQL, an RPC name, a table/column, or a raw URL — only values inside the
+  closed `[ai-query]` spec grammar, which is the injection boundary (0091, extending 0089); output
+  outside it is rejected (`safeParse`), never coerced into a query. The AI call and `AI_API_KEY` are
+  **server-only** and never reach client code (0018/0075); the translation adds no SQL, no aggregation
+  in application code, and no chart renderer — it **deep-links** to the existing surfaces (0084/0090).
+  The deployed demo stays inert-but-alive without a key via the bounded deterministic interpreter;
+  provisioning a key upgrades to live translation with no code change (0075).
