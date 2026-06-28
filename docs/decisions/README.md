@@ -91,5 +91,6 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0085](0085-event-ingestion-contract.md) | Event ingestion contract | accepted | 2026-06-22 |
 | [0086](0086-charting-primitive-layer-visx.md) | Charting primitive layer: visx + design tokens | accepted | 2026-06-22 |
 | [0087](0087-funnel-conversion-semantics.md) | Funnel conversion semantics: ordered, first-touch, total conversion window | accepted | 2026-06-26 |
-| [0088](0088-retention-cohort-semantics.md) | Retention cohort semantics: acquisition cohorts, calendar periods, active-in-period | proposed | 2026-06-26 |
+| [0088](0088-retention-cohort-semantics.md) | Retention cohort semantics: acquisition cohorts, calendar periods, active-in-period | accepted | 2026-06-28 |
 | [0089](0089-segment-definition-model.md) | Segment-definition model: bounded predicate grammar, AND-composition, in-database evaluation | accepted | 2026-06-27 |
+| [0090](0090-saved-analyses-persistence-and-write-rbac.md) | Saved analyses: report / dashboard persistence model and member-write RBAC | accepted | 2026-06-28 |
