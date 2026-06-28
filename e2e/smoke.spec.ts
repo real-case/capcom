@@ -12,7 +12,9 @@ import { expect, test } from "@playwright/test";
 //
 // No error allowlist on purpose: with retries: 0 (ADR 0049) any noise shows
 // up immediately and must be fixed or excluded explicitly in review.
-// This is the template's one generic journey; feature journeys join it as routes land.
+// The home route is now the public landing (PR-10) — landing.spec.ts asserts its
+// content specifically; this stays the generic "renders + hydrates clean" alive-check
+// (the zero-console-error contract now also guards the landing's JSON-LD + markup).
 test("home page renders and hydrates cleanly", async ({ page }) => {
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
