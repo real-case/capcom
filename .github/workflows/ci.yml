@@ -220,33 +220,101 @@ jobs:
           COMMITLINT_TO: ${{ github.event.pull_request.head.sha }}
         run: npm run check:commits -- --verbose # ADR 0072
 
+  # ── e2e + migration replay (DEV-001, re-enabled PR-10) ──────────────────────
+  # ADR 0007/0010/0008: the Playwright e2e exercises the auth/RLS critical path and
+  # the feature journeys end-to-end. Re-armed before the first dev→main promotion
+  # (ADR 0011) per docs/deviations.md DEV-001. The job stands up the local Supabase
+  # stack on the runner (Docker is preinstalled), replays every migration + base
+  # seed, checks the generated DB types are in sync (ADR 0015), exports the LOCAL
+  # stack's dev service key (never a production secret, ADR 0046) so the ingest route
+  # under `next start` and the seed generator can use it, loads dense demo data at the
+  # pinned anchor the data-dense specs assert against, then runs the suite against the
+  # production build.
+  e2e:
+    name: e2e (Supabase + migration replay)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
-  # ── e2e job: deferred during bootstrap ──────────────────────────────────────
-  # ADR 0007/0010 commit the Playwright e2e to the CI gate (Supabase stack
-  # startup → migration replay → gen:types drift check → auth/RLS e2e). The job
-  # is not wired in yet because the Supabase image pulls (~3–4 min/run) dominate
-  # CI turnaround during bootstrap while there are no real feature components and
-  # no migrations to exercise yet. This is a deliberate, temporary deviation
-  # tracked in docs/deviations.md (DEV-001), NOT an ADR change — e2e-in-CI remains
-  # the target end-state.
-  #
-  # The specs still run locally on every change: `npm run test:e2e` (needs a
-  # local Supabase stack: `npx supabase start`).
-  #
-  # Re-enable before the first dev→main production promotion (ADR 0011): author
-  # the job (Supabase startup → migration replay → gen:types drift → auth/RLS
-  # e2e) — there is no prior job in this repo's history to recover.
+      - name: Set up Node 24 from .nvmrc (ADR 0004)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
 
-  # ── Storybook test-runner smoke: local-only during bootstrap (Phase 10) ─────
-  # ADR 0037 puts a `@storybook/test-runner` smoke pass over the *statically built*
-  # Storybook in CI (storybook build → serve → render + play, no axe, no coverage).
-  # It is deferred from CI for now — same lean-bootstrap rationale as the e2e job:
-  # it adds a Storybook build + serve + a second browser run, while the Vitest addon
-  # (browser-mode story tests + a11y + merged coverage, ADR 0037/0039/0041) already runs in
-  # the quality gate above and is the load-bearing engine. This is a deliberate,
-  # temporary deviation tracked in docs/deviations.md (DEV-002), NOT an ADR change.
-  #
-  # It runs LOCALLY on demand: `npm run build-storybook`, serve `storybook-static`
-  # (or `npm run storybook`), then `npm run test:storybook`.
-  #
-  # Re-enable with the e2e job before the first dev→main production promotion.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Start local Supabase (Docker on the runner)
+        run: npx supabase start
+
+      - name: Replay migrations + base seed (db reset)
+        run: npm run db:reset
+
+      - name: "[types] Generated DB types in sync (ADR 0015)"
+        run: |
+          npm run gen:types
+          git diff --exit-code -- src/lib/supabase/database.types.ts
+
+      - name: Export local Supabase dev keys for next start + seed generator
+        # The local stack's SECRET_KEY (a dev key, never a production secret — ADR
+        # 0046) is needed by the ingest route under `next start` and by the dense seed
+        # generator. Read it from `supabase status`; the public URL + publishable key
+        # already default to the local stack (src/lib/env.ts), so only the secret is set.
+        run: |
+          STATUS="$(npx supabase status -o json)"
+          echo "SUPABASE_SECRET_KEY=$(echo "$STATUS" | jq -r .SECRET_KEY)" >> "$GITHUB_ENV"
+
+      - name: Seed dense demo data (pinned anchor)
+        env:
+          SEED_EVENTS_ANCHOR: "2026-06-24T12:00:00.000Z"
+        run: npm run seed:events
+
+      - name: "[e2e] Playwright (auth/RLS + feature journeys)"
+        run: npm run test:e2e
+
+      - name: Stop local Supabase
+        if: always()
+        run: npx supabase stop
+
+  # ── Storybook test-runner smoke (DEV-002, re-enabled PR-10) ─────────────────
+  # ADR 0037: render-without-throw + `play` over the *statically built* Storybook —
+  # no axe, no coverage (single-sourced from the Vitest addon, ADR 0039/0041), so no
+  # assertion suite is duplicated. Re-armed with the e2e job per docs/deviations.md
+  # DEV-002. Builds the static Storybook, serves it, and runs the test-runner against it.
+  storybook-smoke:
+    name: Storybook smoke (test-runner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up Node 24 from .nvmrc (ADR 0004)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build static Storybook
+        run: npm run build-storybook
+
+      - name: "[storybook] Render + play smoke over the built Storybook"
+        # Serve the static build and run the test-runner against it. http-server +
+        # wait-on are pulled ephemerally (npx --yes) — CI-only dev tooling, not an app
+        # dependency, so no package.json / license-gate surface (ADR 0071).
+        run: |
+          npx --yes http-server@14 storybook-static --port 6006 --silent &
+          npx --yes wait-on@8 http://127.0.0.1:6006
+          npm run test:storybook

@@ -10,10 +10,9 @@ import type { TestRunnerConfig } from "@storybook/test-runner";
 // behaviour (render-without-throw + play) is exactly the smoke contract; this config
 // is intentionally empty beyond documenting that contract.
 //
-// Lean-CI note (Phase 10): this smoke pass runs LOCALLY during bootstrap
-// (`npm run build-storybook` then `npm run test:storybook` against a served build);
-// the CI job is deferred, mirroring the Phase 7 e2e deferral. The Vitest addon
-// (coverage + a11y + interaction) and the ≥80% merged gate still run in CI.
+// CI note: this smoke pass is wired into CI as the `storybook-smoke` job (PR-10,
+// re-arming DEV-002) — `build-storybook` → serve → `test:storybook`. The Vitest addon
+// (coverage + a11y + interaction) and the ≥80% merged gate run in the quality gate.
 const config: TestRunnerConfig = {};
 
 export default config;
