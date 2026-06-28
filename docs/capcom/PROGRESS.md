@@ -6,20 +6,20 @@
 
 ## Status
 
-| PR    | Theme                                       | State                      |
-| ----- | ------------------------------------------- | -------------------------- |
-| PR-0  | Bootstrap                                   | ✅ merged                  |
-| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                  |
-| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                  |
-| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**      |
-| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**      |
-| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**      |
-| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**      |
-| PR-6  | Retention cohort grid (ADR 0088)            | ✅ **merged (PR #10/#11)** |
-| PR-7  | Segmentation (ADR 0089)                     | ✅ **merged (PR #12)**     |
-| PR-8  | Dashboards & saved reports (ADR 0090)       | ✅ **merged (PR #13)**     |
-| PR-9  | AI natural-language query (ADR 0091)        | ✅ **merged (PR #14)**     |
-| PR-10 | Public landing + i18n/SEO + README          | ⏳                         |
+| PR    | Theme                                       | State                          |
+| ----- | ------------------------------------------- | ------------------------------ |
+| PR-0  | Bootstrap                                   | ✅ merged                      |
+| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                      |
+| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                      |
+| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**          |
+| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**          |
+| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**          |
+| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**          |
+| PR-6  | Retention cohort grid (ADR 0088)            | ✅ **merged (PR #10/#11)**     |
+| PR-7  | Segmentation (ADR 0089)                     | ✅ **merged (PR #12)**         |
+| PR-8  | Dashboards & saved reports (ADR 0090)       | ✅ **merged (PR #13)**         |
+| PR-9  | AI natural-language query (ADR 0091)        | ✅ **merged (PR #14)**         |
+| PR-10 | Public landing + i18n/SEO + README          | 🔧 **ready on `feat/landing`** |
 
 Accepted ADRs now run **0001–0091, all accepted** (the corpus has no open `proposed` record).
 PR-9 drafted **ADR 0091** (AI NL→query-spec contract) — `app.adr-review` READY → **human-accepted**
@@ -405,11 +405,51 @@ gates green; coverage 90.88% statements / 93.43% lines (≥80, ADR 0008). Code-f
   hook, action mocked). Stories (default/offline/pending/trends/segment/unrecognized/dark + an Ask
   play) under axe. `.cspell` gained `parameterizes`.
 
-## Next: PR-10 — Public landing, i18n/SEO, README case study
+## What PR-10 shipped (first `dev → main` promotion next)
 
-The lead-gen surface: public landing + i18n/SEO polish + a README case study. **Re-enable the
-DEV-001/DEV-002 CI suites** (Playwright e2e + migration-replay; Storybook test-runner smoke) before
-the first `dev → main` production promotion. No new aggregation expected; mostly app-shell + content.
+The lead-gen front door + the re-armed CI safety net — the last roadmap unit before the first
+production promotion. **No new ADR** (the landing rides 0030/0031, the CI re-enable rides
+0007/0010/0008, the closure is a `deviations.md` status flip). All gates green; coverage stays
+≥80% (ADR 0008). Single-locale (en); code-first (no Figma). Three workstreams, clean commits.
+
+- **Public landing (`widgets/landing`):** the placeholder home is replaced by a real marketing
+  landing built as an **FSD widget slice** so the design-token gate covers its markup (`src/app`
+  is not token-gated, ADR 0058). The home route is a thin RSC container that reads the `Landing`/
+  `Roles` namespaces (ADR 0030), assembles a typed copy object, and mounts the pure presentational
+  `<LandingPage>` (Hero, SurfaceShowcase over the six surfaces, DemoAccess with the seeded creds +
+  sign-in CTA, MethodologyStrip, SiteFooter). Props-in, zero client JS, a11y landmarks; `/en`
+  prerenders as **static SSG**. **Token-palette gotcha:** the mission-control `surface-*`/`text-text-*`
+  tokens are a fixed dark-first set; pairing them with the shadcn `foreground`/`card` set (which
+  flips light/dark) fails AA contrast — the landing uses the shadcn palette throughout (what the
+  existing widgets use). The axe gate caught it in the dark story.
+- **i18n / SEO polish (ADR 0030/0031):** new `Landing` namespace (repurposed from `HomePage`, its
+  only caller); `generateMetadata` adds a landing description + canonical/`hreflang`; the layout
+  gains a shared OG/Twitter card; the home route emits **JSON-LD** (WebSite + SoftwareApplication).
+  The OG image is a committed static 1200×630 asset (`public/og.png`), regenerated by
+  `scripts/gen-og-image.mjs` (Playwright, dev-only) — **not** a dynamic `next/og` route (0031 defers
+  that to its own ADR). `check:i18n` parity is vacuous at one locale; ICU is checked.
+- **CI re-enable (DEV-001 + DEV-002, resolved):** `ci.yml` gains an **e2e** job (supabase start →
+  `db:reset` → `gen:types` drift → export the local dev service key to `GITHUB_ENV` → `seed:events`
+  at the pinned `2026-06-24` anchor → `npm run test:e2e`) and a **storybook-smoke** job
+  (build-storybook → serve → `test:storybook`). Verified locally: the full **65-spec** e2e suite is
+  green against the seeded stack (incl. `ai-query.spec.ts` UI sign-in + the new `landing.spec.ts`),
+  and the storybook smoke passes **11 suites / 81 stories**. Both deviations moved to **Resolved**;
+  every workflow action ref stays SHA-pinned (ADR 0044/0070). Marking the two jobs **required** is the
+  remaining human branch-protection step (ADR 0046), after one observed-green cycle.
+- **README case study:** the PR-0 stub is replaced by the behind-the-scenes write-up (domain model +
+  identity split, in-DB SQL aggregation, RLS isolation, member-write path, AI NL→spec, token/FSD
+  governance, the test pyramid, the decisions-first method) + a "Try the live demo" table with the
+  seeded accounts.
+- **Tests:** `LandingPage.test.tsx` renders the real composed page (coverage denominator) — h1, six
+  surface cards, demo creds, the locale-prefixed CTA, the landmarks; `jsonld.test.ts` covers the
+  builder; a CSF3 story (light + dark) carries the axe gate; `e2e/landing.spec.ts` is the public
+  journey and `smoke.spec.ts` now guards the landing's zero-console-error contract.
+
+**Next:** the first `dev → main` **production promotion** — the human release ritual (ADR 0080):
+version bump in `package.json`, the human-edited `CHANGELOG.md` (genesis is hand-authored, ADR 0050),
+an annotated `vX.Y.Z` tag + GitHub Release. PR-10 is **additive** (new accepted ADRs since genesis:
+0081–0091; a new `widgets/landing` slice), so the bump is **MINOR** (`0.1.0` → `0.2.0`) by the ADR 0080
+rule — confirm at the release PR. Deliberately **not** done here: cutting the release is a human step.
 
 ## Conventions (don't re-derive)
 
