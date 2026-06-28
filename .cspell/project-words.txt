@@ -108,3 +108,7 @@ cohorting
 trunc
 behavioural
 metacharacters
+unspoofable
+spoofable
+unvalidated
+introspectable

@@ -12,7 +12,8 @@
       "usedIn": [
         "src/features/auth-by-email/ui/SignInForm.tsx",
         "src/features/auth-by-email/ui/SignOutButton.tsx",
-        "src/features/auth-by-email/ui/SignUpForm.tsx"
+        "src/features/auth-by-email/ui/SignUpForm.tsx",
+        "src/widgets/dashboard/ui/DashboardBoard.tsx"
       ],
       "compositionSignature": []
     },
@@ -24,7 +25,8 @@
       "composedOf": [],
       "usedIn": [
         "src/app/[locale]/(app)/p/[projectId]/page.tsx",
-        "src/app/[locale]/(app)/p/page.tsx"
+        "src/app/[locale]/(app)/p/page.tsx",
+        "src/widgets/dashboard/ui/DashboardBoard.tsx"
       ],
       "compositionSignature": []
     },
