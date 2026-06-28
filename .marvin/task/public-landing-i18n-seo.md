@@ -1,7 +1,7 @@
 ---
 slug: public-landing-i18n-seo
 type: feature
-status: ready
+status: shipped
 created: 2026-06-29
 tracker: none
 supersedes: none
@@ -449,3 +449,24 @@ the landing existing for `landing.spec.ts`). Delivered as clean per-workstream c
 - Dynamic `next/og` OG image (ADR-gated) replacing the static asset.
 - The first `dev → main` production promotion + release ritual (ADR 0080) — human-coordinated, post-merge.
 - Marking DEV-001/DEV-002 required checks after one observed-green cycle (branch protection, human).
+
+## Delivery
+
+- **PR:** [capcom#15](https://github.com/real-case/capcom/pull/15) (`feat/landing` → `dev`),
+  delivered as 6 clean per-workstream commits (+ 2 opening housekeeping commits: the PR-9 status
+  flip + spec, and the spec-critic agent memory).
+- **Verification:** all gates green — `tsc` · `lint` · `format:check` ·
+  `check:design-system` (tokens/contrast/boundaries/graph/design-intent/seals/i18n) · `check:fsd` ·
+  `check:citations` · `check:claude(+md)` · `check:gates` · `check:action-pins` · token-drift ·
+  `check:spelling` · `build` · **`test:coverage` 91.19% stmts / 93.63% lines** (357 tests) ·
+  **`test:e2e` 65 passed** (incl. `ai-query.spec.ts` UI sign-in + new `landing.spec.ts`) ·
+  **storybook smoke 11 suites / 81 stories**. `adr-conformance-reviewer`: **CLEAN** (no blockers,
+  human-only actions correctly deferred).
+- **SPEC GAP — one file outside the contract `files` allowlist.** `.storybook/test-runner.ts`
+  was edited (comment only) to correct a now-stale "the CI job is deferred" note when DEV-002 was
+  re-enabled — not listed in the contract. Benign (a doc-comment fix tied to the DEV-002 closure);
+  disclosed here per the immutability discipline. All 24 contract files were touched as specified.
+- **Human-only follow-ups (ADR 0046/0080), deliberately not done:** the `dev` merge; marking the
+  two new CI jobs as required branch-protection checks (after observed-green); and the first
+  `dev → main` promotion + release ritual (MINOR bump `0.1.0` → `0.2.0`, human-edited CHANGELOG,
+  annotated tag + GitHub Release).
