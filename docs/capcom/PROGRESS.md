@@ -6,20 +6,20 @@
 
 ## Status
 
-| PR    | Theme                                       | State                           |
-| ----- | ------------------------------------------- | ------------------------------- |
-| PR-0  | Bootstrap                                   | ✅ merged                       |
-| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                       |
-| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                       |
-| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**           |
-| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**           |
-| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**           |
-| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**           |
-| PR-6  | Retention cohort grid (ADR 0088)            | ✅ **merged (PR #10/#11)**      |
-| PR-7  | Segmentation (ADR 0089)                     | ✅ **merged (PR #12)**          |
-| PR-8  | Dashboards & saved reports (ADR 0090)       | ✅ **merged (PR #13)**          |
-| PR-9  | AI natural-language query (ADR 0091)        | 🔧 **ready on `feat/ai-query`** |
-| PR-10 | Public landing + i18n/SEO + README          | ⏳                              |
+| PR    | Theme                                       | State                      |
+| ----- | ------------------------------------------- | -------------------------- |
+| PR-0  | Bootstrap                                   | ✅ merged                  |
+| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                  |
+| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                  |
+| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**      |
+| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**      |
+| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**      |
+| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**      |
+| PR-6  | Retention cohort grid (ADR 0088)            | ✅ **merged (PR #10/#11)** |
+| PR-7  | Segmentation (ADR 0089)                     | ✅ **merged (PR #12)**     |
+| PR-8  | Dashboards & saved reports (ADR 0090)       | ✅ **merged (PR #13)**     |
+| PR-9  | AI natural-language query (ADR 0091)        | ✅ **merged (PR #14)**     |
+| PR-10 | Public landing + i18n/SEO + README          | ⏳                         |
 
 Accepted ADRs now run **0001–0091, all accepted** (the corpus has no open `proposed` record).
 PR-9 drafted **ADR 0091** (AI NL→query-spec contract) — `app.adr-review` READY → **human-accepted**
