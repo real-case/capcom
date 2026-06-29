@@ -257,11 +257,14 @@ jobs:
         run: npm run db:reset
 
       - name: "[types] Generated DB types in sync (ADR 0015)"
-        # Regenerate against the local DB by URL — token-free. On the runner,
-        # `supabase gen types --local` falls back to the cloud-auth path ("Access
-        # token not provided"); `--db-url` against the running stack produces
-        # byte-identical output (verified) and needs no token. Same prettier pass
-        # as `npm run gen:types`, then assert no drift from the committed file.
+        # Regenerate against the local DB by URL and assert no drift. `supabase gen
+        # types` runs a token PRESENCE check before dispatch even for purely-local
+        # generation (a CLI quirk); the runner has no cached login, so set a throwaway
+        # value. It is NOT a credential and is never used — generation runs against the
+        # local DB_URL (127.0.0.1), never the cloud (ADR 0044). Output is byte-identical
+        # to `npm run gen:types` (verified), with the same prettier pass.
+        env:
+          SUPABASE_ACCESS_TOKEN: local-only-unused-not-a-secret
         run: |
           DB_URL="$(npx supabase status -o json | jq -r .DB_URL)"
           npx supabase gen types typescript --db-url "$DB_URL" > src/lib/supabase/database.types.ts
