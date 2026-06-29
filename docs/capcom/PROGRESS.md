@@ -6,20 +6,21 @@
 
 ## Status
 
-| PR    | Theme                                       | State                          |
-| ----- | ------------------------------------------- | ------------------------------ |
-| PR-0  | Bootstrap                                   | ✅ merged                      |
-| PR-DS | Design-system token foundation (0081–0082)  | ✅ merged                      |
-| PR-1  | Foundational domain ADRs (0083–0086)        | ✅ merged                      |
-| PR-2  | Tenancy: org/project/membership RLS + RBAC  | ✅ **merged (PR #6)**          |
-| PR-3  | Events + profiles + ingest + seed generator | ✅ **merged (PR #7)**          |
-| PR-4  | Trends (in-DB aggregation → visx charts)    | ✅ **merged (PR #8)**          |
-| PR-5  | Funnels (ordered-step conversion, ADR 0087) | ✅ **merged (PR #9)**          |
-| PR-6  | Retention cohort grid (ADR 0088)            | ✅ **merged (PR #10/#11)**     |
-| PR-7  | Segmentation (ADR 0089)                     | ✅ **merged (PR #12)**         |
-| PR-8  | Dashboards & saved reports (ADR 0090)       | ✅ **merged (PR #13)**         |
-| PR-9  | AI natural-language query (ADR 0091)        | ✅ **merged (PR #14)**         |
-| PR-10 | Public landing + i18n/SEO + README          | 🔧 **ready on `feat/landing`** |
+| PR    | Theme                                           | State                      |
+| ----- | ----------------------------------------------- | -------------------------- |
+| PR-0  | Bootstrap                                       | ✅ merged                  |
+| PR-DS | Design-system token foundation (0081–0082)      | ✅ merged                  |
+| PR-1  | Foundational domain ADRs (0083–0086)            | ✅ merged                  |
+| PR-2  | Tenancy: org/project/membership RLS + RBAC      | ✅ **merged (PR #6)**      |
+| PR-3  | Events + profiles + ingest + seed generator     | ✅ **merged (PR #7)**      |
+| PR-4  | Trends (in-DB aggregation → visx charts)        | ✅ **merged (PR #8)**      |
+| PR-5  | Funnels (ordered-step conversion, ADR 0087)     | ✅ **merged (PR #9)**      |
+| PR-6  | Retention cohort grid (ADR 0088)                | ✅ **merged (PR #10/#11)** |
+| PR-7  | Segmentation (ADR 0089)                         | ✅ **merged (PR #12)**     |
+| PR-8  | Dashboards & saved reports (ADR 0090)           | ✅ **merged (PR #13)**     |
+| PR-9  | AI natural-language query (ADR 0091)            | ✅ **merged (PR #14)**     |
+| PR-10 | Public landing + i18n/SEO + README              | ✅ **merged (PR #15)**     |
+| REL   | First `dev → main` promotion — `v0.1.0` genesis | 🔧 **release PR prepared** |
 
 Accepted ADRs now run **0001–0091, all accepted** (the corpus has no open `proposed` record).
 PR-9 drafted **ADR 0091** (AI NL→query-spec contract) — `app.adr-review` READY → **human-accepted**
@@ -445,11 +446,33 @@ production promotion. **No new ADR** (the landing rides 0030/0031, the CI re-ena
   builder; a CSF3 story (light + dark) carries the axe gate; `e2e/landing.spec.ts` is the public
   journey and `smoke.spec.ts` now guards the landing's zero-console-error contract.
 
-**Next:** the first `dev → main` **production promotion** — the human release ritual (ADR 0080):
-version bump in `package.json`, the human-edited `CHANGELOG.md` (genesis is hand-authored, ADR 0050),
-an annotated `vX.Y.Z` tag + GitHub Release. PR-10 is **additive** (new accepted ADRs since genesis:
-0081–0091; a new `widgets/landing` slice), so the bump is **MINOR** (`0.1.0` → `0.2.0`) by the ADR 0080
-rule — confirm at the release PR. Deliberately **not** done here: cutting the release is a human step.
+## REL — first `dev → main` promotion (`v0.1.0` genesis)
+
+The roadmap is complete (PR-0…PR-10 all merged). The next stage is the first `dev → main`
+**production promotion** — the release ritual of ADR 0080. `main` sits at the PR-0 bootstrap
+(`bc7b723`); `dev` is **89 commits ahead** carrying the whole CAPCOM platform, so this one
+promotion is the genesis.
+
+**Version decision (human-confirmed at the release PR, ADR 0080):** cut as **`v0.1.0`
+genesis**, not `0.2.0`. The CHANGELOG was carrying the _template's_ `[0.1.0]` baseline entry
+(verbatim from the fork, "no demonstration application", link refs → `claude-code-nextjs-starter`).
+That entry was **rewritten** as CAPCOM's genesis baseline (the full platform), `[Unreleased]`
+reset to empty subheads, link refs now pointing to `real-case/capcom`, dated `2026-06-29`. The
+genesis CHANGELOG is **hand-authored**, not a machine draft, exactly as ADR 0080's genesis case
+anticipates. `package.json` stays at `0.1.0` (no bump — genesis ships `0.1.0`).
+
+**Prepared by the agent (this release PR):** the rewritten `CHANGELOG.md` genesis entry + this
+handoff update, on branch `release/v0.1.0` → PR into `dev`.
+
+**Remaining — human-only steps (ADR 0046), in order:**
+
+1. Review + merge the `release/v0.1.0` PR into `dev` (lands the genesis CHANGELOG on `dev`).
+2. Open + merge the `dev → main` promotion PR (the 89-commit genesis promotion).
+3. On the resulting `main` HEAD, place the **annotated** tag `v0.1.0`
+   (`git tag -a v0.1.0 -m "CAPCOM v0.1.0 — genesis"`), push it.
+4. Publish the **GitHub Release** `v0.1.0` with the `[0.1.0]` CHANGELOG section as its body.
+5. Branch-protection: mark the `e2e` + `storybook-smoke` CI jobs **required** after one
+   observed-green cycle (the deferred DEV-001/DEV-002 closure, ADR 0046).
 
 ## Conventions (don't re-derive)
 
