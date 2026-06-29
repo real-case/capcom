@@ -1,40 +1,157 @@
+import type { Metadata } from "next";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import { Link } from "@/i18n/navigation";
+import { buildAlternates } from "@/i18n/metadata";
 import { routing } from "@/i18n/routing";
+import { env } from "@/lib/env";
+import {
+  buildLandingJsonLd,
+  DEMO_PASSWORD,
+  LandingPage,
+  type LandingCopy,
+} from "@/widgets/landing";
+
+type LocaleParams = { locale: string };
 
 /**
- * Placeholder home route. A Server Component rendering localized copy (ADR 0030)
- * — the minimal "the app builds and serves" page. Replace it with the first real
- * screen; the i18n/SEO/error-boundary scaffolding around it stays.
+ * Home route metadata (ADR 0031): a landing-specific description overriding the layout
+ * default, plus canonical/`hreflang` alternates derived from the locale config (ADR 0030).
+ * The shared OG/Twitter card + `metadataBase` live in the root layout.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<LocaleParams>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) return {};
+
+  const t = await getTranslations({ locale, namespace: "Landing" });
+  return {
+    description: t("metaDescription"),
+    alternates: buildAlternates(locale, "/"),
+  };
+}
+
+/**
+ * Public landing route — a thin RSC container (ADR 0065): it reads the `Landing`/`Roles`
+ * namespaces (ADR 0030), assembles the typed copy object, emits JSON-LD structured data
+ * (ADR 0031), and mounts the presentational `<LandingPage>` from the landing widget. All
+ * markup/token discipline lives in the widget; this file is coverage-excluded (route).
  */
 export default async function Home({
   params,
 }: {
-  params: Promise<{ locale: string }>;
+  params: Promise<LocaleParams>;
 }) {
   const { locale } = await params;
-  // The [locale] layout already 404s unknown locales; narrow before enabling
-  // static rendering so next-intl hooks read against a valid locale (ADR 0030).
+  // The [locale] layout already 404s unknown locales; narrow before enabling static
+  // rendering so next-intl hooks read against a valid locale (ADR 0030).
   if (hasLocale(routing.locales, locale)) setRequestLocale(locale);
 
-  const t = await getTranslations("HomePage");
+  const t = await getTranslations("Landing");
+  const roles = await getTranslations("Roles");
+
+  const copy: LandingCopy = {
+    hero: {
+      eyebrow: t("hero.eyebrow"),
+      title: t("hero.title"),
+      tagline: t("hero.tagline"),
+      lead: t("hero.lead"),
+      primaryCta: t("hero.primaryCta"),
+      secondaryCta: t("hero.secondaryCta"),
+    },
+    surfaces: {
+      heading: t("surfaces.heading"),
+      lead: t("surfaces.lead"),
+      items: {
+        trends: {
+          title: t("surfaces.trends.title"),
+          body: t("surfaces.trends.body"),
+        },
+        funnels: {
+          title: t("surfaces.funnels.title"),
+          body: t("surfaces.funnels.body"),
+        },
+        retention: {
+          title: t("surfaces.retention.title"),
+          body: t("surfaces.retention.body"),
+        },
+        segments: {
+          title: t("surfaces.segments.title"),
+          body: t("surfaces.segments.body"),
+        },
+        dashboards: {
+          title: t("surfaces.dashboards.title"),
+          body: t("surfaces.dashboards.body"),
+        },
+        ai: { title: t("surfaces.ai.title"), body: t("surfaces.ai.body") },
+      },
+    },
+    demo: {
+      heading: t("demo.heading"),
+      lead: t("demo.lead"),
+      credentialsLabel: t("demo.credentialsLabel", { password: DEMO_PASSWORD }),
+      roleLabels: {
+        owner: roles("owner"),
+        analyst: roles("analyst"),
+        viewer: roles("viewer"),
+      },
+      cta: t("demo.cta"),
+      note: t("demo.note"),
+    },
+    methodology: {
+      heading: t("methodology.heading"),
+      lead: t("methodology.lead"),
+      items: {
+        adr: {
+          title: t("methodology.adr.title"),
+          body: t("methodology.adr.body"),
+        },
+        rls: {
+          title: t("methodology.rls.title"),
+          body: t("methodology.rls.body"),
+        },
+        sql: {
+          title: t("methodology.sql.title"),
+          body: t("methodology.sql.body"),
+        },
+        tokens: {
+          title: t("methodology.tokens.title"),
+          body: t("methodology.tokens.body"),
+        },
+        tests: {
+          title: t("methodology.tests.title"),
+          body: t("methodology.tests.body"),
+        },
+      },
+    },
+    footer: {
+      tagline: t("footer.tagline"),
+      navLabel: t("footer.navLabel"),
+      repo: t("footer.repo"),
+      roadmap: t("footer.roadmap"),
+      methodology: t("footer.methodology"),
+      license: t("footer.license"),
+      builtOn: t("footer.builtOn"),
+    },
+  };
+
+  const jsonLd = buildLandingJsonLd(env.NEXT_PUBLIC_SITE_URL, copy);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col items-center justify-center gap-4 px-6 py-24 text-center">
-      <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-        {t("heading")}
-      </h1>
-      <p className="max-w-md text-base leading-7 text-muted-foreground">
-        {t("lead")}
-      </p>
-      <Link
-        href="/sign-in"
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-      >
-        {t("signInCta")}
-      </Link>
-    </main>
+    <>
+      {/* JSON-LD structured data (ADR 0031) — our own static payload; the Metadata API
+          does not model it, so it is rendered here. `<` is escaped so the serialized
+          JSON can never close the script element early. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+        }}
+      />
+      <LandingPage copy={copy} />
+    </>
   );
 }

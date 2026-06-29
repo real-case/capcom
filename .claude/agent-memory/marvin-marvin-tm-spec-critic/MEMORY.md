@@ -1,0 +1,1 @@
+- [Gate scoping topology](gate-scoping.md) — which check:* gates cover src/widgets vs src/components-only; token-gate glob, coverage excludes, e2e seed/anchor coupling.
