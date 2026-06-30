@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import sitemap from "./sitemap";
 
-// env defaults NEXT_PUBLIC_SITE_URL to http://localhost:3000 under test.
-const ORIGIN = "http://localhost:3000";
+// env defaults NEXT_PUBLIC_SITE_URL to http://localhost:20000 under test.
+const ORIGIN = "http://localhost:20000";
 
 describe("sitemap", () => {
   it("emits one absolute, locale-prefixed entry per route × locale", () => {

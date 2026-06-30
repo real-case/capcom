@@ -16,7 +16,7 @@ import { expect, test } from "@playwright/test";
  */
 
 const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:20030";
 const SUPABASE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
   "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";

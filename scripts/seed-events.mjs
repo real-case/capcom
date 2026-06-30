@@ -194,7 +194,7 @@ function resolveCredentials() {
   const url =
     process.env.SUPABASE_URL ??
     process.env.NEXT_PUBLIC_SUPABASE_URL ??
-    "http://127.0.0.1:54321";
+    "http://127.0.0.1:20030";
   let secret = process.env.SUPABASE_SECRET_KEY;
   if (!secret) {
     try {

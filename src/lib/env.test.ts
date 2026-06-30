@@ -20,13 +20,13 @@ describe("parseEnv", () => {
 describe("publicEnvSchema", () => {
   it("defaults NEXT_PUBLIC_SITE_URL to localhost when unset", () => {
     expect(parseEnv(publicEnvSchema, {})).toMatchObject({
-      NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
+      NEXT_PUBLIC_SITE_URL: "http://localhost:20000",
     });
   });
 
   it("defaults the Supabase public vars to the local stack when unset", () => {
     expect(parseEnv(publicEnvSchema, {})).toMatchObject({
-      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
+      NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:20030",
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
         "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH",
     });

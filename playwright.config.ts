@@ -1,8 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Dedicated e2e port: a `next dev` session on 3000 must never be picked up
+// Dedicated e2e port: a `next dev` session on 20000 must never be picked up
 // by reuseExistingServer — e2e always targets the production build (ADR 0007).
-const PORT = 3100;
+const PORT = 20020;
 const baseURL = `http://localhost:${PORT}`;
 
 // ADR 0007: e2e runs against a production build. From Phase 7 on, the local

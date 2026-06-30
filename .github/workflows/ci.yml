@@ -325,6 +325,6 @@ jobs:
         # wait-on are pulled ephemerally (npx --yes) — CI-only dev tooling, not an app
         # dependency, so no package.json / license-gate surface (ADR 0071).
         run: |
-          npx --yes http-server@14 storybook-static --port 6006 --silent &
-          npx --yes wait-on@8 http://127.0.0.1:6006
+          npx --yes http-server@14 storybook-static --port 20010 --silent &
+          npx --yes wait-on@8 http://127.0.0.1:20010
           npm run test:storybook
