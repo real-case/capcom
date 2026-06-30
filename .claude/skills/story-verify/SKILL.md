@@ -68,8 +68,8 @@ npm run storybook        # serve the workbench (background)
 Then drive the playwright MCP to each story's iframe URL and screenshot:
 
 ```
-http://localhost:6006/iframe.html?id=<story-id>                       # light
-http://localhost:6006/iframe.html?id=<story-id>&globals=theme:dark    # dark axis
+http://localhost:20010/iframe.html?id=<story-id>                       # light
+http://localhost:20010/iframe.html?id=<story-id>&globals=theme:dark    # dark axis
 ```
 
 (`<story-id>` is the lowercased title/export path, e.g. `ui-servicecard--selected`;

@@ -159,7 +159,10 @@ function syncEnv() {
 function startNext() {
   step(4, "Next.js dev server");
   info(dim("handing off to `next dev` — Ctrl-C to stop\n"));
-  const child = spawn("next", ["dev"], { stdio: "inherit", env: ENV });
+  const child = spawn("next", ["dev", "--port", "20000"], {
+    stdio: "inherit",
+    env: ENV,
+  });
   // Forward termination so Ctrl-C stops next dev cleanly and we exit with its status.
   process.on("SIGINT", () => child.kill("SIGINT"));
   process.on("SIGTERM", () => child.kill("SIGTERM"));

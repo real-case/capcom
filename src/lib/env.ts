@@ -26,7 +26,7 @@ export const publicEnvSchema = z.object({
       protocol: /^https?$/,
       error: "[env] NEXT_PUBLIC_SITE_URL must be an absolute http(s) URL",
     })
-    .default("http://localhost:3000"),
+    .default("http://localhost:20000"),
 
   /**
    * Supabase API origin (ADR 0013). Defaults to the local stack so builds,
@@ -38,7 +38,7 @@ export const publicEnvSchema = z.object({
       protocol: /^https?$/,
       error: "[env] NEXT_PUBLIC_SUPABASE_URL must be an absolute http(s) URL",
     })
-    .default("http://127.0.0.1:54321"),
+    .default("http://127.0.0.1:20030"),
 
   /**
    * Supabase publishable key (ADR 0013). Public by design — it ships to the

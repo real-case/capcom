@@ -181,7 +181,7 @@ Requires **Node 24** (`.nvmrc`) and **Docker** (for the local Supabase stack).
 ```bash
 nvm use            # Node 24
 npm ci
-npm run dev        # boots local Supabase → gen:types → next dev (http://localhost:3000)
+npm run dev        # boots local Supabase → gen:types → next dev (http://localhost:20000)
 npm run seed:events  # (optional) generate dense demo data across the seeded projects
 ```
 
