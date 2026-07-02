@@ -30,7 +30,7 @@ The **Confirmation** section is the testable claim. That is what you check the t
 ### 3. Run the deterministic gates *unscoped*
 These are the machine-checkable Confirmations; run the full suite (the CLAUDE.md **Commands** are authoritative — Node 24). A red gate is **confirmed drift** — cite it and the ADR it enforces.
 
-- `npm run check:design-system` — the design-system bundle (tokens 0058, boundaries 0060, graph 0059/0060, design-intent 0062, seals 0063, gate self-test).
+- `npm run check:design-system` — the design-system bundle (tokens 0058, boundaries 0060, graph 0059/0060, design-intent 0062, seals 0095, gate self-test).
 - `npm run check:i18n` — key parity + ICU across `messages/**` (ADR 0055).
 - `npm run check:stories` — every `src/components/**` module has colocated stories (ADR 0042).
 - `tsc --noEmit` / `npm run lint` / `npm run format:check` — strict TS + lint/format (ADR 0003/0006).

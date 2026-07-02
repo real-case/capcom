@@ -18,7 +18,7 @@
 | --- | --- | --- | --- | --- |
 | CON-001 | **React** as the UI library | Client mandate — pre-selected before bootstrap | 2026-06-10 | None of its own — subsumed by CON-002's Next.js framework ADR ([0002](0002-nextjs-app-router-server-components.md)) |
 | CON-002 | **Next.js (App Router)** as the application framework | Client mandate | 2026-06-10 | [0002](0002-nextjs-app-router-server-components.md) — App Router + Server-Components-default rendering strategy |
-| CON-003 | **MCP server toolchain** — `context7`, `figma`, `vercel`, `supabase`, `chromatic`, `github` — as the mandated agent/dev tooling baseline the project must provide and use | Project-owner mandate — fixed, not deliberated | 2026-06-10 | [0044](0044-mcp-server-configuration.md) — project-scoped, committed config with secrets handled by env-reference |
+| CON-003 | **MCP server toolchain** — `context7`, `vercel`, `supabase`, `chromatic`, `github` — as the mandated agent/dev tooling baseline the project must provide and use. Design tooling is **Claude Design** (claude.ai/design, login-based — not a `.mcp.json` server), per [0094](0094-claude-design-as-design-source.md). | Project-owner mandate — fixed; design tool revised 2026-07-02 | 2026-06-10 (rev. 2026-07-02) | [0044](0044-mcp-server-configuration.md); [0094](0094-claude-design-as-design-source.md) |
 
 ## How to use this registry
 

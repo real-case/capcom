@@ -48,7 +48,7 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0042](0042-component-story-coverage-policy.md) | Component story coverage policy: every component has stories for its meaningful states | accepted | 2026-06-11 |
 | [0043](0043-visual-regression-chromatic.md) | Visual-regression testing: Chromatic over Storybook stories | accepted | 2026-06-11 |
 | [0044](0044-mcp-server-configuration.md) | MCP server configuration: project-scoped, committed config with secrets by reference | accepted | 2026-06-11 |
-| [0045](0045-design-handoff-figma.md) | Design handoff: code-canonical design tokens, Figma as design context via the figma MCP server | accepted | 2026-06-11 |
+| [0045](0045-design-handoff-figma.md) | Design handoff: code-canonical design tokens, Figma as design context via the figma MCP server | superseded by ADR-0094 | 2026-06-11 |
 | [0046](0046-ai-agent-role-and-attribution.md) | AI agent role: primary implementer with enumerated human-only gates | accepted | 2026-06-11 |
 | [0047](0047-human-review-of-agent-authored-prs.md) | Every PR requires human approval; AI review is a first pass, never a substitute | accepted | 2026-06-11 |
 | [0048](0048-ai-code-review-advisory-pr-check.md) | AI code review as an advisory PR check grounded in the ADR corpus | accepted | 2026-06-11 |
@@ -66,7 +66,7 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0060](0060-module-boundary-dependency-cruiser.md) | Module-boundary enforcement and graph reconciliation via dependency-cruiser | accepted | 2026-06-11 |
 | [0061](0061-controlled-vocabularies-and-state-registries.md) | Controlled vocabularies and state registries for components | accepted | 2026-06-11 |
 | [0062](0062-design-intent-spec-and-api-derivation.md) | `design-intent.ts` as component specification and usage-driven API derivation | accepted | 2026-06-11 |
-| [0063](0063-anti-hallucination-approval-and-drift-seal.md) | Anti-hallucination component approval and the Figma drift seal | accepted | 2026-06-11 |
+| [0063](0063-anti-hallucination-approval-and-drift-seal.md) | Anti-hallucination component approval and the Figma drift seal | superseded by ADR-0095 | 2026-06-11 |
 | [0064](0064-defect-log-and-reactive-fitness-growth.md) | Defect Log and reactive growth of design-system fitness functions | accepted | 2026-06-11 |
 | [0065](0065-feature-sliced-design-architecture.md) | Adopt Feature-Sliced Design for application architecture | accepted | 2026-06-20 |
 | [0066](0066-fsd-boundary-enforcement-steiger.md) | Enforce Feature-Sliced Design boundaries with Steiger | accepted | 2026-06-20 |
@@ -82,7 +82,7 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0076](0076-claude-code-hooks-edit-time-enforcement.md) | Claude Code hooks as the edit-time enforcement layer | accepted | 2026-06-20 |
 | [0077](0077-skills-and-review-subagents-structural-layer.md) | Skills and review-subagents as the structural (recall) layer | accepted | 2026-06-20 |
 | [0078](0078-self-testing-gates-and-debt-escape-hatch.md) | Self-testing gates and the technical-debt escape-hatch gate | accepted | 2026-06-20 |
-| [0079](0079-runtime-theme-switching-deferred.md) | Runtime theme switching deferred; ship the `.dark` value layer only | accepted | 2026-06-20 |
+| [0079](0079-runtime-theme-switching-deferred.md) | Runtime theme switching deferred; ship the `.dark` value layer only | superseded by ADR-0092 | 2026-06-20 |
 | [0080](0080-versioning-and-release-policy.md) | Versioning and release policy: template-adapted SemVer with dev→main tagged releases | accepted | 2026-06-21 |
 | [0081](0081-mission-control-design-token-vocabulary.md) | Mission-control design-token vocabulary on a re-introduced primitive layer | accepted | 2026-06-22 |
 | [0082](0082-multitenant-density-runtime-theming.md) | Multi-tenant and density runtime theming via data-attributes, on a swap-only primitive layer | accepted | 2026-06-22 |
@@ -95,3 +95,7 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0089](0089-segment-definition-model.md) | Segment-definition model: bounded predicate grammar, AND-composition, in-database evaluation | accepted | 2026-06-27 |
 | [0090](0090-saved-analyses-persistence-and-write-rbac.md) | Saved analyses: report / dashboard persistence model and member-write RBAC | accepted | 2026-06-28 |
 | [0091](0091-ai-natural-language-query-contract.md) | AI natural-language query: closed query-spec contract and untrusted-output interpretation | accepted | 2026-06-28 |
+| [0092](0092-runtime-light-dark-theme-switching.md) | Runtime light/dark theme switching with a cookie-SSR toggle | accepted | 2026-07-02 |
+| [0093](0093-chart-interaction-layer.md) | Chart interaction layer over visx: tooltip, crosshair, hover, motion | accepted | 2026-07-02 |
+| [0094](0094-claude-design-as-design-source.md) | Claude Design (claude.ai/design) as the design source and living catalog | accepted | 2026-07-02 |
+| [0095](0095-claude-design-approval-drift-seal.md) | Anti-hallucination component approval and the drift seal, adapted for Claude Design | accepted | 2026-07-02 |

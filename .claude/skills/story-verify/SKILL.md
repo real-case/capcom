@@ -55,7 +55,7 @@ component module still has a colocated stories file.
 ## 3. Optional — visual evidence for the human (👤 judges, never the agent)
 
 When the change is visual (new states, token changes, layout), collect screenshots so
-the human can judge quickly. **ADR 0063 boundary, stated plainly: these screenshots are
+the human can judge quickly. **ADR 0095 boundary, stated plainly: these screenshots are
 advisory evidence for human review. The agent never approves a visual baseline, never
 treats its own render as proof of design correctness, and Chromatic UI approval is
 human-only (ADR 0043/0047).** Flagging an obvious breakage (blown-out layout, missing

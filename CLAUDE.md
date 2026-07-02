@@ -77,7 +77,7 @@ still-proposed._
   (0026); **nuqs** + Next.js typed routes — URL state (0027).
 - **Tailwind CSS, CSS-first** (0032); design tokens as CSS custom properties in
   `@theme` — this template ships a **neutral shadcn baseline**: a value layer (`:root` +
-  `.dark`) bridged to the shadcn names via `@theme inline`. The layered Figma-export
+  `.dark`) bridged to the shadcn names via `@theme inline`. The layered design-export
   architecture (primitive + semantic + component `--color-c-*` layers) is documented in
   ADR 0033 for when a real design export is wired; **shadcn/ui** is
   copied into the repo (0034).
@@ -90,8 +90,10 @@ still-proposed._
   technical/numeric face (extends 0033). **Multi-tenant + density runtime theming** (0082):
   `[data-tenant]` re-composes the palette and `[data-density="comfortable"|"dense"]` swaps the
   dimension tokens by overriding the `--c-*` primitive layer **only** — pure CSS, no theme
-  provider; the new ADR 0079 requires to gate runtime switching (its light/dark toggle stays
-  deferred).
+  provider. **Runtime light/dark theming** (0092) adds theme as a **third such primitive-swap
+  axis** on the same mechanism: a cookie-persisted choice applied as a class server-side (no
+  hydration flash, no client theme-provider dependency), with the mission-control `--c-*` layer
+  gaining a light composition so chrome and charts flip as one unit.
 - **next-intl** for i18n (0030); App Router Metadata API for SEO (0031).
 - **React Compiler** — automatic memoization (0029).
 - **Storybook 10** on `@storybook/nextjs-vite`, stories double as tests via
@@ -102,14 +104,15 @@ still-proposed._
 - App Router error boundaries + structured stdout JSON logger `src/lib/logger.ts`
   (0019).
 - **MCP toolchain** (CON-003): committed `.mcp.json` with env-reference secrets —
-  context7, figma (read-only design context, 0045), vercel, supabase, chromatic,
-  github (0044).
-- **Design-system AI-tooling governance** (decided 0058–0064; enforcement lands with
-  Phase 12 / Stages 0–6): single-source token codegen + a stylelint/ESLint token-usage gate
+  context7, vercel, supabase, chromatic, github (0044). Design tooling is **Claude Design**
+  (claude.ai/design) as the design source + living catalog (0094) — login-based via the
+  `DesignSync` MCP + `/design-sync` skill, **not** a `.mcp.json` server.
+- **Design-system AI-tooling governance** (decided 0058–0062, 0064, 0095; enforcement lands
+  with Phase 12 / Stages 0–6): single-source token codegen + a stylelint/ESLint token-usage gate
   (0058); a top-down composition graph (0059) reconciled against a **dependency-cruiser**
   import graph (0060); human-authored controlled vocabularies/state registries under
   `src/design-system/` (0061); per-component typed `design-intent.ts` specs (0062);
-  anti-hallucination Figma-image approval with a drift seal (0063); a Defect Log driving
+  anti-hallucination **Claude Design** approval with a drift seal (0095); a Defect Log driving
   reactive fitness-function growth (0064).
 - **Feature-Sliced Design** application architecture (0065): layers `src/shared`,
   `src/entities`, `src/features`, `src/widgets` under canonical FSD names, added
@@ -148,6 +151,13 @@ still-proposed._
   behind a per-project ingest key — as the **seeded-data** intake contract (0085); and **visx**
   unstyled charting primitives so every chart value comes from the generated token allowlist
   (0086).
+- **Chart interaction layer** (0093): a shared, visx-based interaction sub-primitive layer over
+  0086 — tooltip, crosshair/focus line, series hover-highlight, gradient/area fill, a
+  reduced-motion-guarded `MotionIn` wrapper, an interactive legend, and a time brush — fed only
+  token values (`@visx/tooltip`/`@visx/gradient`/`@visx/brush`/`@visx/event`, no baked palette),
+  theme-aware (0092), deterministic under Chromatic, and keyboard/AT-accessible; interaction is
+  local view-state and a window-changing brush round-trips through nuqs, so widgets stay
+  presentational (extends 0086).
 
 ## Commands
 
@@ -183,16 +193,17 @@ still-proposed._
 - Design-system gates (Stages 0–3, wired in CI): `npm run gen:tokens` — regenerate the
   semantic-token union + lint allowlist + agent-rules reference from the `@theme`/`:root`
   layer, CI drift-checked like `gen:types` (0058); it splits the `--c-*` primitive layer into
-  `PRIMITIVE_VARIABLES` and enforces the tenant/density **swap-only invariant** — throws on a
-  non-primitive override, proven by `--self-test` (0081/0082); `npm run check:contrast` —
-  computed WCAG 2.2 AA contrast over the mission-control status fg/bg + text/surface pairs
-  (oklch→sRGB→luminance), in `check:design-system` and the CI gate (0081); `npm run
+  `PRIMITIVE_VARIABLES` and enforces the tenant/density/theme **swap-only invariant** — throws on
+  a non-primitive override, proven by `--self-test` (0081/0082/0092); `npm run check:contrast` —
+  computed WCAG 2.2 AA contrast over the mission-control status fg/bg + text/surface pairs in both
+  the light and dark compositions (oklch→sRGB→luminance), in `check:design-system` and the CI gate
+  (0081/0092); `npm run
   check:boundaries`
   (`depcruise`) — module-boundary gate (0060); `npm run check:graph` —
   composition↔import reconciliation (0059/0060); `npm run check:design-intent` —
   `design-intent.ts` fitness functions (api↔props, state coverage by subtraction,
-  states↔stories contract-expansion, meta↔graph) (0062); `npm run check:seals` — Figma
-  drift-seal shape/presence gate, inert until a Figma project exists (0063); `npm run
+  states↔stories contract-expansion, meta↔graph) (0062); `npm run check:seals` — Claude Design
+  drift-seal shape/presence gate, inert until a Claude Design project exists (0095); `npm run
   check:tokens` — token-usage lint over `src/components/**` (0058); `npm run check:i18n` —
   key-parity + ICU (0055); `npm run check:gates` — gate self-test (every custom rule
   rejects its violator, P6); `npm run check:design-system` runs the bundle.
@@ -303,9 +314,10 @@ still-proposed._
 - Each component ships a typed `design-intent.ts` at Definition-of-Ready: API derived from the
   `usedIn` union (not guessed), slot-vs-variant boundary recorded with rationale, state
   coverage by subtraction from the 0061 archetype set (`applicable:false` requires a rationale)
-  (0062). API approval uses an ephemeral Figma-image artifact (figma server image capability,
-  never its code path, never the agent's own render) sealed by `renderHash` +
-  `figmaFileVersion` as a drift detector (0063); a Defect Log of missing/ambiguous rules is
+  (0062). API approval uses an ephemeral reconciliation artifact against a **render of the
+  human-authored Claude Design preview** (render the pixels, never read the preview's source HTML,
+  never the agent's own render) sealed by `renderHash` + a Claude Design version identifier as a
+  drift detector (0095); a Defect Log of missing/ambiguous rules is
   filled in review, and invariants graduate into Stage-1 checks on first violation (0064).
 - Multitenancy & identity (0083): every domain row carries `project_id` under
   `organization → project`; isolation is **RLS scoped by a membership join** via
@@ -391,8 +403,9 @@ still-proposed._
 - No manual `useMemo` / `useCallback` / `React.memo` — the React Compiler owns
   memoization; exceptions are rare and documented (`"use no memo"`) (0029).
 - No `tailwind.config.js` — CSS-first configuration only (0032). Token values are
-  code-canonical: Figma conforms to code and never forks it; the figma MCP server is
-  read-only (0033, 0045).
+  code-canonical (0033): **Claude Design** conforms to the token scale and never forks a value —
+  a design-originated change is a reviewed round-trip into `globals.css`, never a silent fork; the
+  implementing agent consumes Claude Design read-only in the approval loop (0094).
 - CSF 2 (`Template.bind({})`) and `storiesOf` fail lint; MDX never defines stories
   (0036). Snapshot baselines update only as a reviewed action (0040). The
   test-runner contributes no coverage and duplicates no assertion suite
@@ -420,19 +433,25 @@ still-proposed._
 - GitHub Actions `uses:` are pinned to a full commit SHA (0044/0070); production dependencies
   stay within the SPDX license allowlist (0071); commits violating Conventional Commits fail CI
   (0072).
-- Runtime light/dark theme switching is deferred (0079): only the `.dark` value layer and the
-  `dark` variant ship — no light/dark toggle or theme provider. ADR 0082 bounds this for the
-  tenant/density axes: `[data-tenant]` / `[data-density]` re-composition is allowed but a block
-  may redefine **only** existing `--c-*` primitives — never introduce a token or touch a semantic
-  `--color-*` name; `gen:tokens` throws on violation (swap-only invariant, self-tested). Adding a
-  light/dark toggle still needs its own ADR (0079). Mission-control status fg/bg and text/surface
-  token pairs must clear WCAG 2.2 AA — enforced by `check:contrast` (0081).
+- Runtime light/dark theme switching ships via a **cookie-persisted, SSR-applied theme class**
+  (0092) — no client theme-provider dependency and no hydration flash; a `ThemeToggle` (a client
+  leaf) writes the cookie and the class is applied server-side. Theme is a **third governed swap
+  selector** on the same primitive-layer mechanism as tenant and density (0082): `[data-tenant]` /
+  `[data-density]` / the theme selector may redefine **only** existing `--c-*` primitives — never
+  introduce a token or touch a semantic `--color-*` name; `gen:tokens` throws on violation
+  (swap-only invariant, self-tested across all three selectors). Mission-control status fg/bg and
+  text/surface token pairs must clear WCAG 2.2 AA in **both** the light and dark compositions —
+  enforced by `check:contrast` (0081/0092). A theming mechanism beyond this cookie-SSR toggle (e.g.
+  adopting a client theme provider) still needs its own ADR.
 - The template is never published to npm — `private: true` is retained permanently; the
   release artifacts are the git tag + GitHub Release + `CHANGELOG.md`, not an npm package
   (0080).
 - The agent never approves its own visual baseline (Chromatic UI, human-only) and is never
-  shown its own implementation during API approval — the proof is Figma pixels it does not
-  control (0063, 0047). Controlled-vocabulary entries are human-authored; a rename/merge/split
+  shown its own implementation during API approval — the proof is **human-authored Claude Design**
+  pixels it does not control (0095, 0047). Because `DesignSync` is bidirectional, the implementing
+  agent uses its **read** methods only in the approval loop and never approves against a design it
+  authored or synced up (the code→design catalog publish is a separate, human-initiated act, 0094).
+  Controlled-vocabulary entries are human-authored; a rename/merge/split
   is a governed migration with an owner, and a component fitting no archetype escalates to a
   human (0061, 0064).
 - Tenant isolation is a database invariant: every domain table has RLS enabled and
