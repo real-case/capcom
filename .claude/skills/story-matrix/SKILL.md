@@ -92,5 +92,5 @@ node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/check-design-intent.
 - **Meaningfulness is a human judgment** (ADR 0051/0042): the matrix is a draft; the PR
   reviewer (and the `storybook-reviewer` agent as a pre-pass) judges whether the covered
   states are the *right* ones and whether a `demoRationale` is a real reason.
-- **Visual baselines are 👤** (ADR 0063/0043): never approve a Chromatic baseline or
+- **Visual baselines are 👤** (ADR 0095/0043): never approve a Chromatic baseline or
   judge your own render as the proof of correctness.

@@ -87,8 +87,8 @@ jobs:
       - name: "[design-intent] Fitness functions"
         run: npm run check:design-intent # ADR 0062
 
-      - name: "[seals] Figma drift seals"
-        run: npm run check:seals # ADR 0063 (inert until a Figma file is wired)
+      - name: "[seals] Claude Design drift seals"
+        run: npm run check:seals # ADR 0095 (inert until a Claude Design project is wired)
 
       - name: "[i18n] Key parity + ICU"
         run: npm run check:i18n # ADR 0055

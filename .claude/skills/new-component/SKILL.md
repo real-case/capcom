@@ -29,7 +29,7 @@ Run the steps **in order** — each gates the next.
 - **Location:** `src/components/ui/<name>.tsx` for a reusable catalogue component. (One-off
   page compositions live in `src/app/**` and are out of this catalogue — ADR 0007/0042.)
 - **Scope — this skill is the `src/components/ui` kit ONLY.** That kit is the shadcn primitive
-  catalogue, governed by dependency-cruiser and the design-system gates (ADR 0034 / 0058–0064)
+  catalogue, governed by dependency-cruiser and the design-system gates (ADR 0034 / 0058–0062, 0064, 0095)
   and is deliberately **outside** the Feature-Sliced Design model (ADR 0065). **Slice-specific,
   domain-aware UI** (a feature's `ui` segment, a widget, an entity's presentational pieces)
   does **not** belong here — it goes through the **`new-slice`** skill into
@@ -204,7 +204,7 @@ export const badgeIntent = {
     items: [],
     traversalComplete: false,
     notes:
-      "Figma frames not wired (👤, ADR 0045/0063). Closed axes live in api.variants; per-variant frames + ApprovalSeals are added at the 👤 API-approval step.",
+      "Claude Design references not wired (👤, ADR 0094/0095). Closed axes live in api.variants; per-variant design references + ApprovalSeals are added at the 👤 API-approval step.",
   },
   states: [
     // From `npm run ds:states -- categorical-indicator`. Mark each applicable
@@ -280,10 +280,10 @@ state → add the story + intent entry). A clean `check:design-system` + `tsc` m
 component is at Definition-of-Ready.
 
 ## 7. The human gates that remain (👤 — do not perform)
-These stay human-owned (ADR 0046/0047/0061/0063), so **surface them and stop**:
+These stay human-owned (ADR 0046/0047/0061/0095), so **surface them and stop**:
 - A new **archetype or usage role** (step 2 had no fit).
-- **API approval** against real **Figma** pixels and the resulting **drift seal** — the agent
-  is never shown its own render for this (ADR 0063).
+- **API approval** against real **Claude Design** pixels and the resulting **drift seal** — the
+  agent is never shown its own render for this (ADR 0095).
 - The **Chromatic** visual baseline (ADR 0043) and **merging** into `dev`/`main`.
 
 End by reporting: the files created, the gate results, and any 👤 escalation the user must take next.

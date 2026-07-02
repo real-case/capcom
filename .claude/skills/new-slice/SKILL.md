@@ -31,7 +31,7 @@ FSD is **additive**. Steiger is scoped to exactly four layers under `src/`:
   app/pages role (ADR 0002). It **consumes `widgets`**. There is **no `pages` layer** —
   renaming it would break the linter, so route files live in `src/app` (ADR 0065).
 - `src/components/**` — the shadcn primitive kit + colocated stories/specs, governed by
-  **dependency-cruiser** (ADR 0034 / 0058–0064) on a **disjoint** scope. A reusable
+  **dependency-cruiser** (ADR 0034 / 0058–0062, 0064, 0095) on a **disjoint** scope. A reusable
   catalogue component goes here via **`new-component`**, never into an FSD layer.
 - `src/design-system`, `src/lib`, `src/i18n` — pre-FSD shared infrastructure. Do **not**
   relocate them into `src/shared`, and do **not** put new FSD code in them.

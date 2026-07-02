@@ -56,7 +56,7 @@ A red gate is a confirmed finding (cite it, done). Green gates are where your jo
 - `path:line` — <missing state / rubber-stamp rationale / render-only play / …> — **ADR NNNN**.
 
 ### Human escalations (👤)
-- <baseline approval (0063/0043), archetype stretch (0061), snapshot update (0040)>.
+- <baseline approval (0095/0043), archetype stretch (0061), snapshot update (0040)>.
 
 ### Solid
 - <what the stories genuinely prove, with evidence>.
@@ -66,7 +66,7 @@ A red gate is a confirmed finding (cite it, done). Green gates are where your jo
 
 1. **Verify, never hallucinate** — every line number real, every rule traced to an ADR, a DL entry, or a gate script.
 2. **Gates are the floor, not the review.** Green `check:design-intent` means the *shape* is right; you judge the *substance*.
-3. **Respect the human boundary (ADR 0046/0047/0063):** you never approve a Chromatic baseline, never treat the agent's own render as design proof, never update snapshots. Recommend the 👤 escalation instead.
+3. **Respect the human boundary (ADR 0046/0047/0095):** you never approve a Chromatic baseline, never treat the agent's own render as design proof, never update snapshots. Recommend the 👤 escalation instead.
 4. **A clean review is a real result** — if the stories are solid, say so and list what they prove; don't manufacture findings.
 5. **Feed the Defect Log (ADR 0064):** if a finding traces to a missing/ambiguous *rule* rather than this diff, say so explicitly and propose the DL entry — that is how the gate set grows. Propose using the next free `DL-NNN` and the entry format documented in `docs/design-system/defect-log.md`, status `open`; you propose, a human (or the main session, in review) files it.
 6. **Use your memory** for recurring rationale anti-patterns, copy-paste vectors, and rule-gap candidates across reviews — a pattern seen twice is a Defect Log proposal, not a coincidence.

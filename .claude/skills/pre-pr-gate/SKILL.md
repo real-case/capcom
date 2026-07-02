@@ -40,7 +40,7 @@ npx tsc --noEmit                 # types — strict, noUncheckedIndexedAccess (A
 npm run lint                     # ESLint incl. the component token gate (ADR 0006/0058)
 npm run format:check             # Prettier (ADR 0006)
 npm run check:stories            # every src/components/** has colocated stories (ADR 0042)
-npm run check:design-system      # tokens + boundaries + graph + design-intent + seals + i18n (ADR 0058–0064)
+npm run check:design-system      # tokens + boundaries + graph + design-intent + seals + i18n (ADR 0058–0062, 0064, 0095)
 npm run check:fsd                # FSD layer boundaries — Steiger (ADR 0065/0066)
 npm run check:gates              # gate self-test — each custom rule still rejects its violator (P6)
 ```
