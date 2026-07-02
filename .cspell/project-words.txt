@@ -116,3 +116,6 @@ parameterizes
 workstreams
 creds
 prerenders
+# premium-UI track (PR-11…PR-15)
+affordance
+affordances

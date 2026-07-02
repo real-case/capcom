@@ -58,20 +58,25 @@ the product tracks). The two never collapse into one table.
 
 ## PR sequence at a glance
 
-| PR    | Theme                              | New ADRs      | Proves                                            |
-| ----- | ---------------------------------- | ------------- | ------------------------------------------------- |
-| PR-0  | Bootstrap (this repo's start)      | —             | governed canvas, gates green                      |
-| PR-DS | Design-system token foundation     | 0081–0082     | mission-control tokens, tenant/density, a11y gate |
-| PR-1  | Foundational domain ADRs           | 0083–0086     | decisions-first, human gate                       |
-| PR-2  | Tenancy: org/project/membership    | —             | multitenant RLS + RBAC                            |
-| PR-3  | Events + profiles + ingest + seed  | —             | event modelling, ingest contract                  |
-| PR-4  | Trends (first flagship slice)      | —             | SQL aggregation → nuqs → visx, end-to-end         |
-| PR-5  | Funnels                            | 0087 (if any) | ordered-step conversion in SQL                    |
-| PR-6  | Retention cohort grid              | —             | the signature dense infographic                   |
-| PR-7  | Segmentation                       | 0088          | flexible attribute/behavior rules                 |
-| PR-8  | Dashboards + saved reports         | —             | Server Actions, optimistic mutations              |
-| PR-9  | AI natural-language query          | 0089 (if any) | provider-agnostic advisory AI                     |
-| PR-10 | Public landing + i18n/SEO + README | —             | the lead-gen surface; CI suites re-enabled        |
+| PR    | Theme                              | New ADRs           | Proves                                            |
+| ----- | ---------------------------------- | ------------------ | ------------------------------------------------- |
+| PR-0  | Bootstrap (this repo's start)      | —                  | governed canvas, gates green                      |
+| PR-DS | Design-system token foundation     | 0081–0082          | mission-control tokens, tenant/density, a11y gate |
+| PR-1  | Foundational domain ADRs           | 0083–0086          | decisions-first, human gate                       |
+| PR-2  | Tenancy: org/project/membership    | —                  | multitenant RLS + RBAC                            |
+| PR-3  | Events + profiles + ingest + seed  | —                  | event modelling, ingest contract                  |
+| PR-4  | Trends (first flagship slice)      | —                  | SQL aggregation → nuqs → visx, end-to-end         |
+| PR-5  | Funnels                            | 0087 (if any)      | ordered-step conversion in SQL                    |
+| PR-6  | Retention cohort grid              | —                  | the signature dense infographic                   |
+| PR-7  | Segmentation                       | 0088               | flexible attribute/behavior rules                 |
+| PR-8  | Dashboards + saved reports         | —                  | Server Actions, optimistic mutations              |
+| PR-9  | AI natural-language query          | 0089 (if any)      | provider-agnostic advisory AI                     |
+| PR-10 | Public landing + i18n/SEO + README | —                  | the lead-gen surface; CI suites re-enabled        |
+| PR-11 | Theme system (light/dark + toggle) | 0092               | premium themed surface on the 0082 swap axis      |
+| PR-12 | Premium primitive kit (shadcn)     | —                  | rich controls replace native form elements        |
+| PR-13 | App shell & navigation IA          | —                  | real product shell, ⌘K, skeletons, empty states   |
+| PR-14 | Chart interaction layer            | 0093               | tooltip / crosshair / gradient / motion over visx |
+| PR-15 | Rich controls + premium landing    | — (new ADR if any) | the visual "wow"; deferred CI suites re-enabled   |
 
 ---
 
@@ -210,6 +215,72 @@ A public marketing route (next-intl + the Metadata API, ADR 0030/0031) with loca
 (`check:i18n`); the README "behind the scenes" case study (data model, SQL aggregations, RLS,
 tests, ADR discipline). Before the first `dev → main` promotion, **re-enable `DEV-001` and
 `DEV-002`** (Playwright e2e + Storybook smoke in CI) per their re-enable triggers.
+
+---
+
+## Premium product surface — PR-11 … PR-15
+
+PR-0…PR-10 build a **functionally complete** analytics platform on real RLS, real SQL aggregation,
+and token-governed visx charts — but with a caretaker UI: native `<select>` controls, static
+charts, a placeholder project hub, and the mission-control dark theme not yet switched on for the app
+chrome. This track raises the surface to the demo's actual purpose — **a visually premium,
+production-grade product** — without loosening a single governance invariant. Three directions,
+decided with the human, frame it and _are_ the recorded goal:
+
+- **Light + dark with a real toggle** — a first-class themed experience, not a deferred nicety
+  (ADR 0092, superseding ADR 0079).
+- **Foundation first** — the theme system, the primitive kit, the app shell, and the chart
+  interaction layer land _before_ the per-surface polish, so every surface inherits quality rather
+  than each being hand-tuned.
+- **By the methodology** — the genuinely new decisions are recorded as ADRs and human-accepted
+  before their code (ADR 0092 theme, ADR 0093 chart interaction); the rest is additive under
+  existing records (shadcn primitives under ADR 0034, FSD widgets under ADR 0065/0066) and needs
+  none.
+
+### PR-11 — Theme system (light/dark + toggle) 🔑
+
+**ADR 0092** (supersedes ADR 0079). Give the `--c-*` primitive layer (ADR 0081) a **light**
+composition so light/dark becomes a third primitive-swap axis alongside tenant/density (ADR 0082);
+read the active theme from a cookie and apply the class **server-side** (no hydration flash,
+RSC-first — ADR 0002); ship one polished `ThemeToggle`. `check:contrast` (ADR 0081) now gates
+**both** compositions and Storybook renders both. The keystone — every later surface sits on it,
+and it retires the "fixed-dark mission-control set" contrast trap by giving that set a light mode.
+
+### PR-12 — Premium primitive kit
+
+Expand `src/components/ui` via **shadcn** (already sanctioned by ADR 0034 — **additive, no new
+ADR**): `input`, combobox / `command`, `popover`, `dialog`, `tooltip`, `tabs`, `dropdown-menu`,
+`calendar` + date-range, `skeleton`, `card`, toasts, `scroll-area`. Each ships its
+`design-intent.ts`, CSF-3 stories over its meaningful states, and clears the axe gate
+(ADR 0036/0038/0039/0062). This is the kit the rich controls and the shell are built from.
+
+### PR-13 — App shell & navigation IA
+
+Replace the placeholder project hub (`p/[projectId]/page.tsx`) and the thin header shell with a real
+`widgets/app-shell`: a sidebar of the analysis sections, brand, project/tenant context, breadcrumbs,
+and a ⌘K command palette (built on `command`). Text "Loading…" gives way to **skeletons**; the
+dashed-border empties become **designed empty states**. Regular FSD widget work under ADR 0065/0066.
+
+### PR-14 — Chart interaction layer
+
+**ADR 0093** (extends ADR 0086). A shared, token-fed, theme-aware interaction layer over visx —
+**tooltip, crosshair, hover-highlight, gradient / area fill, entrance motion, interactive legend,
+time brush** — with interaction kept as local view-state and any window-changing brush routed
+through nuqs (ADR 0027), motion resolved to a static state for Chromatic (ADR 0043), and keyboard +
+reduced-motion a11y (ADR 0039/0052). Upgrade the chart widgets `trends-explorer`, `funnel-builder`,
+`retention-grid`, and `segment-builder`.
+
+### PR-15 — Rich controls rollout + premium landing
+
+Swap the native `<select>` controls for **comboboxes / date-range pickers** across trends, funnels,
+retention, and segments — the URL-state contracts (ADR 0027) are unchanged, only the control is. Lift
+the landing to a premium marketing surface — motion, product visuals, a gradient / mesh treatment —
+and finish with a final polish pass (focus styles, consistency, transitions). A JS motion library, if
+adopted here, is its own record (a candidate new ADR).
+
+> **Re-enable the deferred CI suites (DEV-001 / DEV-002)** — already scheduled by PR-10 — before the
+> `dev → main` promotion that ships this track, so the Playwright e2e (theme persistence / no-flash,
+> ⌘K navigation) and the Storybook smoke run in CI.
 
 ---
 

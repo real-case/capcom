@@ -149,8 +149,9 @@ asserts row-isolation outcomes directly against the database.
 ### The decisions-first method
 
 Nothing in the list above was built before the decision that governs it was **recorded as an
-ADR and accepted by a human**. The corpus runs 0001–0091, all accepted; `CLAUDE.md` is
-regenerated from it (never hand-edited); citations, link integrity, and the `.claude/`
+ADR and accepted by a human**. The corpus is 95 records — every one human-accepted, a handful
+already replaced by superseding records as the design evolved; `CLAUDE.md` is regenerated from
+the accepted set (never hand-edited); citations, link integrity, and the `.claude/`
 infrastructure itself are CI-gated. The git history mirrors the roadmap one reviewable PR at a
 time. That discipline — not any single feature — is what the demo is really showing.
 

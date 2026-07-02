@@ -1,5 +1,5 @@
 ---
-status: "accepted"
+status: "superseded by ADR-0095"
 date: 2026-06-11
 decision-makers: Yurii Anichkin
 ---
