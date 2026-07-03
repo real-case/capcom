@@ -91,9 +91,10 @@ still-proposed._
   `[data-tenant]` re-composes the palette and `[data-density="comfortable"|"dense"]` swaps the
   dimension tokens by overriding the `--c-*` primitive layer **only** — pure CSS, no theme
   provider. **Runtime light/dark theming** (0092) adds theme as a **third such primitive-swap
-  axis** on the same mechanism: a cookie-persisted choice applied as a class server-side (no
-  hydration flash, no client theme-provider dependency), with the mission-control `--c-*` layer
-  gaining a light composition so chrome and charts flip as one unit.
+  axis** on the same mechanism: a cookie-persisted choice applied by a pre-paint resolver over a
+  static SSR default (no hydration flash, no client theme-provider dependency, public routes stay
+  statically generated), with the mission-control `--c-*` layer gaining a light composition so chrome
+  and charts flip as one unit.
 - **next-intl** for i18n (0030); App Router Metadata API for SEO (0031).
 - **React Compiler** — automatic memoization (0029).
 - **Storybook 10** on `@storybook/nextjs-vite`, stories double as tests via
@@ -433,9 +434,10 @@ still-proposed._
 - GitHub Actions `uses:` are pinned to a full commit SHA (0044/0070); production dependencies
   stay within the SPDX license allowlist (0071); commits violating Conventional Commits fail CI
   (0072).
-- Runtime light/dark theme switching ships via a **cookie-persisted, SSR-applied theme class**
-  (0092) — no client theme-provider dependency and no hydration flash; a `ThemeToggle` (a client
-  leaf) writes the cookie and the class is applied server-side. Theme is a **third governed swap
+- Runtime light/dark theme switching ships via a **cookie-persisted theme class applied by a
+  pre-paint resolver over a static SSR default** (0092) — no client theme-provider dependency, no
+  hydration flash, and the public routes stay statically generated; a `ThemeToggle` (a client leaf)
+  writes the cookie and the pre-paint script applies the class. Theme is a **third governed swap
   selector** on the same primitive-layer mechanism as tenant and density (0082): `[data-tenant]` /
   `[data-density]` / the theme selector may redefine **only** existing `--c-*` primitives — never
   introduce a token or touch a semantic `--color-*` name; `gen:tokens` throws on violation

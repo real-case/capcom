@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import { fetchOrganizations } from "@/entities/organization";
 import { fetchProjects } from "@/entities/project";
 import { SignOutButton } from "@/features/auth-by-email";
+import { ThemeToggle } from "@/features/theme";
 import { Link, redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { getCurrentUser, getServerClient } from "@/lib/supabase/server";
@@ -42,6 +43,7 @@ export default async function AppLayout({
     fetchProjects(supabase),
   ]);
   const t = await getTranslations("AppShell");
+  const tTheme = await getTranslations("Theme");
 
   return (
     <div className="flex min-h-full flex-col">
@@ -62,6 +64,7 @@ export default async function AppLayout({
           <span className="hidden text-sm text-muted-foreground sm:inline">
             {t("signedInAs", { email: user.email ?? "" })}
           </span>
+          <ThemeToggle label={tTheme("toggle")} />
           <SignOutButton />
         </div>
       </header>

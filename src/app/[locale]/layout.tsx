@@ -6,6 +6,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import "../globals.css";
 
+import { THEME_INIT_SCRIPT } from "@/features/theme";
 import { buildAlternates } from "@/i18n/metadata";
 import { routing } from "@/i18n/routing";
 import { env } from "@/lib/env";
@@ -85,11 +86,21 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
+    // Theme axis (ADR 0092): a STATIC dark-first default class is server-rendered — no
+    // `cookies()` read, so the public routes stay statically generated — and the pre-paint
+    // script below resolves the actual theme (cookie → system) before first paint. `.dark`
+    // drives the shadcn value layer (ADR 0033); `[data-theme]` swaps the mission-control
+    // `--c-*` primitives (ADR 0081/0082).
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      data-theme="dark"
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col">
+        {/* Pre-paint theme resolver (ADR 0092): reads the cookie (or the system preference on
+            a first visit) and applies the theme before first paint, correcting the static
+            default with no flash. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         {/* v4 inherits locale + messages from the request config (0030).
             Providers adds the client state buckets — TanStack Query + nuqs
             (0025, 0027) — inside the intl provider. */}

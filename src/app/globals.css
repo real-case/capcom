@@ -503,6 +503,79 @@
   --c-viz-cat-12: oklch(0.77 0.11 290);
 }
 
+/* ---- THEME — LIGHT (swaps --c-* COLOR primitives ONLY; ADR 0092) ----
+   The third primitive-swap axis beside tenant/density (ADR 0082): `:root` is the
+   dark-first composition, and `[data-theme="light"]` re-fills the color primitives with
+   a light-mode ramp so the FIXED semantic layer (surface/text/status/viz) re-resolves to
+   a light surface with no change to any semantic name or component. The ramp lightness
+   inverts (a high `--c-gray-*` slot = the light background; a low slot = dark text), the
+   status pairs invert (light-tinted bg, dark fg), and the viz palette darkens for a light
+   canvas. Dimension primitives are NOT theme-swappable — they stay in `:root`/density.
+   Both compositions clear WCAG 2.2 AA (check:contrast, ADR 0081/0092). */
+[data-theme="light"] {
+  /* Neutral ramp — inverted: high number = light surface, low number = dark text */
+  --c-gray-950: oklch(0.99 0.003 256);
+  --c-gray-900: oklch(0.975 0.004 256);
+  --c-gray-850: oklch(0.955 0.005 256);
+  --c-gray-800: oklch(0.93 0.006 256);
+  --c-gray-700: oklch(0.87 0.008 256);
+  --c-gray-600: oklch(0.72 0.01 256);
+  --c-gray-500: oklch(0.56 0.011 256);
+  --c-gray-400: oklch(0.47 0.012 256);
+  --c-gray-300: oklch(0.42 0.013 256);
+  --c-gray-200: oklch(0.33 0.014 256);
+  --c-gray-100: oklch(0.28 0.015 256);
+  --c-gray-50: oklch(0.2 0.014 256);
+
+  /* Accent — darker instrument blue for a light canvas */
+  --c-blue-300: oklch(0.72 0.1 236);
+  --c-blue-400: oklch(0.62 0.14 240);
+  --c-blue-500: oklch(0.54 0.16 244);
+  --c-blue-600: oklch(0.47 0.16 248);
+
+  /* Status — light-tinted bg (950), dark fg (400), mid border (600) */
+  --c-green-400: oklch(0.5 0.13 152);
+  --c-green-600: oklch(0.6 0.14 152);
+  --c-green-950: oklch(0.94 0.035 152);
+  --c-amber-400: oklch(0.52 0.1 74);
+  --c-amber-600: oklch(0.64 0.13 78);
+  --c-amber-950: oklch(0.95 0.05 86);
+  --c-orange-400: oklch(0.52 0.16 44);
+  --c-orange-600: oklch(0.61 0.16 48);
+  --c-orange-950: oklch(0.95 0.04 52);
+  --c-red-400: oklch(0.52 0.2 27);
+  --c-red-600: oklch(0.55 0.21 27);
+  --c-red-950: oklch(0.94 0.035 22);
+
+  /* Data-viz categorical — darkened for a light canvas (Okabe-Ito family) */
+  --c-viz-cat-01: oklch(0.55 0.15 238);
+  --c-viz-cat-02: oklch(0.58 0.15 62);
+  --c-viz-cat-03: oklch(0.55 0.13 158);
+  --c-viz-cat-04: oklch(0.6 0.15 100);
+  --c-viz-cat-05: oklch(0.5 0.18 286);
+  --c-viz-cat-06: oklch(0.55 0.2 28);
+  --c-viz-cat-07: oklch(0.55 0.16 330);
+  --c-viz-cat-08: oklch(0.58 0.11 200);
+  --c-viz-cat-09: oklch(0.55 0.14 128);
+  --c-viz-cat-10: oklch(0.56 0.16 12);
+  --c-viz-cat-11: oklch(0.6 0.13 52);
+  --c-viz-cat-12: oklch(0.56 0.12 270);
+
+  /* Data-viz sequential — light -> dark for a light canvas */
+  --c-viz-seq-1: oklch(0.9 0.04 236);
+  --c-viz-seq-2: oklch(0.78 0.08 236);
+  --c-viz-seq-3: oklch(0.64 0.12 238);
+  --c-viz-seq-4: oklch(0.5 0.15 240);
+  --c-viz-seq-5: oklch(0.4 0.15 244);
+
+  /* Data-viz diverging — amber <-> neutral <-> cyan (darkened) */
+  --c-viz-div-1: oklch(0.6 0.16 55);
+  --c-viz-div-2: oklch(0.74 0.09 68);
+  --c-viz-div-3: oklch(0.68 0.01 256);
+  --c-viz-div-4: oklch(0.6 0.11 220);
+  --c-viz-div-5: oklch(0.5 0.16 240);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

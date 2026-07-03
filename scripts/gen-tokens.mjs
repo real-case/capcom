@@ -55,6 +55,7 @@ function customProps(body) {
 const PRIMITIVE_PREFIX = "--c-";
 const TENANT_RE = /\[data-tenant[^\]]*\]\s*\{([^}]*)\}/g;
 const DENSITY_RE = /\[data-density[^\]]*\]\s*\{([^}]*)\}/g;
+const THEME_RE = /\[data-theme[^\]]*\]\s*\{([^}]*)\}/g;
 const ROOT_RE = /:root\s*\{([^}]*)\}/g;
 
 /** The `--c-*` primitive names declared across the given :root block bodies. */
@@ -120,8 +121,29 @@ function runSelfTest() {
     ok = false;
   }
 
+  // The same invariant on the theme selector — the third swap axis (ADR 0092).
+  let themeThrew = false;
+  try {
+    const themeBad = `:root{--c-x:1;--surface-y:0;}[data-theme="light"]{--surface-y:9;}`;
+    assertSwapOnly(
+      collectPrimitives(blockBodies(themeBad, new RegExp(ROOT_RE.source, "g"))),
+      "[data-theme]",
+      blockBodies(themeBad, new RegExp(THEME_RE.source, "g")),
+    );
+  } catch {
+    themeThrew = true;
+  }
+  if (!themeThrew) {
+    console.error(
+      "self-test FAIL: a violating [data-theme] override (non-primitive) was accepted",
+    );
+    ok = false;
+  }
+
   if (!ok) process.exit(1);
-  console.log("gen-tokens --self-test: swap-only invariant OK");
+  console.log(
+    "gen-tokens --self-test: swap-only invariant OK (tenant / density / theme)",
+  );
   process.exit(0);
 }
 
@@ -169,6 +191,11 @@ assertSwapOnly(
   primitiveSet,
   "[data-density]",
   blockBodies(css, new RegExp(DENSITY_RE.source, "g")),
+);
+assertSwapOnly(
+  primitiveSet,
+  "[data-theme]",
+  blockBodies(css, new RegExp(THEME_RE.source, "g")),
 );
 
 const KNOWN_PREFIXES = ["--color-", "--radius-", "--font-"];
