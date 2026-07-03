@@ -95,7 +95,7 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0089](0089-segment-definition-model.md) | Segment-definition model: bounded predicate grammar, AND-composition, in-database evaluation | accepted | 2026-06-27 |
 | [0090](0090-saved-analyses-persistence-and-write-rbac.md) | Saved analyses: report / dashboard persistence model and member-write RBAC | accepted | 2026-06-28 |
 | [0091](0091-ai-natural-language-query-contract.md) | AI natural-language query: closed query-spec contract and untrusted-output interpretation | accepted | 2026-06-28 |
-| [0092](0092-runtime-light-dark-theme-switching.md) | Runtime light/dark theme switching with a cookie-SSR toggle | accepted | 2026-07-02 |
+| [0092](0092-runtime-light-dark-theme-switching.md) | Runtime light/dark theme switching with a cookie-persisted toggle | accepted | 2026-07-02 |
 | [0093](0093-chart-interaction-layer.md) | Chart interaction layer over visx: tooltip, crosshair, hover, motion | accepted | 2026-07-02 |
 | [0094](0094-claude-design-as-design-source.md) | Claude Design (claude.ai/design) as the design source and living catalog | accepted | 2026-07-02 |
 | [0095](0095-claude-design-approval-drift-seal.md) | Anti-hallucination component approval and the drift seal, adapted for Claude Design | accepted | 2026-07-02 |
