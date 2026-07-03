@@ -1,4 +1,7 @@
 {
+  "Theme": {
+    "toggle": "Toggle light or dark theme"
+  },
   "Metadata": {
     "title": "CAPCOM — Product Analytics",
     "description": "CAPCOM: a multitenant product-analytics platform — events, funnels, retention cohorts, and segmentation."

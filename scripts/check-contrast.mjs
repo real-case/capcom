@@ -35,11 +35,11 @@ const PAIRS = [
   ["--text-secondary", "--surface-background", 4.5],
 ];
 
-/** Map every `--name: value;` declared in any `:root { … }` block (the default layer). */
-function readRootVars(css) {
+/** Declarations inside every block matching `selectorRe` (capture group 1 = the body),
+ *  merged left→right so a later block overlays earlier ones (ADR 0092 theme overlay). */
+function readVarsFor(css, selectorRe) {
   const vars = {};
-  const blocks = css.matchAll(/:root\s*\{([^}]*)\}/g);
-  for (const [, body] of blocks) {
+  for (const [, body] of css.matchAll(selectorRe)) {
     for (const [, name, value] of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
       vars[name] = value.trim();
     }
@@ -124,32 +124,47 @@ function runSelfTest() {
 
 if (process.argv.includes("--self-test")) runSelfTest();
 
-const vars = readRootVars(readFileSync(CSS, "utf8"));
+const css = readFileSync(CSS, "utf8");
+
+// The DEFAULT layer (:root) is the dark composition; [data-theme="light"] overlays the
+// light `--c-*` primitives (ADR 0092 — theme is a third primitive-swap axis). BOTH must
+// clear AA over the mission-control pairs (ADR 0081/0092).
+const rootVars = readVarsFor(css, /:root\s*\{([^}]*)\}/g);
+const lightOverlay = readVarsFor(css, /\[data-theme="light"\]\s*\{([^}]*)\}/g);
+const COMPOSITIONS = [
+  { label: "dark  (:root)", vars: rootVars },
+  {
+    label: 'light ([data-theme="light"])',
+    vars: { ...rootVars, ...lightOverlay },
+  },
+];
+
 const failures = [];
-const rows = [];
-
-for (const [fgName, bgName, min] of PAIRS) {
-  const fg = resolve(`var(${fgName})`, vars);
-  const bg = resolve(`var(${bgName})`, vars);
-  const ratio = contrastRatio(fg, bg);
-  const pass = ratio >= min;
-  rows.push(
-    `  ${pass ? "✓" : "✗"} ${ratio.toFixed(2).padStart(6)} : 1  (min ${min})  ${fgName} on ${bgName}`,
-  );
-  if (!pass) failures.push({ fgName, bgName, ratio, min });
-}
-
 console.log(
-  "check:contrast — WCAG 2.2 AA over mission-control token pairs (ADR 0081):",
+  "check:contrast — WCAG 2.2 AA over mission-control token pairs (ADR 0081/0092):",
 );
-console.log(rows.join("\n"));
+for (const { label, vars } of COMPOSITIONS) {
+  const rows = [];
+  for (const [fgName, bgName, min] of PAIRS) {
+    const fg = resolve(`var(${fgName})`, vars);
+    const bg = resolve(`var(${bgName})`, vars);
+    const ratio = contrastRatio(fg, bg);
+    const pass = ratio >= min;
+    rows.push(
+      `  ${pass ? "✓" : "✗"} ${ratio.toFixed(2).padStart(6)} : 1  (min ${min})  ${fgName} on ${bgName}`,
+    );
+    if (!pass) failures.push({ label, fgName, bgName, ratio, min });
+  }
+  console.log(`\n[${label}]`);
+  console.log(rows.join("\n"));
+}
 
 if (failures.length) {
   console.error(
-    `\ncheck:contrast: ${failures.length} pair(s) below AA — tune the oklch values in src/app/globals.css.`,
+    `\ncheck:contrast: ${failures.length} pair(s) below AA across ${COMPOSITIONS.length} composition(s) — tune the oklch values in src/app/globals.css.`,
   );
   process.exit(1);
 }
 console.log(
-  `\ncheck:contrast: OK — all ${PAIRS.length} pairs clear WCAG 2.2 AA.`,
+  `\ncheck:contrast: OK — all ${PAIRS.length} pairs clear WCAG 2.2 AA in both the light and dark compositions.`,
 );
