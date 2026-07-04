@@ -111,10 +111,6 @@
     }
   },
   "Workspace": {
-    "switcher": {
-      "label": "Switch project",
-      "placeholder": "Select a project"
-    },
     "home": {
       "title": "Your workspaces",
       "lead": "Organizations and projects you can access."
@@ -133,19 +129,58 @@
   },
   "AppShell": {
     "brand": "CAPCOM",
-    "signedInAs": "Signed in as {email}"
+    "signedInAs": "Signed in as {email}",
+    "nav": {
+      "overview": "Overview",
+      "trends": "Trends",
+      "funnels": "Funnels",
+      "retention": "Retention",
+      "segments": "Segments",
+      "dashboards": "Dashboards",
+      "ask": "Ask AI"
+    },
+    "sidebar": {
+      "primaryNav": "Primary navigation",
+      "sectionsLabel": "Analytics"
+    },
+    "breadcrumb": {
+      "label": "Breadcrumb",
+      "workspaces": "Workspaces"
+    },
+    "command": {
+      "trigger": "Search…",
+      "openHint": "Open command palette",
+      "title": "Command palette",
+      "description": "Jump to a section or switch project.",
+      "placeholder": "Type a command or search…",
+      "empty": "No results found.",
+      "goTo": "Go to",
+      "switchProject": "Switch project"
+    }
   },
   "ProjectOverview": {
-    "organization": "Organization",
     "yourRole": "Your role",
-    "placeholderTitle": "Project overview",
-    "placeholderBody": "Explore your analytics surfaces, or save and compose them into dashboards.",
-    "openTrends": "Open trends",
-    "openFunnels": "Open funnels",
-    "openRetention": "Open retention",
-    "openSegments": "Open segments",
-    "openDashboards": "Open dashboards",
-    "openAiQuery": "Ask with AI"
+    "lead": "Jump into an analysis surface, or compose saved reports into a dashboard.",
+    "surfaces": {
+      "trends": {
+        "description": "Time-bucketed event counts with an optional property breakdown."
+      },
+      "funnels": {
+        "description": "Ordered-step conversion within a single window, by distinct users."
+      },
+      "retention": {
+        "description": "Acquisition cohorts held over calendar-aligned periods."
+      },
+      "segments": {
+        "description": "Attribute and behavioural rules over profiles and events."
+      },
+      "dashboards": {
+        "description": "Save analyses and compose them onto a shared dashboard."
+      },
+      "ask": {
+        "description": "Describe an analysis in plain language and open it."
+      }
+    }
   },
   "Trends": {
     "title": "Trends",

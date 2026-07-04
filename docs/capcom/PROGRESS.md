@@ -6,21 +6,24 @@
 
 ## Status
 
-| PR    | Theme                                           | State                      |
-| ----- | ----------------------------------------------- | -------------------------- |
-| PR-0  | Bootstrap                                       | ✅ merged                  |
-| PR-DS | Design-system token foundation (0081–0082)      | ✅ merged                  |
-| PR-1  | Foundational domain ADRs (0083–0086)            | ✅ merged                  |
-| PR-2  | Tenancy: org/project/membership RLS + RBAC      | ✅ **merged (PR #6)**      |
-| PR-3  | Events + profiles + ingest + seed generator     | ✅ **merged (PR #7)**      |
-| PR-4  | Trends (in-DB aggregation → visx charts)        | ✅ **merged (PR #8)**      |
-| PR-5  | Funnels (ordered-step conversion, ADR 0087)     | ✅ **merged (PR #9)**      |
-| PR-6  | Retention cohort grid (ADR 0088)                | ✅ **merged (PR #10/#11)** |
-| PR-7  | Segmentation (ADR 0089)                         | ✅ **merged (PR #12)**     |
-| PR-8  | Dashboards & saved reports (ADR 0090)           | ✅ **merged (PR #13)**     |
-| PR-9  | AI natural-language query (ADR 0091)            | ✅ **merged (PR #14)**     |
-| PR-10 | Public landing + i18n/SEO + README              | ✅ **merged (PR #15)**     |
-| REL   | First `dev → main` promotion — `v0.1.0` genesis | 🔧 **release PR prepared** |
+| PR    | Theme                                           | State                          |
+| ----- | ----------------------------------------------- | ------------------------------ |
+| PR-0  | Bootstrap                                       | ✅ merged                      |
+| PR-DS | Design-system token foundation (0081–0082)      | ✅ merged                      |
+| PR-1  | Foundational domain ADRs (0083–0086)            | ✅ merged                      |
+| PR-2  | Tenancy: org/project/membership RLS + RBAC      | ✅ **merged (PR #6)**          |
+| PR-3  | Events + profiles + ingest + seed generator     | ✅ **merged (PR #7)**          |
+| PR-4  | Trends (in-DB aggregation → visx charts)        | ✅ **merged (PR #8)**          |
+| PR-5  | Funnels (ordered-step conversion, ADR 0087)     | ✅ **merged (PR #9)**          |
+| PR-6  | Retention cohort grid (ADR 0088)                | ✅ **merged (PR #10/#11)**     |
+| PR-7  | Segmentation (ADR 0089)                         | ✅ **merged (PR #12)**         |
+| PR-8  | Dashboards & saved reports (ADR 0090)           | ✅ **merged (PR #13)**         |
+| PR-9  | AI natural-language query (ADR 0091)            | ✅ **merged (PR #14)**         |
+| PR-10 | Public landing + i18n/SEO + README              | ✅ **merged (PR #15)**         |
+| REL   | First `dev → main` promotion — `v0.1.0` genesis | ✅ **released (tag `v0.1.0`)** |
+| PR-11 | Theme system (light/dark + toggle, ADR 0092)    | ✅ **merged (PR #19)**         |
+| PR-12 | Premium primitive kit (shadcn)                  | ✅ **merged (PR #20)**         |
+| PR-13 | App shell & navigation IA                       | 🔧 **this branch**             |
 
 Accepted ADRs now run **0001–0091, all accepted** (the corpus has no open `proposed` record).
 PR-9 drafted **ADR 0091** (AI NL→query-spec contract) — `app.adr-review` READY → **human-accepted**
@@ -473,6 +476,53 @@ handoff update, on branch `release/v0.1.0` → PR into `dev`.
 4. Publish the **GitHub Release** `v0.1.0` with the `[0.1.0]` CHANGELOG section as its body.
 5. Branch-protection: mark the `e2e` + `storybook-smoke` CI jobs **required** after one
    observed-green cycle (the deferred DEV-001/DEV-002 closure, ADR 0046).
+
+## What PR-13 shipped (PR-14 builds on this)
+
+The real product shell — a persistent sidebar, breadcrumb, ⌘K command palette, a designed
+overview hub, and navigation skeletons — replacing the PR-2 thin header + dashed placeholder.
+**No new ADR** (regular FSD widget work under ADR 0065/0066, built from the PR-12 shadcn kit
+under ADR 0034; tokens per ADR 0058). All gates green; coverage 90.6% statements / 93.4% lines
+(≥80, ADR 0008). Code-first (no design source consumed).
+
+- **Layout topology.** The chrome split in two so nothing double-renders: `(app)/layout.tsx`
+  is now only the **app-wide top bar** (brand → `/p`, signed-in identity, `ThemeToggle`,
+  `SignOutButton`) shared by the workspace home and every project route; a **new
+  `(app)/p/[projectId]/layout.tsx`** resolves the project + org + project list under RLS
+  (404 on a non-member, the same guard the analysis routes apply) and wraps all project routes
+  in the `AppShell`. The org/project fetch + the `WorkspaceSwitcher` moved out of the outer
+  layout; the sidebar + ⌘K supersede the switcher.
+- **Widget `widgets/app-shell`** (ADR 0065). One slice, public API `AppShell` + `ProjectHub`
+  (index.ts); `SidebarNav`, `CommandPalette`, and the section registry (`model/sections.ts` —
+  the one ordered list the sidebar, breadcrumb, and palette all derive from) stay internal.
+  `AppShell` is presentational chrome (props-in, fetches nothing); the sidebar collapses below
+  `md`, where the palette carries navigation. Token-only colors (ADR 0058); lucide icons via
+  `currentColor` (no raw fill/stroke). It imports **downward only** — `@/components/ui/*`, the
+  `theme`/`auth-by-email` features live in the outer layer now, so the widget pulls no sibling
+  widget (`check:fsd`/`check:boundaries` clean).
+- **⌘K command palette** (ADR 0034 `command`). The kit's `CommandDialog` renders `children`
+  directly and does **not** include the cmdk `<Command>` root — the caller must supply it (the
+  gotcha that made the first jsdom render throw `subscribe of undefined`). Groups: **Go to**
+  (the sections) + **Switch project** (other projects, current excluded). Open/close + the ⌘K
+  binding live in `AppShell`; selecting a row routes through the i18n router and closes.
+- **Overview hub `ProjectHub`** replaces the dashed placeholder with a designed card grid (one
+  whole-card link per surface, overview excluded), plus a context header (org + role badge).
+  Navigation **skeletons** (`[projectId]/loading.tsx`, ADR 0034 `skeleton`) replace bare
+  "Loading…" during project-route navigation; a per-widget chart-skeleton swap is a noted
+  follow-up boundary.
+- **Removed** the `workspace-switcher` widget (superseded; its only consumer was the old
+  layout) and its `Workspace.switcher` i18n keys — Steiger orphan avoided.
+- **Governance sync.** `card` / `skeleton` / `command` gained their new consumers in
+  **both** the composition graph (ADR 0059) and their `design-intent.ts` `usedIn` (ADR 0062);
+  `gen:tokens` is idempotent (no token-drift). New `AppShell.nav/sidebar/breadcrumb/command`
+  - `ProjectOverview.lead/surfaces` i18n (single-locale `en`, ICU balanced).
+- **Tests.** Unit: `SidebarNav` (active state), `CommandPalette` (list/filter/navigate/switch),
+  `ProjectHub` (six cards, overview excluded, hrefs), `AppShell` (breadcrumb + ⌘K open) — real
+  hooks with `@/i18n/navigation` mocked; `ProjectHub` story (light + dark) under axe. The route
+  files (project layout + loading) are coverage-excluded (RSC), covered by `next build` +
+  `e2e/app-shell.spec.ts` (sidebar nav + active section + ⌘K jump). Two `ai-query.spec.ts`
+  assertions were scoped to the result's live region (the sidebar now lists the same section
+  names). **e2e was not run locally (no Docker here); CI's e2e job runs it.**
 
 ## Conventions (don't re-derive)
 

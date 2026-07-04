@@ -119,3 +119,4 @@ prerenders
 # premium-UI track (PR-11…PR-15)
 affordance
 affordances
+cmdk
