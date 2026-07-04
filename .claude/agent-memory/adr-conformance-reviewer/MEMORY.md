@@ -1,1 +1,2 @@
 - [CAPCOM domain ADRs cross-ref convention](capcom-domain-adr-cross-ref.md) — proposed siblings in one PR cite each other by descriptive phrase, not number, until accepted; only cite a number when the target record exists.
+- [shadcn transitive deps need ADR](shadcn-transitive-deps-need-adr.md) — ADR 0034 covers shadcn-over-Radix, not non-Radix runtime deps (cmdk/sonner/react-day-picker/date-fns); gates don't inspect package.json — flag as "needs a decision".
