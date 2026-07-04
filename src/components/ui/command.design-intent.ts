@@ -16,7 +16,10 @@ export const commandIntent = {
     archetype: "collection",
     compositionSignature: ["dialog"],
     composedOf: ["dialog"],
-    usedIn: ["src/components/ui/combobox.tsx"],
+    usedIn: [
+      "src/components/ui/combobox.tsx",
+      "src/widgets/app-shell/ui/CommandPalette.tsx",
+    ],
   },
   usageRole: null,
   variants: {

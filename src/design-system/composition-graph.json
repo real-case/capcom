@@ -98,7 +98,7 @@
       "archetype": "container",
       "module": "src/components/ui/card.tsx",
       "composedOf": [],
-      "usedIn": [],
+      "usedIn": ["src/widgets/app-shell/ui/ProjectHub.tsx"],
       "compositionSignature": []
     },
     {
@@ -116,7 +116,7 @@
       "archetype": null,
       "module": "src/components/ui/skeleton.tsx",
       "composedOf": [],
-      "usedIn": [],
+      "usedIn": ["src/app/[locale]/(app)/p/[projectId]/loading.tsx"],
       "compositionSignature": [],
       "notes": "Purely presentational leaf (like `label`) — a shimmer placeholder with no interaction, variants, or data; archetype:null per the new-component skill's presentational-leaf exception (ADR 0061). Flagged for 👤 confirmation."
     },
@@ -136,7 +136,10 @@
       "archetype": "collection",
       "module": "src/components/ui/command.tsx",
       "composedOf": ["dialog"],
-      "usedIn": ["src/components/ui/combobox.tsx"],
+      "usedIn": [
+        "src/components/ui/combobox.tsx",
+        "src/widgets/app-shell/ui/CommandPalette.tsx"
+      ],
       "compositionSignature": ["dialog"]
     },
     {

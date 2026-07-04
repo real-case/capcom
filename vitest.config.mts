@@ -146,6 +146,13 @@ export default defineConfig({
         "src/app/[locale]/*/layout.tsx",
         "src/app/[locale]/*/p/page.tsx",
         "src/app/[locale]/*/p/*/page.tsx",
+        // PR-13: the project-scoped shell layout is an async Server Component that
+        // resolves the project + org + project list under RLS, and `loading.tsx` is a
+        // route-level Suspense fallback — neither runs under jsdom. Covered by
+        // `next build` + the shell e2e; the shell chrome (AppShell, SidebarNav,
+        // CommandPalette) and the hub (ProjectHub) are unit-tested directly.
+        "src/app/[locale]/*/p/*/layout.tsx",
+        "src/app/[locale]/*/p/*/loading.tsx",
         // PR-4 (ADR 0084): the trends route is one segment deeper than the
         // overview page above, so it needs its own entry — same rationale (an
         // async Server Component that resolves the project under RLS, exercised by

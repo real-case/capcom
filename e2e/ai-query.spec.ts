@@ -48,8 +48,10 @@ test.describe("AI query (ADR 0091)", () => {
     await page.getByRole("button", { name: "Ask" }).click();
 
     // The interpreted spec is surfaced as a trends analysis with an Open-analysis link.
-    // Exact match: the prompt/example copy contains the kind words too.
-    await expect(page.getByText("Trends", { exact: true })).toBeVisible();
+    // Scope to the result's live region — the shell sidebar (PR-13) also lists the
+    // section names, so an unscoped exact-text match would be ambiguous.
+    const result = page.locator('[aria-live="polite"]');
+    await expect(result.getByText("Trends", { exact: true })).toBeVisible();
     const open = page.getByRole("link", { name: /Open analysis/ });
     await expect(open).toBeVisible();
     await expect(open).toHaveAttribute(
@@ -73,7 +75,11 @@ test.describe("AI query (ADR 0091)", () => {
       .getByRole("button", { name: "Weekly retention cohorts" })
       .click();
 
-    await expect(page.getByText("Retention", { exact: true })).toBeVisible();
+    await expect(
+      page.locator('[aria-live="polite"]').getByText("Retention", {
+        exact: true,
+      }),
+    ).toBeVisible();
     await expect(
       page.getByRole("link", { name: /Open analysis/ }),
     ).toHaveAttribute(
