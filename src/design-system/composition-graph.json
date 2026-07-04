@@ -10,10 +10,14 @@
       "module": "src/components/ui/button.tsx",
       "composedOf": [],
       "usedIn": [
+        "src/components/ui/calendar.tsx",
+        "src/components/ui/combobox.tsx",
+        "src/components/ui/date-range-picker.tsx",
         "src/features/ai-query/ui/AiQueryPanel.tsx",
         "src/features/auth-by-email/ui/SignInForm.tsx",
         "src/features/auth-by-email/ui/SignOutButton.tsx",
         "src/features/auth-by-email/ui/SignUpForm.tsx",
+        "src/features/theme/ui/ThemeToggle.tsx",
         "src/widgets/dashboard/ui/DashboardBoard.tsx"
       ],
       "compositionSignature": []
@@ -39,6 +43,128 @@
       "composedOf": [],
       "usedIn": [],
       "compositionSignature": []
+    },
+    {
+      "id": "popover",
+      "kind": "primitive",
+      "archetype": "disclosure",
+      "module": "src/components/ui/popover.tsx",
+      "composedOf": [],
+      "usedIn": [
+        "src/components/ui/combobox.tsx",
+        "src/components/ui/date-range-picker.tsx"
+      ],
+      "compositionSignature": []
+    },
+    {
+      "id": "dialog",
+      "kind": "primitive",
+      "archetype": "container",
+      "module": "src/components/ui/dialog.tsx",
+      "composedOf": [],
+      "usedIn": ["src/components/ui/command.tsx"],
+      "compositionSignature": []
+    },
+    {
+      "id": "tooltip",
+      "kind": "primitive",
+      "archetype": "disclosure",
+      "module": "src/components/ui/tooltip.tsx",
+      "composedOf": [],
+      "usedIn": [],
+      "compositionSignature": []
+    },
+    {
+      "id": "dropdown-menu",
+      "kind": "primitive",
+      "archetype": "collection",
+      "module": "src/components/ui/dropdown-menu.tsx",
+      "composedOf": [],
+      "usedIn": [],
+      "compositionSignature": []
+    },
+    {
+      "id": "tabs",
+      "kind": "primitive",
+      "archetype": "navigation",
+      "module": "src/components/ui/tabs.tsx",
+      "composedOf": [],
+      "usedIn": [],
+      "compositionSignature": []
+    },
+    {
+      "id": "card",
+      "kind": "primitive",
+      "archetype": "container",
+      "module": "src/components/ui/card.tsx",
+      "composedOf": [],
+      "usedIn": [],
+      "compositionSignature": []
+    },
+    {
+      "id": "scroll-area",
+      "kind": "primitive",
+      "archetype": "container",
+      "module": "src/components/ui/scroll-area.tsx",
+      "composedOf": [],
+      "usedIn": [],
+      "compositionSignature": []
+    },
+    {
+      "id": "skeleton",
+      "kind": "primitive",
+      "archetype": null,
+      "module": "src/components/ui/skeleton.tsx",
+      "composedOf": [],
+      "usedIn": [],
+      "compositionSignature": [],
+      "notes": "Purely presentational leaf (like `label`) — a shimmer placeholder with no interaction, variants, or data; archetype:null per the new-component skill's presentational-leaf exception (ADR 0061). Flagged for 👤 confirmation."
+    },
+    {
+      "id": "sonner",
+      "kind": "primitive",
+      "archetype": null,
+      "module": "src/components/ui/sonner.tsx",
+      "composedOf": [],
+      "usedIn": [],
+      "compositionSignature": [],
+      "notes": "Infrastructural toast-region mount (a provider-like wrapper around the sonner library) — renders no content of its own; the feedback surface is library-rendered. archetype:null; flagged for 👤 confirmation (feedback archetype would apply to a toast, not to this region wrapper)."
+    },
+    {
+      "id": "command",
+      "kind": "composite",
+      "archetype": "collection",
+      "module": "src/components/ui/command.tsx",
+      "composedOf": ["dialog"],
+      "usedIn": ["src/components/ui/combobox.tsx"],
+      "compositionSignature": ["dialog"]
+    },
+    {
+      "id": "calendar",
+      "kind": "composite",
+      "archetype": "selection-control",
+      "module": "src/components/ui/calendar.tsx",
+      "composedOf": ["button"],
+      "usedIn": ["src/components/ui/date-range-picker.tsx"],
+      "compositionSignature": ["button"]
+    },
+    {
+      "id": "combobox",
+      "kind": "composite",
+      "archetype": "selection-control",
+      "module": "src/components/ui/combobox.tsx",
+      "composedOf": ["button", "command", "popover"],
+      "usedIn": [],
+      "compositionSignature": ["button", "command", "popover"]
+    },
+    {
+      "id": "date-range-picker",
+      "kind": "composite",
+      "archetype": "selection-control",
+      "module": "src/components/ui/date-range-picker.tsx",
+      "composedOf": ["button", "calendar", "popover"],
+      "usedIn": [],
+      "compositionSignature": ["button", "calendar", "popover"]
     }
   ]
 }
