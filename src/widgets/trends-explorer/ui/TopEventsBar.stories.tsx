@@ -67,15 +67,14 @@ export const FocusedReadout: Story = {
   args: { initialFocusIndex: 1 },
 };
 
-// interaction/keyboard (play, ADR 0038/0039/0052): each bar is focusable and announces
-// its value; focusing one shows its tooltip.
+// interaction/keyboard (play, ADR 0038/0039/0052): each bar is focusable and its
+// aria-label carries its value (the sole keyboard announcement — no live region).
 export const FocusBar: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const bar = await canvas.findByRole("img", { name: /page_view: 2,757/i });
     bar.focus();
     await expect(bar).toHaveFocus();
-    await expect(canvas.getByRole("status")).toHaveTextContent(/page_view/);
     await userEvent.tab();
     await expect(bar).not.toHaveFocus();
   },

@@ -4,7 +4,6 @@ import { Bar } from "@visx/shape";
 import { useState } from "react";
 
 import {
-  ChartLiveRegion,
   ChartTooltip,
   ChartTooltipRow,
   ChartTooltipTitle,
@@ -18,9 +17,11 @@ import type { SegmentDistributionRow } from "@/entities/segment";
  * `fn_segment_distribution` rows and the scalar segment `size` as props and owns no
  * fetching or aggregation (ADR 0084/0089). Each bar's **percentage** is derived here from
  * `users / size` — display formatting, not event reduction (ADR 0089). Every color comes
- * from the categorical token allowlist (ADR 0058/0081). Each bucket is hover/focus-
- * interactive: a token tooltip shows the count and share, the focused bar keeps full
- * weight while the others dim (a non-color highlight, ADR 0039/0052). A fixed aspect-ratio
+ * from the categorical token allowlist (ADR 0058/0081). Each bucket is an individually
+ * focusable `&lt;g role="img"&gt;` whose `aria-label` states its share (ADR 0039/0052) — the
+ * sole announcement on the keyboard path, so no separate live region. Hover/focus shows a
+ * token tooltip with the count and share and keeps that bar at full weight while the others
+ * dim (a non-color highlight). A fixed aspect-ratio
  * box keeps the render deterministic for Chromatic (ADR 0043) and lets the tooltip
  * position in percentages with no layout measurement.
  */
@@ -179,7 +180,6 @@ function Distribution({
       share,
     )}`;
   };
-  const liveMessage = activeRow === undefined ? "" : rowAria(activeRow);
 
   return (
     <div
@@ -277,8 +277,6 @@ function Distribution({
           value={`${nf.format(Number(activeRow?.users ?? 0))} · ${pct(activeShare)}`}
         />
       </ChartTooltip>
-
-      <ChartLiveRegion message={liveMessage} />
     </div>
   );
 }

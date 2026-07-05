@@ -92,14 +92,13 @@ export const FocusedBucket: Story = {
   args: { initialFocusIndex: 0 },
 };
 
-// interaction/keyboard (play, ADR 0038/0039/0052): each bucket is focusable and announces
-// its share; focusing one shows its tooltip.
+// interaction/keyboard (play, ADR 0038/0039/0052): each bucket is focusable and its
+// aria-label states its share (the sole keyboard announcement — no live region).
 export const FocusBucket: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const bucket = await canvas.findByRole("img", { name: /^US:/i });
     bucket.focus();
     await expect(bucket).toHaveFocus();
-    await expect(canvas.getByRole("status")).toHaveTextContent(/US:/);
   },
 };

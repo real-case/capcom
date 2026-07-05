@@ -69,14 +69,13 @@ export const FocusedStep: Story = {
   args: { initialFocusIndex: 1 },
 };
 
-// interaction/keyboard (play, ADR 0038/0039/0052): each step is focusable and announces
-// its conversion; focusing one shows its tooltip.
+// interaction/keyboard (play, ADR 0038/0039/0052): each step is focusable and its
+// aria-label states its conversion (the sole keyboard announcement — no live region).
 export const FocusStep: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const step = await canvas.findByRole("img", { name: /2\. sign_up/i });
     step.focus();
     await expect(step).toHaveFocus();
-    await expect(canvas.getByRole("status")).toHaveTextContent(/sign_up/);
   },
 };

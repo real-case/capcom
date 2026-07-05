@@ -3,12 +3,7 @@
 import { Bar } from "@visx/shape";
 import { useState } from "react";
 
-import {
-  ChartLiveRegion,
-  ChartTooltip,
-  ChartTooltipTitle,
-  MotionIn,
-} from "@/components/charts";
+import { ChartTooltip, ChartTooltipTitle, MotionIn } from "@/components/charts";
 import type { FunnelStep } from "@/entities/event";
 
 /**
@@ -17,11 +12,13 @@ import type { FunnelStep } from "@/entities/event";
  * or aggregation (ADR 0084/0087). Conversion **percentages** are derived here from the
  * per-step user counts — a ratio of two already-reduced numbers is display formatting,
  * not event reduction (ADR 0087). Every color comes from the token allowlist
- * (ADR 0058/0081) via `var(--color-*)`. Each step is hover/focus-interactive: a token
- * tooltip breaks down users, overall share, and step-over-step conversion; the focused
- * step keeps full weight while the others dim (a non-color highlight, ADR 0039/0052). A
- * fixed aspect-ratio box keeps the render deterministic for Chromatic (ADR 0043) and lets
- * the tooltip position in percentages with no layout measurement.
+ * (ADR 0058/0081) via `var(--color-*)`. Each step is an individually focusable
+ * `&lt;g role="img"&gt;` whose `aria-label` states its conversion (ADR 0039/0052) — the sole
+ * announcement on the keyboard path, so no separate live region. Hover/focus shows a token
+ * tooltip that breaks down users, overall share, and step-over-step conversion, and keeps
+ * that step at full weight while the others dim (a non-color highlight). A fixed
+ * aspect-ratio box keeps the render deterministic for Chromatic (ADR 0043) and lets the
+ * tooltip position in percentages with no layout measurement.
  */
 
 const VIEW_W = 720;
@@ -149,8 +146,6 @@ export function FunnelChart({
         : `, ${pct(row.fromPrev)} from the previous step`
     }`;
 
-  const liveMessage = activeRow === undefined ? "" : rowAria(activeRow);
-
   return (
     <div className="flex flex-col" data-state="data">
       <div
@@ -272,8 +267,6 @@ export function FunnelChart({
           ) : null}
         </ChartTooltip>
       </div>
-
-      <ChartLiveRegion message={liveMessage} />
     </div>
   );
 }

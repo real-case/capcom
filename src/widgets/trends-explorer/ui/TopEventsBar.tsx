@@ -6,7 +6,6 @@ import { Bar } from "@visx/shape";
 import { useState } from "react";
 
 import {
-  ChartLiveRegion,
   ChartTooltip,
   ChartTooltipRow,
   ChartTooltipTitle,
@@ -18,11 +17,12 @@ import type { TopEvent } from "@/entities/event";
  * Top-events bar chart (ADR 0086, interaction layer ADR 0093) — a presentational visx
  * widget. It receives the reduced `fn_top_events` rows as props and owns no fetching or
  * aggregation (ADR 0084). Bars take their fill from a data-viz token (ADR 0058/0081) via
- * `var(--color-*)`. Each bar is hover/focus-interactive: a token tooltip shows the count,
- * the pointed/focused bar keeps full weight while the others dim (a non-color highlight,
- * ADR 0039/0052), and a live region announces the focused bar. A fixed aspect-ratio box
- * keeps the render deterministic for Chromatic (ADR 0043) and lets the tooltip position
- * in percentages with no layout measurement.
+ * `var(--color-*)`. Each bar is an individually focusable `&lt;g role="img"&gt;` whose
+ * `aria-label` carries its value (ADR 0039/0052) — the sole announcement on the keyboard
+ * path, so no separate live region (which would double-read the focused bar). Hover/focus
+ * shows a token tooltip and keeps that bar at full weight while the others dim (a non-color
+ * highlight). A fixed aspect-ratio box keeps the render deterministic for Chromatic
+ * (ADR 0043) and lets the tooltip position in percentages with no layout measurement.
  */
 
 const VIEW_W = 720;
@@ -109,11 +109,6 @@ export function TopEventsBar({
   const leftPct = Math.max(6, Math.min(94, (tipXRoot / VIEW_W) * 100));
   const topPct = (tipYRoot / viewH) * 100;
 
-  const liveMessage =
-    activeRow === undefined
-      ? ""
-      : `${activeRow.event_name}: ${nf.format(Number(activeRow.count))}`;
-
   return (
     <div className="flex flex-col" data-state="data">
       <div
@@ -197,8 +192,6 @@ export function TopEventsBar({
           />
         </ChartTooltip>
       </div>
-
-      <ChartLiveRegion message={liveMessage} />
     </div>
   );
 }
