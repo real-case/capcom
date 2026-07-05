@@ -1,7 +1,10 @@
 "use client";
 
+import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
+
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 
 import { useFunnel } from "../api/use-funnel";
 import {
@@ -31,6 +34,7 @@ import { FunnelChart } from "./FunnelChart";
  */
 export function FunnelBuilder({ projectId }: { projectId: string }) {
   const t = useTranslations("Funnels");
+  const tc = useTranslations("Controls");
   const [raw, setQuery] = useQueryStates(funnelParsers);
 
   // The Zod schema is the validation authority (ADR 0017): run the nuqs-parsed values
@@ -68,39 +72,35 @@ export function FunnelBuilder({ projectId }: { projectId: string }) {
       <fieldset className="flex flex-wrap items-end gap-3">
         <legend className="sr-only">{t("controlsLegend")}</legend>
 
-        <Field label={t("rangeLabel")}>
-          <select
-            className={selectClass}
-            value={query.range}
-            onChange={(e) => {
-              const range = pick(RANGES, e.target.value);
-              if (range) void setQuery({ range });
-            }}
-          >
-            {RANGES.map((r) => (
-              <option key={r} value={r}>
-                {t(`range_${r}` as RangeKey)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <ComboField
+          label={t("rangeLabel")}
+          value={query.range}
+          options={RANGES.map((r) => ({
+            value: r,
+            label: t(`range_${r}` as RangeKey),
+          }))}
+          onValueChange={(value) => {
+            const range = pick(RANGES, value);
+            if (range) void setQuery({ range });
+          }}
+          searchPlaceholder={tc("search")}
+          emptyText={tc("noResults")}
+        />
 
-        <Field label={t("windowLabel")}>
-          <select
-            className={selectClass}
-            value={query.window}
-            onChange={(e) => {
-              const window = pick(WINDOWS, e.target.value);
-              if (window) void setQuery({ window });
-            }}
-          >
-            {WINDOWS.map((w) => (
-              <option key={w} value={w}>
-                {t(`window_${w}` as WindowKey)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <ComboField
+          label={t("windowLabel")}
+          value={query.window}
+          options={WINDOWS.map((w) => ({
+            value: w,
+            label: t(`window_${w}` as WindowKey),
+          }))}
+          onValueChange={(value) => {
+            const window = pick(WINDOWS, value);
+            if (window) void setQuery({ window });
+          }}
+          searchPlaceholder={tc("search")}
+          emptyText={tc("noResults")}
+        />
       </fieldset>
 
       <fieldset className="flex flex-col gap-2">
@@ -116,18 +116,20 @@ export function FunnelBuilder({ projectId }: { projectId: string }) {
                 <span className="w-14 text-xs font-medium text-muted-foreground tabular-nums">
                   {t("stepLabel", { n: i + 1 })}
                 </span>
-                <select
-                  className={selectClass}
+                <Combobox
                   aria-label={t("stepEventLabel", { n: i + 1 })}
+                  className="w-52"
                   value={step}
-                  onChange={(e) => setStep(i, e.target.value)}
-                >
-                  {options.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
+                  options={options.map((name) => ({
+                    value: name,
+                    label: name,
+                  }))}
+                  onValueChange={(value) => {
+                    if (value) setStep(i, value);
+                  }}
+                  searchPlaceholder={tc("search")}
+                  emptyText={tc("noResults")}
+                />
                 <button
                   type="button"
                   className={removeBtnClass}
@@ -174,8 +176,6 @@ export function FunnelBuilder({ projectId }: { projectId: string }) {
   );
 }
 
-const selectClass =
-  "rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
 const removeBtnClass =
   "rounded-md border border-input bg-background px-2 py-1 text-xs text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50";
 const addBtnClass =
@@ -186,7 +186,7 @@ type RangeKey = `range_${Range}`;
 type WindowKey = `window_${Window}`;
 
 /**
- * Narrow a raw `<select>` value to one of an allowed const tuple — runtime check, no
+ * Narrow a raw combobox value to one of an allowed const tuple — runtime check, no
  * `as` cast: `find` returns the tuple's element type or undefined, so the URL state
  * stays in lockstep with the parser enums.
  */
@@ -197,17 +197,41 @@ function pick<const T extends readonly string[]>(
   return allowed.find((option) => option === value);
 }
 
-function Field({
+/**
+ * A labelled Combobox — the accessible, premium replacement for a native `<select>`
+ * (ADR 0034, PR-15). The visible label names the trigger via `aria-labelledby`, so the
+ * URL-state contract (ADR 0027) is unchanged — only the control is.
+ */
+function ComboField({
   label,
-  children,
+  value,
+  options,
+  onValueChange,
+  searchPlaceholder,
+  emptyText,
+  className = "w-44",
 }: {
   label: string;
-  children: React.ReactNode;
+  value: string;
+  options: readonly ComboboxOption[];
+  onValueChange: (value: string) => void;
+  searchPlaceholder: string;
+  emptyText: string;
+  className?: string;
 }) {
+  const labelId = useId();
   return (
-    <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      <span>{label}</span>
-      {children}
-    </label>
+    <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      <span id={labelId}>{label}</span>
+      <Combobox
+        aria-labelledby={labelId}
+        value={value}
+        options={options}
+        onValueChange={onValueChange}
+        searchPlaceholder={searchPlaceholder}
+        emptyText={emptyText}
+        className={className}
+      />
+    </div>
   );
 }

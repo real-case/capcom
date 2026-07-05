@@ -15,6 +15,17 @@ vi.mock("@/entities/event", () => ({ fetchFunnel }));
 
 import { FunnelBuilder } from "./FunnelBuilder";
 
+/**
+ * Drive a Combobox (PR-15): open the labelled trigger, then click an option by its
+ * visible label. Options exist in the DOM only while the popover is open.
+ */
+async function selectCombo(name: string, optionName: string | RegExp) {
+  await userEvent.click(screen.getByRole("combobox", { name }));
+  await userEvent.click(
+    await screen.findByRole("option", { name: optionName }),
+  );
+}
+
 function renderBuilder(onUrlUpdate: (e: UrlUpdateEvent) => void) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -64,10 +75,7 @@ describe("FunnelBuilder", () => {
     await waitFor(() => expect(fetchFunnel).toHaveBeenCalled());
     fetchFunnel.mockClear();
 
-    await userEvent.selectOptions(
-      screen.getByLabelText("Event for step 2"),
-      "search",
-    );
+    await selectCombo("Event for step 2", "search");
 
     // URL state round-trips (ADR 0027) ...
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());

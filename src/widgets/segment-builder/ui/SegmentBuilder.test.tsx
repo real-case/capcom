@@ -27,6 +27,17 @@ vi.mock("@/entities/segment", async (importOriginal) => ({
 
 import { SegmentBuilder } from "./SegmentBuilder";
 
+/**
+ * Drive a Combobox (PR-15): open the labelled trigger, then click an option by its
+ * visible label. Options exist in the DOM only while the popover is open.
+ */
+async function selectCombo(name: string, optionName: string | RegExp) {
+  await userEvent.click(screen.getByRole("combobox", { name }));
+  await userEvent.click(
+    await screen.findByRole("option", { name: optionName }),
+  );
+}
+
 function renderBuilder(
   onUrlUpdate: (e: UrlUpdateEvent) => void,
   searchParams?: Record<string, string>,
@@ -86,10 +97,7 @@ describe("SegmentBuilder", () => {
     await waitFor(() => expect(fetchSegmentDistribution).toHaveBeenCalled());
     fetchSegmentDistribution.mockClear();
 
-    await userEvent.selectOptions(
-      screen.getByLabelText("Break down by"),
-      "Device",
-    );
+    await selectCombo("Break down by", "Device");
 
     // URL state round-trips (ADR 0027) ...
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
@@ -136,11 +144,8 @@ describe("SegmentBuilder", () => {
     await waitFor(() => expect(fetchSegmentSize).toHaveBeenCalled());
     fetchSegmentSize.mockClear();
 
-    // The single attribute predicate's trait select (aria-label indexed per row).
-    await userEvent.selectOptions(
-      screen.getByLabelText("Trait for attribute 1"),
-      "Country",
-    );
+    // The single attribute predicate's trait combobox (aria-label indexed per row).
+    await selectCombo("Trait for attribute 1", "Country");
 
     // withKey resets the value to the first country option (US), keeping the rule valid.
     await waitFor(() =>
@@ -160,10 +165,7 @@ describe("SegmentBuilder", () => {
     await waitFor(() => expect(fetchSegmentSize).toHaveBeenCalled());
 
     // eq → in: withOp wraps the single value "pro" into ["pro"].
-    await userEvent.selectOptions(
-      screen.getByLabelText("Condition for attribute 1"),
-      "is any of",
-    );
+    await selectCombo("Condition for attribute 1", "is any of");
     await waitFor(() =>
       expect(fetchSegmentSize).toHaveBeenCalledWith(
         expect.anything(),
@@ -208,10 +210,7 @@ describe("SegmentBuilder", () => {
     await waitFor(() => expect(fetchSegmentSize).toHaveBeenCalled());
     fetchSegmentSize.mockClear();
 
-    await userEvent.selectOptions(
-      screen.getByLabelText("Frequency for behavior 1"),
-      "at most",
-    );
+    await selectCombo("Frequency for behavior 1", "at most");
     await waitFor(() =>
       expect(fetchSegmentSize).toHaveBeenCalledWith(
         expect.anything(),
@@ -320,10 +319,7 @@ describe("SegmentBuilder", () => {
     await waitFor(() => expect(fetchSegmentSize).toHaveBeenCalled());
     fetchSegmentSize.mockClear();
 
-    await userEvent.selectOptions(
-      screen.getByLabelText("Condition for attribute 1"),
-      "is",
-    );
+    await selectCombo("Condition for attribute 1", "is");
     await waitFor(() =>
       expect(fetchSegmentSize).toHaveBeenCalledWith(
         expect.anything(),

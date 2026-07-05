@@ -15,6 +15,17 @@ vi.mock("@/entities/event", () => ({ fetchRetention }));
 
 import { RetentionGrid } from "./RetentionGrid";
 
+/**
+ * Drive a Combobox (PR-15): open the labelled trigger, then click an option by its
+ * visible label. Options exist in the DOM only while the popover is open.
+ */
+async function selectCombo(name: string, optionName: string | RegExp) {
+  await userEvent.click(screen.getByRole("combobox", { name }));
+  await userEvent.click(
+    await screen.findByRole("option", { name: optionName }),
+  );
+}
+
 function renderGrid(onUrlUpdate: (e: UrlUpdateEvent) => void) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -74,7 +85,7 @@ describe("RetentionGrid", () => {
     await waitFor(() => expect(fetchRetention).toHaveBeenCalled());
     fetchRetention.mockClear();
 
-    await userEvent.selectOptions(screen.getByLabelText("Cohort by"), "month");
+    await selectCombo("Cohort by", "Month");
 
     // URL state round-trips (ADR 0027) ...
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
@@ -95,10 +106,7 @@ describe("RetentionGrid", () => {
     renderGrid(onUrlUpdate);
     await waitFor(() => expect(fetchRetention).toHaveBeenCalled());
 
-    await userEvent.selectOptions(
-      screen.getByLabelText("Analysis range"),
-      "180d",
-    );
+    await selectCombo("Analysis range", "Last 180 days");
 
     await waitFor(() => {
       const last = onUrlUpdate.mock.calls.at(-1)![0] as UrlUpdateEvent;

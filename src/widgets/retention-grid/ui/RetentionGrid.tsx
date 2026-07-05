@@ -1,7 +1,10 @@
 "use client";
 
+import { useId } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
+
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 
 import { useRetention } from "../api/use-retention";
 import {
@@ -28,6 +31,7 @@ import { CohortGrid } from "./CohortGrid";
  */
 export function RetentionGrid({ projectId }: { projectId: string }) {
   const t = useTranslations("Retention");
+  const tc = useTranslations("Controls");
   const locale = useLocale();
   const [raw, setQuery] = useQueryStates(retentionParsers);
 
@@ -45,39 +49,35 @@ export function RetentionGrid({ projectId }: { projectId: string }) {
       <fieldset className="flex flex-wrap items-end gap-3">
         <legend className="sr-only">{t("controlsLegend")}</legend>
 
-        <Field label={t("rangeLabel")}>
-          <select
-            className={selectClass}
-            value={query.range}
-            onChange={(e) => {
-              const range = pick(RANGES, e.target.value);
-              if (range) void setQuery({ range });
-            }}
-          >
-            {RANGES.map((r) => (
-              <option key={r} value={r}>
-                {t(`range_${r}` as RangeKey)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <ComboField
+          label={t("rangeLabel")}
+          value={query.range}
+          options={RANGES.map((r) => ({
+            value: r,
+            label: t(`range_${r}` as RangeKey),
+          }))}
+          onValueChange={(value) => {
+            const range = pick(RANGES, value);
+            if (range) void setQuery({ range });
+          }}
+          searchPlaceholder={tc("search")}
+          emptyText={tc("noResults")}
+        />
 
-        <Field label={t("periodLabel")}>
-          <select
-            className={selectClass}
-            value={query.period}
-            onChange={(e) => {
-              const period = pick(PERIODS, e.target.value);
-              if (period) void setQuery({ period });
-            }}
-          >
-            {PERIODS.map((p) => (
-              <option key={p} value={p}>
-                {t(`period_${p}` as PeriodKey)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <ComboField
+          label={t("periodLabel")}
+          value={query.period}
+          options={PERIODS.map((p) => ({
+            value: p,
+            label: t(`period_${p}` as PeriodKey),
+          }))}
+          onValueChange={(value) => {
+            const period = pick(PERIODS, value);
+            if (period) void setQuery({ period });
+          }}
+          searchPlaceholder={tc("search")}
+          emptyText={tc("noResults")}
+        />
       </fieldset>
 
       <section
@@ -105,15 +105,12 @@ export function RetentionGrid({ projectId }: { projectId: string }) {
   );
 }
 
-const selectClass =
-  "rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
-
 // Translation-key helpers: keep the dynamic `t(...)` calls inside the typed namespace.
 type RangeKey = `range_${Range}`;
 type PeriodKey = `period_${Period}`;
 
 /**
- * Narrow a raw `<select>` value to one of an allowed const tuple — runtime check, no
+ * Narrow a raw combobox value to one of an allowed const tuple — runtime check, no
  * `as` cast: `find` returns the tuple's element type or undefined, so the URL state
  * stays in lockstep with the parser enums.
  */
@@ -124,17 +121,41 @@ function pick<const T extends readonly string[]>(
   return allowed.find((option) => option === value);
 }
 
-function Field({
+/**
+ * A labelled Combobox — the accessible, premium replacement for a native `<select>`
+ * (ADR 0034, PR-15). The visible label names the trigger via `aria-labelledby`, so the
+ * URL-state contract (ADR 0027) is unchanged — only the control is.
+ */
+function ComboField({
   label,
-  children,
+  value,
+  options,
+  onValueChange,
+  searchPlaceholder,
+  emptyText,
+  className = "w-44",
 }: {
   label: string;
-  children: React.ReactNode;
+  value: string;
+  options: readonly ComboboxOption[];
+  onValueChange: (value: string) => void;
+  searchPlaceholder: string;
+  emptyText: string;
+  className?: string;
 }) {
+  const labelId = useId();
   return (
-    <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      <span>{label}</span>
-      {children}
-    </label>
+    <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      <span id={labelId}>{label}</span>
+      <Combobox
+        aria-labelledby={labelId}
+        value={value}
+        options={options}
+        onValueChange={onValueChange}
+        searchPlaceholder={searchPlaceholder}
+        emptyText={emptyText}
+        className={className}
+      />
+    </div>
   );
 }

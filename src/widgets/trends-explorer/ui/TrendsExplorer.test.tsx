@@ -18,6 +18,18 @@ vi.mock("@/entities/event", () => ({ fetchEventTrends, fetchTopEvents }));
 
 import { TrendsExplorer } from "./TrendsExplorer";
 
+/**
+ * Drive a Combobox (PR-15): open the labelled trigger, then click an option by its
+ * visible label. Unlike a native `<select>`, options exist in the DOM only while the
+ * popover is open, so every interaction opens first.
+ */
+async function selectCombo(name: string, optionName: string | RegExp) {
+  await userEvent.click(screen.getByRole("combobox", { name }));
+  await userEvent.click(
+    await screen.findByRole("option", { name: optionName }),
+  );
+}
+
 function renderExplorer(onUrlUpdate: (e: UrlUpdateEvent) => void) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -59,7 +71,10 @@ describe("TrendsExplorer", () => {
     });
     expect("p_breakdown_key" in args).toBe(false);
 
-    // Top events populate the event picker.
+    // Top events populate the event picker (options exist once the combobox opens).
+    await userEvent.click(
+      screen.getByRole("combobox", { name: messages.Trends.eventLabel }),
+    );
     expect(
       await screen.findByRole("option", { name: "purchase" }),
     ).toBeInTheDocument();
@@ -71,7 +86,10 @@ describe("TrendsExplorer", () => {
     await waitFor(() => expect(fetchEventTrends).toHaveBeenCalled());
     fetchEventTrends.mockClear();
 
-    await userEvent.selectOptions(screen.getByLabelText("Interval"), "week");
+    await selectCombo(
+      messages.Trends.intervalLabel,
+      messages.Trends.interval_week,
+    );
 
     // URL state round-trips (shareable link, ADR 0027) ...
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
@@ -92,7 +110,10 @@ describe("TrendsExplorer", () => {
     await waitFor(() => expect(fetchEventTrends).toHaveBeenCalled());
     fetchEventTrends.mockClear();
 
-    await userEvent.selectOptions(screen.getByLabelText("Breakdown"), "device");
+    await selectCombo(
+      messages.Trends.breakdownLabel,
+      messages.Trends.breakdown_device,
+    );
 
     await waitFor(() =>
       expect(fetchEventTrends).toHaveBeenCalledWith(

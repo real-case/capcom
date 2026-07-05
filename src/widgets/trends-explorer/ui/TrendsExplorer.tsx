@@ -1,9 +1,11 @@
 "use client";
 
+import { useId } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
 
 import { ChartBrush } from "@/components/charts";
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 
 import { useEventTrends, useTopEvents } from "../api/use-trends";
 import {
@@ -32,6 +34,7 @@ import { TrendsChart } from "./TrendsChart";
  */
 export function TrendsExplorer({ projectId }: { projectId: string }) {
   const t = useTranslations("Trends");
+  const tc = useTranslations("Controls");
   const locale = useLocale();
   const [raw, setQuery] = useQueryStates(trendsParsers);
 
@@ -65,70 +68,60 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
       <fieldset className="flex flex-wrap items-end gap-3">
         <legend className="sr-only">{t("controlsLegend")}</legend>
 
-        <Field label={t("eventLabel")}>
-          <select
-            className={selectClass}
-            value={query.event}
-            onChange={(e) => void setQuery({ event: e.target.value })}
-          >
-            {eventOptions.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <ComboField
+          label={t("eventLabel")}
+          value={query.event}
+          options={eventOptions.map((name) => ({ value: name, label: name }))}
+          onValueChange={(event) => {
+            if (event) void setQuery({ event });
+          }}
+          searchPlaceholder={tc("search")}
+          emptyText={tc("noResults")}
+          className="w-52"
+        />
 
-        <Field label={t("rangeLabel")}>
-          <select
-            className={selectClass}
-            value={query.range}
-            onChange={(e) => {
-              const range = pick(RANGES, e.target.value);
-              if (range) void setQuery({ range, from: null, to: null });
-            }}
-          >
-            {RANGES.map((r) => (
-              <option key={r} value={r}>
-                {t(`range_${r}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <ComboField
+          label={t("rangeLabel")}
+          value={query.range}
+          options={RANGES.map((r) => ({ value: r, label: t(`range_${r}`) }))}
+          onValueChange={(value) => {
+            const range = pick(RANGES, value);
+            // A new preset also clears a stale brush sub-window (ADR 0093).
+            if (range) void setQuery({ range, from: null, to: null });
+          }}
+          searchPlaceholder={tc("search")}
+          emptyText={tc("noResults")}
+        />
 
-        <Field label={t("intervalLabel")}>
-          <select
-            className={selectClass}
-            value={query.interval}
-            onChange={(e) => {
-              const interval = pick(INTERVALS, e.target.value);
-              if (interval) void setQuery({ interval });
-            }}
-          >
-            {INTERVALS.map((i) => (
-              <option key={i} value={i}>
-                {t(`interval_${i}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <ComboField
+          label={t("intervalLabel")}
+          value={query.interval}
+          options={INTERVALS.map((i) => ({
+            value: i,
+            label: t(`interval_${i}`),
+          }))}
+          onValueChange={(value) => {
+            const interval = pick(INTERVALS, value);
+            if (interval) void setQuery({ interval });
+          }}
+          searchPlaceholder={tc("search")}
+          emptyText={tc("noResults")}
+        />
 
-        <Field label={t("breakdownLabel")}>
-          <select
-            className={selectClass}
-            value={query.breakdown}
-            onChange={(e) => {
-              const breakdown = pick(BREAKDOWN_KEYS, e.target.value);
-              if (breakdown) void setQuery({ breakdown });
-            }}
-          >
-            {BREAKDOWN_KEYS.map((b) => (
-              <option key={b} value={b}>
-                {t(`breakdown_${b}`)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <ComboField
+          label={t("breakdownLabel")}
+          value={query.breakdown}
+          options={BREAKDOWN_KEYS.map((b) => ({
+            value: b,
+            label: t(`breakdown_${b}`),
+          }))}
+          onValueChange={(value) => {
+            const breakdown = pick(BREAKDOWN_KEYS, value);
+            if (breakdown) void setQuery({ breakdown });
+          }}
+          searchPlaceholder={tc("search")}
+          emptyText={tc("noResults")}
+        />
       </fieldset>
 
       <section
@@ -201,11 +194,8 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
   );
 }
 
-const selectClass =
-  "rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
-
 /**
- * Narrow a raw `<select>` value to one of an allowed const tuple — runtime check, no
+ * Narrow a raw combobox value to one of an allowed const tuple — runtime check, no
  * `as` cast: `find` returns the tuple's element type or undefined, so the URL state
  * stays in lockstep with the parser enums (the value can only be one of the options).
  */
@@ -216,17 +206,42 @@ function pick<const T extends readonly string[]>(
   return allowed.find((option) => option === value);
 }
 
-function Field({
+/**
+ * A labelled Combobox — the accessible, premium replacement for a native `<select>`
+ * (ADR 0034, PR-15). The visible label names the trigger via `aria-labelledby` (a
+ * `role="combobox"` element takes its name from the reference, not its text content),
+ * so the URL-state contract (ADR 0027) is unchanged — only the control is.
+ */
+function ComboField({
   label,
-  children,
+  value,
+  options,
+  onValueChange,
+  searchPlaceholder,
+  emptyText,
+  className = "w-44",
 }: {
   label: string;
-  children: React.ReactNode;
+  value: string;
+  options: readonly ComboboxOption[];
+  onValueChange: (value: string) => void;
+  searchPlaceholder: string;
+  emptyText: string;
+  className?: string;
 }) {
+  const labelId = useId();
   return (
-    <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      <span>{label}</span>
-      {children}
-    </label>
+    <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      <span id={labelId}>{label}</span>
+      <Combobox
+        aria-labelledby={labelId}
+        value={value}
+        options={options}
+        onValueChange={onValueChange}
+        searchPlaceholder={searchPlaceholder}
+        emptyText={emptyText}
+        className={className}
+      />
+    </div>
   );
 }

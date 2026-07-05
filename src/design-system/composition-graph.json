@@ -157,7 +157,12 @@
       "archetype": "selection-control",
       "module": "src/components/ui/combobox.tsx",
       "composedOf": ["button", "command", "popover"],
-      "usedIn": [],
+      "usedIn": [
+        "src/widgets/funnel-builder/ui/FunnelBuilder.tsx",
+        "src/widgets/retention-grid/ui/RetentionGrid.tsx",
+        "src/widgets/segment-builder/ui/SegmentBuilder.tsx",
+        "src/widgets/trends-explorer/ui/TrendsExplorer.tsx"
+      ],
       "compositionSignature": ["button", "command", "popover"]
     },
     {

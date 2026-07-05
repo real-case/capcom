@@ -1,7 +1,10 @@
 "use client";
 
+import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
+
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 
 import {
   ATTRIBUTE_OPS,
@@ -39,12 +42,13 @@ import { SegmentDistribution } from "./SegmentDistribution";
  * are bound to the query string via nuqs (ADR 0027), so a segment is a shareable,
  * bookmarkable link; the hooks call the `SECURITY INVOKER` RPCs under the signed-in
  * member's RLS (ADR 0084/0013) and TanStack Query caches/polls the result (ADR 0025).
- * Every value control is a select/checkbox, so the builder only ever produces a
+ * Every value control is a combobox/checkbox, so the builder only ever produces a
  * schema-valid rule (ADR 0017/0089). Loading / error / empty are threaded down to the
  * chart — it stays presentational (ADR 0086) and never fetches.
  */
 export function SegmentBuilder({ projectId }: { projectId: string }) {
   const t = useTranslations("Segments");
+  const tc = useTranslations("Controls");
   const [raw, setQuery] = useQueryStates(segmentParsers);
 
   // The Zod schema is the validation authority (ADR 0017): re-validate the nuqs-parsed
@@ -105,38 +109,34 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
     <div className="flex flex-col gap-6">
       <fieldset className="flex flex-wrap items-end gap-3">
         <legend className="sr-only">{t("controlsLegend")}</legend>
-        <Field label={t("rangeLabel")}>
-          <select
-            className={selectClass}
-            value={query.range}
-            onChange={(e) => {
-              const range = pick(RANGES, e.target.value);
-              if (range) void setQuery({ range });
-            }}
-          >
-            {RANGES.map((r) => (
-              <option key={r} value={r}>
-                {t(`range_${r}` as RangeKey)}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label={t("dimensionLabel")}>
-          <select
-            className={selectClass}
-            value={query.dimension}
-            onChange={(e) => {
-              const dimension = pick(DIMENSIONS, e.target.value);
-              if (dimension) void setQuery({ dimension });
-            }}
-          >
-            {DIMENSIONS.map((d) => (
-              <option key={d} value={d}>
-                {t(`dimension_${d}` as DimensionKey)}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <ComboField
+          label={t("rangeLabel")}
+          value={query.range}
+          options={RANGES.map((r) => ({
+            value: r,
+            label: t(`range_${r}` as RangeKey),
+          }))}
+          onValueChange={(value) => {
+            const range = pick(RANGES, value);
+            if (range) void setQuery({ range });
+          }}
+          searchPlaceholder={tc("search")}
+          emptyText={tc("noResults")}
+        />
+        <ComboField
+          label={t("dimensionLabel")}
+          value={query.dimension}
+          options={DIMENSIONS.map((d) => ({
+            value: d,
+            label: t(`dimension_${d}` as DimensionKey),
+          }))}
+          onValueChange={(value) => {
+            const dimension = pick(DIMENSIONS, value);
+            if (dimension) void setQuery({ dimension });
+          }}
+          searchPlaceholder={tc("search")}
+          emptyText={tc("noResults")}
+        />
       </fieldset>
 
       {/* Attribute predicates (over profiles.traits). */}
@@ -147,39 +147,41 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
         <ul className="flex flex-col gap-2">
           {rule.attributes.map((pred, i) => (
             <li key={i} className="flex flex-wrap items-center gap-2">
-              <select
-                className={selectClass}
+              <Combobox
                 aria-label={t("traitLabel", { n: i + 1 })}
+                className="w-36"
                 value={pred.key}
-                onChange={(e) => {
-                  const key = pick(DIMENSIONS, e.target.value);
+                options={DIMENSIONS.map((k) => ({
+                  value: k,
+                  label: t(`dimension_${k}` as DimensionKey),
+                }))}
+                onValueChange={(value) => {
+                  const key = pick(DIMENSIONS, value);
                   if (key) setAttribute(i, withKey(pred, key));
                 }}
-              >
-                {DIMENSIONS.map((k) => (
-                  <option key={k} value={k}>
-                    {t(`dimension_${k}` as DimensionKey)}
-                  </option>
-                ))}
-              </select>
-              <select
-                className={selectClass}
+                searchPlaceholder={tc("search")}
+                emptyText={tc("noResults")}
+              />
+              <Combobox
                 aria-label={t("opLabel", { n: i + 1 })}
+                className="w-36"
                 value={pred.op}
-                onChange={(e) => {
-                  const op = pick(ATTRIBUTE_OPS, e.target.value);
+                options={ATTRIBUTE_OPS.map((op) => ({
+                  value: op,
+                  label: t(`attrOp_${op}` as AttrOpKey),
+                }))}
+                onValueChange={(value) => {
+                  const op = pick(ATTRIBUTE_OPS, value);
                   if (op) setAttribute(i, withOp(pred, op));
                 }}
-              >
-                {ATTRIBUTE_OPS.map((op) => (
-                  <option key={op} value={op}>
-                    {t(`attrOp_${op}` as AttrOpKey)}
-                  </option>
-                ))}
-              </select>
+                searchPlaceholder={tc("search")}
+                emptyText={tc("noResults")}
+              />
               <AttributeValue
                 pred={pred}
                 groupLabel={t("valueLabel", { n: i + 1 })}
+                searchPlaceholder={tc("search")}
+                emptyText={tc("noResults")}
                 onChange={(next) => setAttribute(i, next)}
               />
               <RemoveButton
@@ -210,40 +212,40 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
         <ul className="flex flex-col gap-2">
           {rule.behaviors.map((pred, i) => (
             <li key={i} className="flex flex-wrap items-center gap-2">
-              <select
-                className={selectClass}
+              <Combobox
                 aria-label={t("eventLabel", { n: i + 1 })}
+                className="w-44"
                 value={pred.event}
-                onChange={(e) => {
-                  const event = pick(SEGMENT_EVENTS, e.target.value);
+                options={SEGMENT_EVENTS.map((ev) => ({
+                  value: ev,
+                  label: ev,
+                }))}
+                onValueChange={(value) => {
+                  const event = pick(SEGMENT_EVENTS, value);
                   if (event) setBehavior(i, { ...pred, event });
                 }}
-              >
-                {SEGMENT_EVENTS.map((ev) => (
-                  <option key={ev} value={ev}>
-                    {ev}
-                  </option>
-                ))}
-              </select>
-              <select
-                className={selectClass}
+                searchPlaceholder={tc("search")}
+                emptyText={tc("noResults")}
+              />
+              <Combobox
                 aria-label={t("behaviorOpLabel", { n: i + 1 })}
+                className="w-36"
                 value={pred.op}
-                onChange={(e) => {
-                  const op = pick(BEHAVIOR_OPS, e.target.value);
+                options={BEHAVIOR_OPS.map((op) => ({
+                  value: op,
+                  label: t(`behOp_${op}` as BehOpKey),
+                }))}
+                onValueChange={(value) => {
+                  const op = pick(BEHAVIOR_OPS, value);
                   if (op) setBehavior(i, { ...pred, op });
                 }}
-              >
-                {BEHAVIOR_OPS.map((op) => (
-                  <option key={op} value={op}>
-                    {t(`behOp_${op}` as BehOpKey)}
-                  </option>
-                ))}
-              </select>
+                searchPlaceholder={tc("search")}
+                emptyText={tc("noResults")}
+              />
               <input
                 type="number"
                 min={0}
-                className={`${selectClass} w-20 tabular-nums`}
+                className={`${countInputClass} w-20 tabular-nums`}
                 aria-label={t("countLabel", { n: i + 1 })}
                 value={pred.count}
                 onChange={(e) =>
@@ -300,10 +302,14 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
 function AttributeValue({
   pred,
   groupLabel,
+  searchPlaceholder,
+  emptyText,
   onChange,
 }: {
   pred: AttributePredicate;
   groupLabel: string;
+  searchPlaceholder: string;
+  emptyText: string;
   onChange: (next: AttributePredicate) => void;
 }) {
   const values = TRAIT_VALUES[pred.key];
@@ -339,20 +345,17 @@ function AttributeValue({
     );
   }
   return (
-    <select
-      className={selectClass}
+    <Combobox
       aria-label={groupLabel}
+      className="w-36"
       value={pred.value}
-      onChange={(e) =>
-        onChange({ key: pred.key, op: pred.op, value: e.target.value })
-      }
-    >
-      {values.map((v) => (
-        <option key={v} value={v}>
-          {v}
-        </option>
-      ))}
-    </select>
+      options={values.map((v) => ({ value: v, label: v }))}
+      onValueChange={(value) => {
+        if (value) onChange({ key: pred.key, op: pred.op, value });
+      }}
+      searchPlaceholder={searchPlaceholder}
+      emptyText={emptyText}
+    />
   );
 }
 
@@ -408,7 +411,7 @@ function clampCount(raw: string): number {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-const selectClass =
+const countInputClass =
   "rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
 const removeBtnClass =
   "rounded-md border border-input bg-background px-2 py-1 text-xs text-muted-foreground hover:text-foreground";
@@ -422,7 +425,7 @@ type AttrOpKey = `attrOp_${AttributeOp}`;
 type BehOpKey = `behOp_${BehaviorOp}`;
 
 /**
- * Narrow a raw `<select>` value to one of an allowed const tuple — runtime check, no `as`
+ * Narrow a raw combobox value to one of an allowed const tuple — runtime check, no `as`
  * cast: `find` returns the tuple's element type or undefined, so the URL state stays in
  * lockstep with the parser enums.
  */
@@ -433,17 +436,41 @@ function pick<const T extends readonly string[]>(
   return allowed.find((option) => option === value);
 }
 
-function Field({
+/**
+ * A labelled Combobox — the accessible, premium replacement for a native `<select>`
+ * (ADR 0034, PR-15). The visible label names the trigger via `aria-labelledby`, so the
+ * URL-state contract (ADR 0027) is unchanged — only the control is.
+ */
+function ComboField({
   label,
-  children,
+  value,
+  options,
+  onValueChange,
+  searchPlaceholder,
+  emptyText,
+  className = "w-44",
 }: {
   label: string;
-  children: React.ReactNode;
+  value: string;
+  options: readonly ComboboxOption[];
+  onValueChange: (value: string) => void;
+  searchPlaceholder: string;
+  emptyText: string;
+  className?: string;
 }) {
+  const labelId = useId();
   return (
-    <label className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      <span>{label}</span>
-      {children}
-    </label>
+    <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
+      <span id={labelId}>{label}</span>
+      <Combobox
+        aria-labelledby={labelId}
+        value={value}
+        options={options}
+        onValueChange={onValueChange}
+        searchPlaceholder={searchPlaceholder}
+        emptyText={emptyText}
+        className={className}
+      />
+    </div>
   );
 }
