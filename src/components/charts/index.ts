@@ -29,7 +29,7 @@ export type { AreaGradientProps } from "./gradient";
 export { ChartLegend } from "./legend";
 export type { ChartLegendProps, LegendSeries } from "./legend";
 
-export { ChartBrush } from "./brush";
+export { ChartBrush, boundsToRange } from "./brush";
 export type { ChartBrushProps, BrushRange } from "./brush";
 
 export { useChartFocus, nearestIndex } from "./use-chart-focus";

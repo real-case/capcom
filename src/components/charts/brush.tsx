@@ -6,6 +6,18 @@ import { scaleLinear } from "@visx/scale";
 type BrushBounds = { x0: number; x1: number };
 
 /**
+ * Convert visx brush x-bounds (timestamp ms, either order) to an ISO `{ from, to }`
+ * window — or `null` for a cleared/zero-width brush (a click, not a selection). Exported
+ * so the conversion is unit-testable without simulating a drag.
+ */
+export function boundsToRange(bounds: BrushBounds | null): BrushRange | null {
+  if (!bounds) return null;
+  const from = new Date(Math.min(bounds.x0, bounds.x1)).toISOString();
+  const to = new Date(Math.max(bounds.x0, bounds.x1)).toISOString();
+  return from === to ? null : { from, to };
+}
+
+/**
  * Time brush (ADR 0093) — a slim range selector for narrowing a chart's analysis
  * window. It wraps `@visx/brush`'s unstyled primitive (ADR 0086); the selection rect and
  * handles are semantic tokens (ADR 0058/0081), so nothing is baked and the surfaces flip
@@ -78,14 +90,8 @@ export function ChartBrush({
     : undefined;
 
   const handleBrushEnd = (bounds: BrushBounds | null) => {
-    if (!bounds) {
-      onChange(null);
-      return;
-    }
-    const from = new Date(Math.min(bounds.x0, bounds.x1)).toISOString();
-    const to = new Date(Math.max(bounds.x0, bounds.x1)).toISOString();
-    // A zero-width brush is a click, not a selection — treat it as a clear.
-    onChange(from === to ? null : { from, to });
+    // A zero-width brush is a click, not a selection — boundsToRange treats it as a clear.
+    onChange(boundsToRange(bounds));
   };
 
   return (
