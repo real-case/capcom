@@ -1,6 +1,9 @@
 import { localPoint } from "@visx/event";
 import { useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 
 /**
  * Focus + keyboard model shared by the interactive charts (ADR 0093). It holds the
@@ -21,12 +24,12 @@ export type ChartFocus = {
   clear: () => void;
   /** Pointer handler → nearest datum by x. Attach to the SVG (or an overlay rect). */
   onPointerMove: (
-    event: ReactPointerEvent<SVGElement>,
+    event: ReactPointerEvent<Element>,
     /** Per-datum x positions in the SAME coordinate space `localPoint` returns. */
     positions: readonly number[],
   ) => void;
   /** Keyboard handler for stepping the focus across `count` data points. */
-  onKeyDown: (event: React.KeyboardEvent<SVGElement>, count: number) => void;
+  onKeyDown: (event: ReactKeyboardEvent<Element>, count: number) => void;
 };
 
 /** Index of the position nearest `x` by absolute distance; -1 for an empty list. */
@@ -49,11 +52,16 @@ function clampIndex(n: number, count: number): number | null {
   return Math.max(0, Math.min(count - 1, n));
 }
 
-export function useChartFocus(): ChartFocus {
-  const [index, setIndex] = useState<number | null>(null);
+export function useChartFocus(initial: number | null = null): ChartFocus {
+  const [index, setIndex] = useState<number | null>(initial);
 
   const onPointerMove: ChartFocus["onPointerMove"] = (event, positions) => {
-    const point = localPoint(event.nativeEvent);
+    // localPoint maps to the root SVG's user space (viewBox units) via its screen CTM,
+    // so `point.x` is comparable to the positions the chart computes in that same space.
+    const point = localPoint(
+      event.currentTarget as SVGElement,
+      event.nativeEvent,
+    );
     if (!point) return;
     const next = nearestIndex(point.x, positions);
     setIndex(next < 0 ? null : next);

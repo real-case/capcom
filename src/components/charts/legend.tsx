@@ -27,6 +27,12 @@ export type ChartLegendProps = {
   hidden?: ReadonlySet<string>;
   /** Toggle handler. Omit for a static, non-interactive legend. */
   onToggle?: (name: string) => void;
+  /**
+   * Series hover/focus handler (ADR 0093) — the chart dims the other series while one is
+   * pointed at or keyboard-focused. `null` clears the highlight. Pure view-state; drives
+   * a non-color highlight (stroke width), never color alone.
+   */
+  onHover?: (name: string | null) => void;
   /** Accessible label for the legend group. */
   label?: string;
   className?: string;
@@ -36,10 +42,22 @@ export function ChartLegend({
   series,
   hidden,
   onToggle,
+  onHover,
   label = "Series legend",
   className,
 }: ChartLegendProps) {
   const isHidden = (name: string) => hidden?.has(name) ?? false;
+  // Hover/focus enter+leave for series highlight; a no-op object spread when unused so
+  // the static legend stays a plain list.
+  const hoverProps = (name: string) =>
+    onHover
+      ? {
+          onPointerEnter: () => onHover(name),
+          onPointerLeave: () => onHover(null),
+          onFocus: () => onHover(name),
+          onBlur: () => onHover(null),
+        }
+      : {};
 
   return (
     <ul
@@ -71,13 +89,17 @@ export function ChartLegend({
                 type="button"
                 aria-pressed={!off}
                 onClick={() => onToggle(s.name)}
+                {...hoverProps(s.name)}
                 className="flex items-center gap-1.5 rounded-sm text-caption text-muted-foreground transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 {swatch}
                 {text}
               </button>
             ) : (
-              <span className="flex items-center gap-1.5 text-caption text-muted-foreground">
+              <span
+                {...hoverProps(s.name)}
+                className="flex items-center gap-1.5 text-caption text-muted-foreground"
+              >
                 {swatch}
                 {text}
               </span>

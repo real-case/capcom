@@ -1,13 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { expect, userEvent, within } from "storybook/test";
 
 import type { EventTrendBucket } from "@/entities/event";
 
 import { TrendsChart } from "./TrendsChart";
 
 // ADR 0036/0042: colocated CSF 3 stories covering the meaningful states (default,
-// multi-series, empty, loading, error, overflow). TrendsChart is presentational — no
-// play required (ADR 0038). All fixtures are deterministic (no time/random) for
-// Chromatic stability (ADR 0043). Series colors come from viz tokens (ADR 0081).
+// multi-series, empty, loading, error, overflow) plus the ADR 0093 interaction layer:
+// a pinned-open focused readout (deterministic for Chromatic, ADR 0043), an interactive
+// legend toggle, and the keyboard inspection path (ADR 0038/0039/0052). All fixtures are
+// deterministic (no time/random). Series colors come from viz tokens (ADR 0081).
 
 const DAY = 86_400_000;
 const START = Date.UTC(2026, 4, 1); // fixed anchor — deterministic
@@ -110,4 +112,50 @@ export const AllZero: Story = {
 
 export const Dark: Story = {
   globals: { theme: "dark" },
+};
+
+// Interaction (ADR 0093): the tooltip + crosshair pinned open at a fixed bucket, so the
+// hover readout is captured deterministically by Chromatic (ADR 0043) rather than relying
+// on a simulated pointer.
+export const FocusedReadout: Story = {
+  args: {
+    data: multiSeries(14, ["mobile", "desktop", "tablet", "Other"]),
+    label: "page_view by device",
+    initialFocusIndex: 7,
+  },
+};
+
+// interaction (play, ADR 0038): toggling a legend entry hides that series; assert the
+// aria-pressed state flips (behavior, not render).
+export const LegendToggle: Story = {
+  args: {
+    data: multiSeries(14, ["mobile", "desktop", "tablet"]),
+    label: "page_view by device",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const mobile = await canvas.findByRole("button", { name: /mobile/i });
+    await expect(mobile).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(mobile);
+    await expect(mobile).toHaveAttribute("aria-pressed", "false");
+  },
+};
+
+// keyboard path (ADR 0039/0052): the plot is focusable and Arrow keys move the focused
+// bucket, which the live region announces.
+export const KeyboardInspect: Story = {
+  args: {
+    data: multiSeries(14, ["mobile", "desktop"]),
+    label: "page_view by device",
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const plot = await canvas.findByRole("group", { name: /arrow keys/i });
+    plot.focus();
+    await expect(plot).toHaveFocus();
+    await userEvent.keyboard("{ArrowRight}");
+    await expect(canvas.getByRole("status")).toHaveTextContent(
+      /mobile|desktop/,
+    );
+  },
 };

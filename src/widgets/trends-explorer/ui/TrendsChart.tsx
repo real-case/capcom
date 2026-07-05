@@ -3,17 +3,34 @@
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { Group } from "@visx/group";
 import { scaleLinear, scaleTime } from "@visx/scale";
-import { LinePath } from "@visx/shape";
+import { AreaClosed, LinePath } from "@visx/shape";
+import { useState } from "react";
 
+import {
+  AreaGradient,
+  ChartLegend,
+  ChartLiveRegion,
+  ChartTooltip,
+  ChartTooltipRow,
+  ChartTooltipTitle,
+  Crosshair,
+  MotionIn,
+  useChartFocus,
+} from "@/components/charts";
 import type { EventTrendBucket } from "@/entities/event";
 
 /**
- * Trends line chart (ADR 0086) — a presentational visx widget. It receives the
- * already-reduced `fn_event_trends` rows as props and owns no fetching or
- * aggregation (ADR 0084); the feature decides what to query. Every color comes from
- * the generated data-viz token allowlist (ADR 0058/0081) via `var(--color-*)` — no
- * raw fill/stroke. A fixed `viewBox` keeps the render deterministic for Chromatic
- * (ADR 0043) while CSS scales the SVG to its container, so no layout measurement runs.
+ * Trends line chart (ADR 0086, interaction layer ADR 0093) — a presentational visx
+ * widget. It receives the already-reduced `fn_event_trends` rows as props and owns no
+ * fetching or aggregation (ADR 0084); the feature decides what to query. Every color
+ * comes from the generated data-viz token allowlist (ADR 0058/0081) via `var(--color-*)`.
+ *
+ * Interaction is **local view-state** (ADR 0026): a pointer/keyboard focus index drives a
+ * crosshair + tooltip, an interactive legend toggles series visibility and highlights on
+ * hover, and each line carries a token area-gradient. Motion is reduced-motion-guarded
+ * (ADR 0039/0043). None of it fetches or writes URL-state — a window-changing brush is
+ * the feature's job (ADR 0027/0093). A fixed `viewBox` keeps the render deterministic for
+ * Chromatic; the tooltip is positioned in percentages so no layout measurement runs.
  */
 
 const VIEW_W = 720;
@@ -24,6 +41,9 @@ const INNER_H = VIEW_H - MARGIN.top - MARGIN.bottom;
 // Axis tick label size, in viewBox units. Named (not an inline literal) so the
 // provenance is reviewable — SVG font-size has no token utility (ADR 0058/0081).
 const AXIS_FONT_SIZE = 10;
+const LINE_W = 2;
+const LINE_W_FOCUS = 3; // non-color affordance for the hover-highlighted series
+const DIM_OPACITY = 0.25; // other series while one is highlighted
 
 // Categorical data-viz tokens (ADR 0081), cycled per series; 'Other' takes a neutral
 // token so the rollup reads as distinct from the named series.
@@ -50,10 +70,19 @@ export type TrendsChartProps = {
   isError?: boolean;
   /** Accessible description of what the chart shows (e.g. the event + range). */
   label?: string;
+  /** Active app locale for tooltip date/number formatting (ADR 0030); math stays UTC. */
+  locale?: string;
+  /**
+   * Seed the focused bucket index. Used by stories to pin the tooltip/crosshair open for
+   * a deterministic Chromatic snapshot (ADR 0043/0093); undefined = nothing focused.
+   */
+  initialFocusIndex?: number;
   /** User-facing state copy, supplied (localized) by the feature; ADR 0030. */
   loadingLabel?: string;
   errorLabel?: string;
   emptyLabel?: string;
+  /** Accessible hint for the keyboard-focusable plot. */
+  inspectHint?: string;
 };
 
 type Point = { date: Date; count: number };
@@ -85,37 +114,23 @@ function toSeries(data: EventTrendBucket[]): Series[] {
   }));
 }
 
-/** Shared frame so the empty / loading / error states match the chart's footprint. */
-function Frame({
-  children,
-  state,
-}: {
-  children?: React.ReactNode;
-  state?: string;
-}) {
-  return (
-    <div
-      className="w-full"
-      data-state={state}
-      style={{ aspectRatio: `${VIEW_W} / ${VIEW_H}` }}
-    >
-      {children}
-    </div>
-  );
+/** A safe SVG id fragment from a series name (gradient defs). */
+function slug(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 function Message({ tone, text }: { tone: "muted" | "error"; text: string }) {
   return (
-    <Frame state={tone === "error" ? "error" : "empty"}>
-      <div
-        role={tone === "error" ? "alert" : "status"}
-        className={`flex h-full w-full items-center justify-center rounded-md border border-dashed border-border text-sm ${
-          tone === "error" ? "text-destructive" : "text-muted-foreground"
-        }`}
-      >
-        {text}
-      </div>
-    </Frame>
+    <div
+      role={tone === "error" ? "alert" : "status"}
+      data-state={tone === "error" ? "error" : "empty"}
+      style={{ aspectRatio: `${VIEW_W} / ${VIEW_H}` }}
+      className={`flex w-full items-center justify-center rounded-md border border-dashed border-border text-sm ${
+        tone === "error" ? "text-destructive" : "text-muted-foreground"
+      }`}
+    >
+      {text}
+    </div>
   );
 }
 
@@ -124,23 +139,33 @@ export function TrendsChart({
   isLoading = false,
   isError = false,
   label = "Event trend over time",
+  locale = "en-US",
+  initialFocusIndex,
   loadingLabel = "Loading…",
   errorLabel = "Couldn’t load the chart.",
   emptyLabel = "No data in this range.",
+  inspectHint = "Use the arrow keys to inspect each time bucket.",
 }: TrendsChartProps) {
+  const focus = useChartFocus(initialFocusIndex ?? null);
+  const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
+  const [hovered, setHovered] = useState<string | null>(null);
+
   if (isError) return <Message tone="error" text={errorLabel} />;
   if (isLoading) return <Message tone="muted" text={loadingLabel} />;
   if (data.length === 0) return <Message tone="muted" text={emptyLabel} />;
 
   const series = toSeries(data);
+  const visible = series.filter((s) => !hidden.has(s.name));
+
   const bucketTimes = [
     ...new Set(data.map((d) => new Date(d.bucket).getTime())),
-  ];
-  const maxCount = Math.max(1, ...data.map((d) => Number(d.count)));
-  const minTime = Math.min(...bucketTimes);
-  const maxTime = Math.max(...bucketTimes);
-  // A single-bucket window has a zero-width time domain, which collapses the line to
-  // an invisible point at x=0. Pad the domain by one bucket's span (or a day for the
+  ].sort((a, b) => a - b);
+  const visibleCounts = visible.flatMap((s) => s.points.map((p) => p.count));
+  const maxCount = Math.max(1, ...visibleCounts);
+  const minTime = bucketTimes[0]!;
+  const maxTime = bucketTimes[bucketTimes.length - 1]!;
+  // A single-bucket window has a zero-width time domain, which collapses the line to an
+  // invisible point at x=0. Pad the domain by one bucket's span (or a day for the
   // lone-point case) so the point renders mid-axis.
   const span =
     bucketTimes.length > 1
@@ -161,76 +186,199 @@ export function TrendsChart({
   const axisColor = "var(--color-border)";
   const tickColor = "var(--color-muted-foreground)";
 
+  // Per-datum x positions in root-svg space, for pointer→nearest-bucket mapping.
+  const bucketXs = bucketTimes.map(
+    (t) => MARGIN.left + (xScale(new Date(t)) ?? 0),
+  );
+
+  // Focused-bucket derivations (crosshair, tooltip, live region).
+  const focusIndex =
+    focus.index !== null && focus.index < bucketTimes.length
+      ? focus.index
+      : null;
+  const focusTime = focusIndex === null ? null : bucketTimes[focusIndex]!;
+  const focusRows =
+    focusTime === null
+      ? []
+      : visible
+          .map((s) => {
+            const point = s.points.find((p) => p.date.getTime() === focusTime);
+            return point ? { series: s, count: point.count } : null;
+          })
+          .filter((r): r is { series: Series; count: number } => r !== null);
+
+  const nf = new Intl.NumberFormat(locale);
+  const df = new Intl.DateTimeFormat(locale, {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  // Tooltip position as a percentage of the viewBox so it tracks the CSS-scaled SVG.
+  const focusXRoot =
+    focusTime === null ? 0 : MARGIN.left + (xScale(new Date(focusTime)) ?? 0);
+  const focusYRoot =
+    focusRows.length > 0
+      ? MARGIN.top + Math.min(...focusRows.map((r) => yScale(r.count) ?? 0))
+      : MARGIN.top;
+  const leftPct = Math.max(6, Math.min(94, (focusXRoot / VIEW_W) * 100));
+  const topPct = (focusYRoot / VIEW_H) * 100;
+
+  const liveMessage =
+    focusTime === null
+      ? ""
+      : `${df.format(new Date(focusTime))} — ${focusRows
+          .map((r) => `${r.series.name} ${nf.format(r.count)}`)
+          .join(", ")}`;
+
+  const dimmed = (name: string) => hovered !== null && hovered !== name;
+
   return (
-    <Frame state="data">
-      <svg
-        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-        width="100%"
-        height="100%"
-        role="img"
-        aria-label={`${label}. ${series.length} series across ${bucketTimes.length} time buckets.`}
-        preserveAspectRatio="xMidYMid meet"
+    <div className="flex flex-col gap-2" data-state="data">
+      <div
+        className="relative w-full"
+        style={{ aspectRatio: `${VIEW_W} / ${VIEW_H}` }}
       >
-        <title>{label}</title>
-        <Group left={MARGIN.left} top={MARGIN.top}>
-          <AxisLeft
-            scale={yScale}
-            numTicks={4}
-            stroke={axisColor}
-            tickStroke={axisColor}
-            tickLabelProps={() => ({
-              fill: tickColor,
-              fontSize: AXIS_FONT_SIZE,
-              textAnchor: "end",
-              dx: -4,
-              dy: 3,
-            })}
-          />
-          <AxisBottom
-            top={INNER_H}
-            scale={xScale}
-            numTicks={6}
-            stroke={axisColor}
-            tickStroke={axisColor}
-            tickLabelProps={() => ({
-              fill: tickColor,
-              fontSize: AXIS_FONT_SIZE,
-              textAnchor: "middle",
-            })}
-          />
-          {series.map((s) => (
-            <LinePath<Point>
-              key={s.name}
-              data={s.points}
-              x={(p) => xScale(p.date) ?? 0}
-              y={(p) => yScale(p.count) ?? 0}
-              stroke={s.color}
-              strokeWidth={2}
-              strokeLinecap="round"
+        <MotionIn className="h-full w-full">
+          <div
+            role="group"
+            tabIndex={0}
+            aria-label={`${label}. ${inspectHint}`}
+            onKeyDown={(e) => focus.onKeyDown(e, bucketTimes.length)}
+            onBlur={focus.clear}
+            className="h-full w-full rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            <svg
+              viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+              width="100%"
+              height="100%"
+              role="img"
+              aria-label={`${label}. ${series.length} series across ${bucketTimes.length} time buckets.`}
+              preserveAspectRatio="xMidYMid meet"
+            >
+              <title>{label}</title>
+              <defs>
+                {visible.map((s) => (
+                  <AreaGradient
+                    key={s.name}
+                    id={`trend-fill-${slug(s.name)}`}
+                    color={s.color}
+                  />
+                ))}
+              </defs>
+              <Group left={MARGIN.left} top={MARGIN.top}>
+                <AxisLeft
+                  scale={yScale}
+                  numTicks={4}
+                  stroke={axisColor}
+                  tickStroke={axisColor}
+                  tickLabelProps={() => ({
+                    fill: tickColor,
+                    fontSize: AXIS_FONT_SIZE,
+                    textAnchor: "end",
+                    dx: -4,
+                    dy: 3,
+                  })}
+                />
+                <AxisBottom
+                  top={INNER_H}
+                  scale={xScale}
+                  numTicks={6}
+                  stroke={axisColor}
+                  tickStroke={axisColor}
+                  tickLabelProps={() => ({
+                    fill: tickColor,
+                    fontSize: AXIS_FONT_SIZE,
+                    textAnchor: "middle",
+                  })}
+                />
+                {visible.map((s) => (
+                  <Group
+                    key={s.name}
+                    opacity={dimmed(s.name) ? DIM_OPACITY : 1}
+                  >
+                    <AreaClosed<Point>
+                      data={s.points}
+                      x={(p) => xScale(p.date) ?? 0}
+                      y={(p) => yScale(p.count) ?? 0}
+                      yScale={yScale}
+                      fill={`url(#trend-fill-${slug(s.name)})`}
+                    />
+                    <LinePath<Point>
+                      data={s.points}
+                      x={(p) => xScale(p.date) ?? 0}
+                      y={(p) => yScale(p.count) ?? 0}
+                      stroke={s.color}
+                      strokeWidth={hovered === s.name ? LINE_W_FOCUS : LINE_W}
+                      strokeLinecap="round"
+                    />
+                  </Group>
+                ))}
+                {focusTime !== null && (
+                  <Crosshair
+                    x={xScale(new Date(focusTime)) ?? 0}
+                    top={0}
+                    bottom={INNER_H}
+                    dots={focusRows.map((r) => ({
+                      key: r.series.name,
+                      y: yScale(r.count) ?? 0,
+                      color: r.series.color,
+                    }))}
+                  />
+                )}
+                {/* Transparent overlay to capture pointer position across the plot. */}
+                <rect
+                  x={0}
+                  y={0}
+                  width={INNER_W}
+                  height={INNER_H}
+                  fill="none"
+                  pointerEvents="all"
+                  onPointerMove={(e) => focus.onPointerMove(e, bucketXs)}
+                  onPointerLeave={focus.clear}
+                />
+              </Group>
+            </svg>
+          </div>
+        </MotionIn>
+
+        <ChartTooltip
+          open={focusRows.length > 0}
+          left={`${leftPct}%`}
+          top={`${topPct}%`}
+        >
+          <ChartTooltipTitle>
+            {focusTime === null ? "" : df.format(new Date(focusTime))}
+          </ChartTooltipTitle>
+          {focusRows.map((r) => (
+            <ChartTooltipRow
+              key={r.series.name}
+              color={r.series.color}
+              name={r.series.name}
+              value={nf.format(r.count)}
             />
           ))}
-        </Group>
-      </svg>
-      {series.length > 1 ? (
-        <ul
-          className="mt-2 flex flex-wrap gap-x-4 gap-y-1"
-          aria-label="Series legend"
-        >
-          {series.map((s) => (
-            <li
-              key={s.name}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground"
-            >
-              <span
-                aria-hidden
-                className="inline-block size-2 rounded-full"
-                style={{ backgroundColor: s.color }}
-              />
-              {s.name}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </Frame>
+        </ChartTooltip>
+      </div>
+
+      {series.length > 1 && (
+        <ChartLegend
+          series={series}
+          hidden={hidden}
+          onToggle={(name) =>
+            setHidden((prev) => {
+              const next = new Set(prev);
+              if (next.has(name)) next.delete(name);
+              else next.add(name);
+              return next;
+            })
+          }
+          onHover={setHovered}
+        />
+      )}
+
+      <ChartLiveRegion message={liveMessage} />
+    </div>
   );
 }

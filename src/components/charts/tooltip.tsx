@@ -29,10 +29,14 @@ export function useChartTooltip<TData>() {
 export type ChartTooltipProps = {
   /** Whether the tooltip is shown — `tooltipOpen` from {@link useChartTooltip}. */
   open: boolean;
-  /** Left offset within the chart's `relative` container, in px. */
-  left: number;
-  /** Top offset within the chart's `relative` container, in px. */
-  top: number;
+  /**
+   * Left offset within the chart's `relative` container. Accepts a CSS length or a
+   * percentage string — charts pass a `%` so the tooltip tracks the CSS-scaled SVG with
+   * no layout measurement (the container matches the viewBox aspect ratio).
+   */
+  left: number | string;
+  /** Top offset within the chart's `relative` container (px or `%` — see `left`). */
+  top: number | string;
   children: ReactNode;
   className?: string;
 };
