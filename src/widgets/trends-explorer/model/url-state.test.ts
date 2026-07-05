@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DEFAULT_TRENDS_QUERY,
+  effectiveWindow,
   resolveWindow,
   toTopEventsArgs,
   toTrendsArgs,
@@ -63,6 +64,8 @@ describe("toTrendsArgs", () => {
       range: "7d",
       interval: "day",
       breakdown: "none",
+      from: null,
+      to: null,
     };
     const args = toTrendsArgs(query, "proj-1", NOW);
     expect(args).toMatchObject({
@@ -98,5 +101,43 @@ describe("toTopEventsArgs", () => {
       p_to: "2026-06-26T00:00:00.000Z",
       p_limit: 10,
     });
+  });
+});
+
+describe("effectiveWindow (brush override, ADR 0093)", () => {
+  const WINDOW = {
+    from: "2026-06-10T00:00:00.000Z",
+    to: "2026-06-15T00:00:00.000Z",
+  };
+
+  it("uses the explicit brush window when both ends are present", () => {
+    const query: TrendsQuery = { ...DEFAULT_TRENDS_QUERY, ...WINDOW };
+    expect(effectiveWindow(query, NOW)).toEqual(WINDOW);
+    // …and the RPC arg bag narrows to it, not the 30d preset.
+    expect(toTrendsArgs(query, "proj-1", NOW)).toMatchObject({
+      p_from: WINDOW.from,
+      p_to: WINDOW.to,
+    });
+  });
+
+  it("falls back to the preset when only one end is set", () => {
+    const query: TrendsQuery = {
+      ...DEFAULT_TRENDS_QUERY,
+      from: WINDOW.from,
+      to: null,
+    };
+    expect(effectiveWindow(query, NOW)).toEqual(resolveWindow("30d", NOW));
+  });
+});
+
+describe("trendsQuerySchema brush window", () => {
+  it("accepts an ISO window and clears a malformed one to null", () => {
+    expect(
+      trendsQuerySchema.parse({
+        ...DEFAULT_TRENDS_QUERY,
+        from: "2026-06-10T00:00:00.000Z",
+        to: "not-a-date",
+      }),
+    ).toMatchObject({ from: "2026-06-10T00:00:00.000Z", to: null });
   });
 });

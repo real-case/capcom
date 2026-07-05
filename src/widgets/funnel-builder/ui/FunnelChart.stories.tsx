@@ -1,11 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { expect, within } from "storybook/test";
 
 import type { FunnelStep } from "@/entities/event";
 
 import { FunnelChart } from "./FunnelChart";
 
 // ADR 0036/0042: colocated CSF 3 stories covering default / empty / loading / error /
-// overflow. Presentational — no play (ADR 0038). Deterministic fixtures (ADR 0043); bar
+// overflow, plus the ADR 0093 interaction: a pinned-open step tooltip (deterministic for
+// Chromatic, ADR 0043) and a focus play (ADR 0038/0039/0052). Deterministic fixtures; bar
 // fill from a viz token (ADR 0081). Counts are non-increasing down the steps, matching
 // the funnel invariant (ADR 0087).
 
@@ -60,4 +62,20 @@ export const Overflow: Story = {
 
 export const Dark: Story = {
   globals: { theme: "dark" },
+};
+
+// Interaction (ADR 0093): a step's conversion tooltip pinned open for a deterministic snapshot.
+export const FocusedStep: Story = {
+  args: { initialFocusIndex: 1 },
+};
+
+// interaction/keyboard (play, ADR 0038/0039/0052): each step is focusable and its
+// aria-label states its conversion (the sole keyboard announcement — no live region).
+export const FocusStep: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const step = await canvas.findByRole("img", { name: /2\. sign_up/i });
+    step.focus();
+    await expect(step).toHaveFocus();
+  },
 };

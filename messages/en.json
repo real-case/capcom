@@ -209,7 +209,10 @@
     "trendLoading": "Loading trend…",
     "trendError": "Couldn’t load the trend.",
     "topLoading": "Loading top events…",
-    "topError": "Couldn’t load top events."
+    "topError": "Couldn’t load top events.",
+    "brushHeading": "Zoom the window",
+    "brushLabel": "Drag to select a time window within the range",
+    "brushReset": "Reset to full range"
   },
   "Funnels": {
     "title": "Funnels",
