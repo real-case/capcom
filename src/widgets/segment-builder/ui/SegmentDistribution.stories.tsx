@@ -1,13 +1,15 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { expect, within } from "storybook/test";
 
 import type { SegmentDistributionRow } from "@/entities/segment";
 
 import { SegmentDistribution } from "./SegmentDistribution";
 
 // ADR 0036/0042: colocated CSF 3 stories covering default / empty / loading / error /
-// overflow. Presentational — no play (ADR 0038). Deterministic fixtures (ADR 0043); bar
-// fill from the categorical viz scale (ADR 0081). Rows are descending by users and sum to
-// the segment size, matching the distribution invariants (ADR 0089).
+// overflow, plus the ADR 0093 interaction: a pinned-open bucket tooltip (deterministic
+// for Chromatic, ADR 0043) and a focus play (ADR 0038/0039/0052). Deterministic fixtures;
+// bar fill from the categorical viz scale (ADR 0081). Rows are descending by users and sum
+// to the segment size, matching the distribution invariants (ADR 0089).
 
 const sum = (rows: SegmentDistributionRow[]) =>
   rows.reduce((n, r) => n + Number(r.users), 0);
@@ -83,4 +85,21 @@ export const Overflow: Story = {
 
 export const Dark: Story = {
   globals: { theme: "dark" },
+};
+
+// Interaction (ADR 0093): a bucket's tooltip pinned open for a deterministic snapshot.
+export const FocusedBucket: Story = {
+  args: { initialFocusIndex: 0 },
+};
+
+// interaction/keyboard (play, ADR 0038/0039/0052): each bucket is focusable and announces
+// its share; focusing one shows its tooltip.
+export const FocusBucket: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const bucket = await canvas.findByRole("img", { name: /^US:/i });
+    bucket.focus();
+    await expect(bucket).toHaveFocus();
+    await expect(canvas.getByRole("status")).toHaveTextContent(/US:/);
+  },
 };

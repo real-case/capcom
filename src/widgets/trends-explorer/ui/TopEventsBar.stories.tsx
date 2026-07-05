@@ -1,11 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
+import { expect, userEvent, within } from "storybook/test";
 
 import type { TopEvent } from "@/entities/event";
 
 import { TopEventsBar } from "./TopEventsBar";
 
 // ADR 0036/0042: colocated CSF 3 stories covering default / empty / loading / error /
-// overflow. Presentational — no play (ADR 0038). Deterministic fixtures (ADR 0043);
+// overflow, plus the ADR 0093 interaction: a pinned-open tooltip (deterministic for
+// Chromatic, ADR 0043) and a focus play (ADR 0038/0039/0052). Deterministic fixtures;
 // bar fill from a viz token (ADR 0081).
 
 const DEFAULT: TopEvent[] = [
@@ -58,4 +60,23 @@ export const Overflow: Story = {
 
 export const Dark: Story = {
   globals: { theme: "dark" },
+};
+
+// Interaction (ADR 0093): a bar's tooltip pinned open for a deterministic snapshot.
+export const FocusedReadout: Story = {
+  args: { initialFocusIndex: 1 },
+};
+
+// interaction/keyboard (play, ADR 0038/0039/0052): each bar is focusable and announces
+// its value; focusing one shows its tooltip.
+export const FocusBar: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const bar = await canvas.findByRole("img", { name: /page_view: 2,757/i });
+    bar.focus();
+    await expect(bar).toHaveFocus();
+    await expect(canvas.getByRole("status")).toHaveTextContent(/page_view/);
+    await userEvent.tab();
+    await expect(bar).not.toHaveFocus();
+  },
 };
