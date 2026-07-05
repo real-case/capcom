@@ -1,7 +1,9 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
+
+import { ChartBrush } from "@/components/charts";
 
 import { useEventTrends, useTopEvents } from "../api/use-trends";
 import {
@@ -9,6 +11,7 @@ import {
   DEFAULT_TRENDS_QUERY,
   INTERVALS,
   RANGES,
+  resolveWindow,
   toTopEventsArgs,
   toTrendsArgs,
   trendsParsers,
@@ -29,6 +32,7 @@ import { TrendsChart } from "./TrendsChart";
  */
 export function TrendsExplorer({ projectId }: { projectId: string }) {
   const t = useTranslations("Trends");
+  const locale = useLocale();
   const [raw, setQuery] = useQueryStates(trendsParsers);
 
   // The Zod schema is the validation authority (ADR 0017): run the nuqs-parsed values
@@ -41,6 +45,14 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
   const now = new Date();
   const trends = useEventTrends(toTrendsArgs(query, projectId, now));
   const top = useTopEvents(toTopEventsArgs(query, projectId, now));
+
+  // The brush track spans the full preset range; the selection is the explicit window,
+  // if any. Selecting or clearing it writes nuqs URL-state (ADR 0027/0093) — the feature
+  // does the round-trip, the widget never fetches (ADR 0086). Changing the preset range
+  // also clears a stale sub-window.
+  const brushDomain = resolveWindow(query.range, now);
+  const brushValue =
+    query.from && query.to ? { from: query.from, to: query.to } : null;
 
   // The event picker lists what the project actually emits (from fn_top_events),
   // always including the current selection so it stays selectable before data loads.
@@ -73,7 +85,7 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
             value={query.range}
             onChange={(e) => {
               const range = pick(RANGES, e.target.value);
-              if (range) void setQuery({ range });
+              if (range) void setQuery({ range, from: null, to: null });
             }}
           >
             {RANGES.map((r) => (
@@ -131,10 +143,41 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
           isLoading={trends.isPending}
           isError={trends.isError}
           label={t("trendChartLabel", { event: query.event })}
+          locale={locale}
           loadingLabel={t("trendLoading")}
           errorLabel={t("trendError")}
           emptyLabel={t("noEvents")}
         />
+
+        <div className="mt-4 flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <span className="text-caption text-muted-foreground">
+              {t("brushHeading")}
+            </span>
+            {brushValue ? (
+              <button
+                type="button"
+                onClick={() => void setQuery({ from: null, to: null })}
+                className="rounded-sm text-caption text-muted-foreground underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                {t("brushReset")}
+              </button>
+            ) : null}
+          </div>
+          <ChartBrush
+            key={`${query.range}-${query.from ?? ""}-${query.to ?? ""}`}
+            domain={brushDomain}
+            value={brushValue}
+            label={t("brushLabel")}
+            onChange={(next) =>
+              void setQuery(
+                next
+                  ? { from: next.from, to: next.to }
+                  : { from: null, to: null },
+              )
+            }
+          />
+        </div>
       </section>
 
       <section

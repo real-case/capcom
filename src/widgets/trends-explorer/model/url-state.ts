@@ -39,15 +39,23 @@ export const trendsQuerySchema = z.object({
   range: z.enum(RANGES),
   interval: z.enum(INTERVALS),
   breakdown: z.enum(BREAKDOWN_KEYS),
+  // An explicit window selected with the chart brush (ADR 0093), overriding `range` for
+  // the queried window while `range` still bounds the brush track. Each is individually
+  // resilient (`.catch(null)`) so a malformed value clears to null without discarding
+  // the rest of the query; both must be present to take effect.
+  from: z.iso.datetime({ offset: true }).nullable().catch(null),
+  to: z.iso.datetime({ offset: true }).nullable().catch(null),
 });
 export type TrendsQuery = z.infer<typeof trendsQuerySchema>;
 
-/** Defaults: 30 days of daily buckets of `page_view`, no breakdown. */
+/** Defaults: 30 days of daily buckets of `page_view`, no breakdown, whole-range window. */
 export const DEFAULT_TRENDS_QUERY: TrendsQuery = {
   event: "page_view",
   range: "30d",
   interval: "day",
   breakdown: "none",
+  from: null,
+  to: null,
 };
 
 /**
@@ -65,6 +73,9 @@ export const trendsParsers = {
   breakdown: parseAsStringEnum<BreakdownKey>([...BREAKDOWN_KEYS]).withDefault(
     DEFAULT_TRENDS_QUERY.breakdown,
   ),
+  // Nullable (no default): absent from the URL until the user brushes a sub-window.
+  from: parseAsString,
+  to: parseAsString,
 };
 
 const DAYS: Record<Range, number> = { "7d": 7, "30d": 30, "90d": 90 };
@@ -93,6 +104,19 @@ export function resolveWindow(
 }
 
 /**
+ * The window actually queried: the explicit brush selection when both ends are present
+ * (ADR 0093), otherwise the relative-range preset. Kept separate from `resolveWindow` so
+ * the brush track can still span the full preset while the query narrows.
+ */
+export function effectiveWindow(
+  query: TrendsQuery,
+  now: Date,
+): { from: string; to: string } {
+  if (query.from && query.to) return { from: query.from, to: query.to };
+  return resolveWindow(query.range, now);
+}
+
+/**
  * Map URL-state to the `fn_event_trends` argument bag. `breakdown: "none"` omits the
  * key entirely (the SQL default is null → a single series); any other value is passed
  * as the breakdown property key.
@@ -102,7 +126,7 @@ export function toTrendsArgs(
   projectId: string,
   now: Date,
 ): EventTrendsArgs {
-  const { from, to } = resolveWindow(query.range, now);
+  const { from, to } = effectiveWindow(query, now);
   const base: EventTrendsArgs = {
     p_project_id: projectId,
     p_event_name: query.event,
@@ -122,6 +146,6 @@ export function toTopEventsArgs(
   now: Date,
   limit = 10,
 ): TopEventsArgs {
-  const { from, to } = resolveWindow(query.range, now);
+  const { from, to } = effectiveWindow(query, now);
   return { p_project_id: projectId, p_from: from, p_to: to, p_limit: limit };
 }
