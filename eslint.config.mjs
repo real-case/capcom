@@ -56,7 +56,11 @@ const eslintConfig = defineConfig([
     // from the token layer only, so the token gate covers src/widgets/** too — ADR
     // 0086's confirmation made operative. The check:tokens script passes both dirs to
     // eslint (this glob alone does not run the linter over widgets).
-    files: ["src/components/**/*.{ts,tsx}", "src/widgets/**/*.{ts,tsx}"],
+    files: [
+      "src/components/**/*.{ts,tsx}",
+      "src/widgets/**/*.{ts,tsx}",
+      "src/shared/**/*.{ts,tsx}",
+    ],
     ignores: [
       "src/components/**/*.test.{ts,tsx}",
       "src/components/**/*.stories.{ts,tsx}",
@@ -64,6 +68,10 @@ const eslintConfig = defineConfig([
       "src/widgets/**/*.test.{ts,tsx}",
       "src/widgets/**/*.stories.{ts,tsx}",
       "src/widgets/**/__snapshots__/**",
+      // shared/ui carries reusable UI (token-gated); shared/testing is test infra.
+      "src/shared/**/*.test.{ts,tsx}",
+      "src/shared/**/*.stories.{ts,tsx}",
+      "src/shared/testing/**",
     ],
     rules: {
       "no-restricted-syntax": [

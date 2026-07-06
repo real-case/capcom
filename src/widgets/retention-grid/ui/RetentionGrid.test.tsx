@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { selectCombo } from "@/shared/testing";
 
 import messages from "../../../../messages/en.json";
 
@@ -74,7 +75,7 @@ describe("RetentionGrid", () => {
     await waitFor(() => expect(fetchRetention).toHaveBeenCalled());
     fetchRetention.mockClear();
 
-    await userEvent.selectOptions(screen.getByLabelText("Cohort by"), "month");
+    await selectCombo("Cohort by", "Month");
 
     // URL state round-trips (ADR 0027) ...
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
@@ -95,10 +96,7 @@ describe("RetentionGrid", () => {
     renderGrid(onUrlUpdate);
     await waitFor(() => expect(fetchRetention).toHaveBeenCalled());
 
-    await userEvent.selectOptions(
-      screen.getByLabelText("Analysis range"),
-      "180d",
-    );
+    await selectCombo("Analysis range", "Last 180 days");
 
     await waitFor(() => {
       const last = onUrlUpdate.mock.calls.at(-1)![0] as UrlUpdateEvent;

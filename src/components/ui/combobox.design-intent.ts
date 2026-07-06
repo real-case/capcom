@@ -16,7 +16,11 @@ export const comboboxIntent = {
     archetype: "selection-control",
     compositionSignature: ["button", "command", "popover"],
     composedOf: ["button", "command", "popover"],
-    usedIn: [],
+    usedIn: [
+      "src/shared/ui/ComboField.tsx",
+      "src/widgets/funnel-builder/ui/FunnelBuilder.tsx",
+      "src/widgets/segment-builder/ui/SegmentBuilder.tsx",
+    ],
   },
   usageRole: "selection-control",
   variants: {

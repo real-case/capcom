@@ -5,6 +5,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { selectCombo } from "@/shared/testing";
+
 import messages from "../../../../messages/en.json";
 
 // Mock the data layer only — the REAL useEventTrends/useTopEvents hooks run, so the
@@ -59,7 +61,10 @@ describe("TrendsExplorer", () => {
     });
     expect("p_breakdown_key" in args).toBe(false);
 
-    // Top events populate the event picker.
+    // Top events populate the event picker (options exist once the combobox opens).
+    await userEvent.click(
+      screen.getByRole("combobox", { name: messages.Trends.eventLabel }),
+    );
     expect(
       await screen.findByRole("option", { name: "purchase" }),
     ).toBeInTheDocument();
@@ -71,7 +76,10 @@ describe("TrendsExplorer", () => {
     await waitFor(() => expect(fetchEventTrends).toHaveBeenCalled());
     fetchEventTrends.mockClear();
 
-    await userEvent.selectOptions(screen.getByLabelText("Interval"), "week");
+    await selectCombo(
+      messages.Trends.intervalLabel,
+      messages.Trends.interval_week,
+    );
 
     // URL state round-trips (shareable link, ADR 0027) ...
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
@@ -92,7 +100,10 @@ describe("TrendsExplorer", () => {
     await waitFor(() => expect(fetchEventTrends).toHaveBeenCalled());
     fetchEventTrends.mockClear();
 
-    await userEvent.selectOptions(screen.getByLabelText("Breakdown"), "device");
+    await selectCombo(
+      messages.Trends.breakdownLabel,
+      messages.Trends.breakdown_device,
+    );
 
     await waitFor(() =>
       expect(fetchEventTrends).toHaveBeenCalledWith(

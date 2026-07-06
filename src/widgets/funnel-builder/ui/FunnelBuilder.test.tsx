@@ -5,6 +5,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { selectCombo } from "@/shared/testing";
+
 import messages from "../../../../messages/en.json";
 
 // Mock the data layer only — the REAL useFunnel hook runs, so the test exercises the
@@ -64,10 +66,7 @@ describe("FunnelBuilder", () => {
     await waitFor(() => expect(fetchFunnel).toHaveBeenCalled());
     fetchFunnel.mockClear();
 
-    await userEvent.selectOptions(
-      screen.getByLabelText("Event for step 2"),
-      "search",
-    );
+    await selectCombo("Event for step 2", "search");
 
     // URL state round-trips (ADR 0027) ...
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
