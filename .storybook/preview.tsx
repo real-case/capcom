@@ -1,5 +1,6 @@
 import * as React from "react";
 import isChromatic from "chromatic/isChromatic";
+import { MotionConfig } from "motion/react";
 import type { Decorator, Preview } from "@storybook/nextjs-vite";
 
 // ADR 0032/0033: stories render against the real Tailwind build and the semantic
@@ -68,6 +69,23 @@ const freezeForSnapshot: Decorator = (Story) => (
   </>
 );
 
+/**
+ * Determinism for **JS motion** (ADR 0096). `freezeForSnapshot` only tames CSS
+ * animations/transitions; Motion (`motion/react`) animates via WAAPI/rAF, so it needs its
+ * own freeze. Forcing `reducedMotion: "always"` across Storybook makes every Motion
+ * primitive take its static / final-state branch (`useReducedMotion()` → true), so **all**
+ * content is rendered in place — the axe run (ADR 0039) checks the whole page (no
+ * `whileInView` section left at `opacity: 0` and skipped), and Chromatic (ADR 0043) has no
+ * mid-flight animation or IntersectionObserver timing to race. The live motion is reviewed
+ * in the running app (`npm run dev`), not the workbench — the same trade the CSS freeze
+ * makes for snapshots.
+ */
+const staticMotion: Decorator = (Story) => (
+  <MotionConfig reducedMotion="always">
+    <Story />
+  </MotionConfig>
+);
+
 const preview: Preview = {
   parameters: {
     a11y: {
@@ -104,7 +122,7 @@ const preview: Preview = {
       },
     },
   },
-  decorators: [freezeForSnapshot, withTheme],
+  decorators: [staticMotion, freezeForSnapshot, withTheme],
 };
 
 export default preview;

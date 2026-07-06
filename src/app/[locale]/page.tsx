@@ -10,6 +10,7 @@ import {
   DEMO_PASSWORD,
   LandingPage,
   type LandingCopy,
+  MotionPolicy,
 } from "@/widgets/landing";
 
 type LocaleParams = { locale: string };
@@ -151,7 +152,9 @@ export default async function Home({
           __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
         }}
       />
-      <LandingPage copy={copy} />
+      <MotionPolicy>
+        <LandingPage copy={copy} />
+      </MotionPolicy>
     </>
   );
 }

@@ -6,6 +6,7 @@
  * assemble the copy object and emit JSON-LD (ADR 0031).
  */
 export { LandingPage } from "./ui/LandingPage";
+export { MotionPolicy } from "./ui/motion";
 export { buildLandingJsonLd, type JsonLdGraph } from "./model/jsonld";
 export {
   DEMO_ACCOUNTS,
