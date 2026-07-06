@@ -99,3 +99,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0093](0093-chart-interaction-layer.md) | Chart interaction layer over visx: tooltip, crosshair, hover, motion | accepted | 2026-07-02 |
 | [0094](0094-claude-design-as-design-source.md) | Claude Design (claude.ai/design) as the design source and living catalog | accepted | 2026-07-02 |
 | [0095](0095-claude-design-approval-drift-seal.md) | Anti-hallucination component approval and the drift seal, adapted for Claude Design | accepted | 2026-07-02 |
+| [0096](0096-js-motion-library-for-the-premium-landing.md) | Motion (a JS animation library) for the premium landing, scoped to client islands | accepted | 2026-07-06 |
