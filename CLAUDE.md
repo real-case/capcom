@@ -159,6 +159,13 @@ still-proposed._
   theme-aware (0092), deterministic under Chromatic, and keyboard/AT-accessible; interaction is
   local view-state and a window-changing brush round-trips through nuqs, so widgets stay
   presentational (extends 0086).
+- **Premium-landing motion — Motion** (0096): the MIT `motion` library (`motion/react`, the
+  maintained successor to Framer Motion) for the premium landing, adopted **additively** beside the
+  CSS/`tw-animate-css` `MotionIn` layer (0093) and scoped to **client islands** — `LandingPage` stays
+  a server component rendering its copy into the SSR HTML (0002), only thin animated wrappers are
+  `"use client"`; motion animates `opacity`/`transform` (any animated color via tokens, 0058/0081),
+  reduced-motion-guarded (0039/0052), Chromatic-pinned to its final state (0043), and `LazyMotion`-
+  bundled for supply-chain discipline (0069/0071).
 
 ## Commands
 
@@ -264,6 +271,13 @@ still-proposed._
   (`--color-primary`, `--color-muted-foreground`, …) exposed via the `@theme inline`
   bridge; light/dark = `.dark` value-layer overrides; shadcn components live in
   `src/components/ui` (0032, 0033, 0034).
+- Landing/premium motion uses **Motion** (`motion/react`) as **client islands** (0096): `LandingPage`
+  and its sections stay Server Components (their copy in the SSR HTML, statically generable, 0002);
+  animation lives in small `"use client"` wrappers; motion animates `opacity`/`transform` only (any
+  animated color is a token, 0058/0081), honors `prefers-reduced-motion` globally (`MotionConfig
+  reducedMotion="user"`, 0039/0052), resolves to its final state under Chromatic (0043), and ships via
+  `LazyMotion` (0069/0071). Additive beside the CSS `MotionIn` layer (0093), which stays the default
+  for the chart interaction surfaces.
 - i18n: routes under `src/app/[locale]/`; catalogs in `messages/<locale>.json`;
   middleware composes next-intl with the Supabase session refresh (0030). Metadata
   via `metadata` / `generateMetadata`, `app/sitemap.ts`, `app/robots.ts` (0031).
@@ -445,6 +459,12 @@ still-proposed._
   text/surface token pairs must clear WCAG 2.2 AA in **both** the light and dark compositions —
   enforced by `check:contrast` (0081/0092). A theming mechanism beyond this cookie-SSR toggle (e.g.
   adopting a client theme provider) still needs its own ADR.
+- JS motion (Motion) is **islands-only** (0096): the landing is never a page-wide `"use client"` tree
+  — its content stays Server-Component-rendered and crawlable (0002); motion animates
+  `opacity`/`transform` (color only via tokens, 0058), is `prefers-reduced-motion`-guarded
+  (0039/0052), and Chromatic-deterministic (0043). `motion` is the sole JS animation library; a
+  different library, or motion beyond this island-scoping (e.g. app-wide route transitions), needs its
+  own ADR.
 - The template is never published to npm — `private: true` is retained permanently; the
   release artifacts are the git tag + GitHub Release + `CHANGELOG.md`, not an npm package
   (0080).
