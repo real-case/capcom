@@ -1,11 +1,10 @@
 "use client";
 
-import { useId } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
 
 import { ChartBrush } from "@/components/charts";
-import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
+import { ComboField } from "@/shared/ui";
 
 import { useEventTrends, useTopEvents } from "../api/use-trends";
 import {
@@ -206,42 +205,5 @@ function pick<const T extends readonly string[]>(
   return allowed.find((option) => option === value);
 }
 
-/**
- * A labelled Combobox — the accessible, premium replacement for a native `<select>`
- * (ADR 0034, PR-15). The visible label names the trigger via `aria-labelledby` (a
- * `role="combobox"` element takes its name from the reference, not its text content),
- * so the URL-state contract (ADR 0027) is unchanged — only the control is.
- */
-function ComboField({
-  label,
-  value,
-  options,
-  onValueChange,
-  searchPlaceholder,
-  emptyText,
-  className = "w-44",
-}: {
-  label: string;
-  value: string;
-  options: readonly ComboboxOption[];
-  onValueChange: (value: string) => void;
-  searchPlaceholder: string;
-  emptyText: string;
-  className?: string;
-}) {
-  const labelId = useId();
-  return (
-    <div className="flex flex-col gap-1 text-xs font-medium text-muted-foreground">
-      <span id={labelId}>{label}</span>
-      <Combobox
-        aria-labelledby={labelId}
-        value={value}
-        options={options}
-        onValueChange={onValueChange}
-        searchPlaceholder={searchPlaceholder}
-        emptyText={emptyText}
-        className={className}
-      />
-    </div>
-  );
-}
+// The labelled Combobox lives in `@/shared/ui` (`ComboField`), shared across the analytics
+// widgets — imported above.

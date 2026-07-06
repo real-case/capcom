@@ -30,7 +30,7 @@
     "check:i18n": "node scripts/check-i18n-parity.mjs",
     "check:boundaries": "depcruise src",
     "check:fsd": "steiger ./src",
-    "check:tokens": "eslint src/components src/widgets --no-error-on-unmatched-pattern",
+    "check:tokens": "eslint src/components src/widgets src/shared --no-error-on-unmatched-pattern",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:design-system": "npm run check:tokens && npm run check:contrast && npm run check:boundaries && npm run check:graph && npm run check:design-intent && npm run check:seals && npm run check:i18n",
     "check:gates": "node scripts/check-gates.mjs",

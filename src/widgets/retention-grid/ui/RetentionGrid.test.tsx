@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { selectCombo } from "@/shared/testing";
 
 import messages from "../../../../messages/en.json";
 
@@ -14,17 +15,6 @@ vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({}) }));
 vi.mock("@/entities/event", () => ({ fetchRetention }));
 
 import { RetentionGrid } from "./RetentionGrid";
-
-/**
- * Drive a Combobox (PR-15): open the labelled trigger, then click an option by its
- * visible label. Options exist in the DOM only while the popover is open.
- */
-async function selectCombo(name: string, optionName: string | RegExp) {
-  await userEvent.click(screen.getByRole("combobox", { name }));
-  await userEvent.click(
-    await screen.findByRole("option", { name: optionName }),
-  );
-}
 
 function renderGrid(onUrlUpdate: (e: UrlUpdateEvent) => void) {
   const queryClient = new QueryClient({

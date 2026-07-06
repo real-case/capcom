@@ -6,6 +6,7 @@ import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { SegmentRule } from "@/entities/segment";
+import { selectCombo } from "@/shared/testing";
 
 import messages from "../../../../messages/en.json";
 
@@ -26,17 +27,6 @@ vi.mock("@/entities/segment", async (importOriginal) => ({
 }));
 
 import { SegmentBuilder } from "./SegmentBuilder";
-
-/**
- * Drive a Combobox (PR-15): open the labelled trigger, then click an option by its
- * visible label. Options exist in the DOM only while the popover is open.
- */
-async function selectCombo(name: string, optionName: string | RegExp) {
-  await userEvent.click(screen.getByRole("combobox", { name }));
-  await userEvent.click(
-    await screen.findByRole("option", { name: optionName }),
-  );
-}
 
 function renderBuilder(
   onUrlUpdate: (e: UrlUpdateEvent) => void,

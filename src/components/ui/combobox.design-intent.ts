@@ -17,10 +17,9 @@ export const comboboxIntent = {
     compositionSignature: ["button", "command", "popover"],
     composedOf: ["button", "command", "popover"],
     usedIn: [
+      "src/shared/ui/ComboField.tsx",
       "src/widgets/funnel-builder/ui/FunnelBuilder.tsx",
-      "src/widgets/retention-grid/ui/RetentionGrid.tsx",
       "src/widgets/segment-builder/ui/SegmentBuilder.tsx",
-      "src/widgets/trends-explorer/ui/TrendsExplorer.tsx",
     ],
   },
   usageRole: "selection-control",

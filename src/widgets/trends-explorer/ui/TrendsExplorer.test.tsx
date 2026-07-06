@@ -5,6 +5,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { selectCombo } from "@/shared/testing";
+
 import messages from "../../../../messages/en.json";
 
 // Mock the data layer only — the REAL useEventTrends/useTopEvents hooks run, so the
@@ -17,18 +19,6 @@ vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({}) }));
 vi.mock("@/entities/event", () => ({ fetchEventTrends, fetchTopEvents }));
 
 import { TrendsExplorer } from "./TrendsExplorer";
-
-/**
- * Drive a Combobox (PR-15): open the labelled trigger, then click an option by its
- * visible label. Unlike a native `<select>`, options exist in the DOM only while the
- * popover is open, so every interaction opens first.
- */
-async function selectCombo(name: string, optionName: string | RegExp) {
-  await userEvent.click(screen.getByRole("combobox", { name }));
-  await userEvent.click(
-    await screen.findByRole("option", { name: optionName }),
-  );
-}
 
 function renderExplorer(onUrlUpdate: (e: UrlUpdateEvent) => void) {
   const queryClient = new QueryClient({
