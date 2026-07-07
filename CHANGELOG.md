@@ -40,6 +40,75 @@ drafted from the merge history and human-edited before release (ADR 0050).
 
 ### Security
 
+## [0.2.0] - 2026-07-07
+
+The premium product surface. PR-0…PR-10 delivered a functionally complete analytics
+platform on real RLS, real SQL aggregation, and token-governed visx charts; this release
+raises that surface to the demo's actual purpose — a visually premium, production-grade
+product — without loosening a governance invariant. The genuinely new decisions land as
+human-accepted ADRs before their code (theme, chart interaction, design source, motion);
+the rest is additive under existing records (shadcn primitives, FSD widgets).
+
+### Added
+
+- **Runtime light/dark theming** (ADR 0092, supersedes 0079). The `--c-*` primitive layer
+  gains a **light** composition, so theme becomes a third primitive-swap axis alongside
+  tenant and density (ADR 0082) — the semantic layer and components never change. The active
+  theme is a cookie-persisted choice applied by a **pre-paint resolver over a static SSR
+  default**: no hydration flash, no client theme-provider, and public routes stay statically
+  generated. Ships a polished `ThemeToggle` client leaf; `check:contrast` (ADR 0081) now
+  gates **both** compositions and Storybook renders both.
+- **Chart interaction layer** (ADR 0093, extends 0086). A shared, token-fed, theme-aware
+  visx interaction sub-primitive layer — tooltip, crosshair / focus line, series
+  hover-highlight, gradient / area fill, a reduced-motion-guarded entrance-motion wrapper, an
+  interactive legend, and a time brush. Interaction stays local view-state; a window-changing
+  brush round-trips through nuqs (ADR 0027). Applied to the trends, funnel, retention, and
+  segment widgets, deterministic under Chromatic and keyboard/AT-accessible (ADR 0039/0052).
+  New dependencies: `@visx/tooltip`, `@visx/gradient`, `@visx/brush`, `@visx/event`.
+- **Premium primitive kit** (ADR 0034, additive). Twelve shadcn primitives —
+  `card`, `dialog`, `popover`, `tooltip`, `tabs`, `dropdown-menu`, `command`, `combobox`,
+  `calendar` + `date-range-picker`, `skeleton`, `scroll-area`, and `sonner` toasts — each
+  with a `design-intent.ts`, CSF-3 stories over its meaningful states, and the axe gate
+  (ADR 0036/0038/0039/0062). New dependencies: `cmdk`, `date-fns`, `react-day-picker`,
+  `sonner`.
+- **App shell & navigation IA** (ADR 0065/0066). A real `widgets/app-shell` — a sidebar of
+  the analysis sections, brand / project / tenant context, breadcrumbs, and a **⌘K command
+  palette** — replaces the placeholder project hub; **skeletons** replace the "Loading…"
+  text and **designed empty states** replace the dashed-border placeholders.
+- **Rich controls rollout** (PR-15). The native `<select>` controls are swapped for
+  **comboboxes / date-range pickers** across trends, funnels, retention, and segments — the
+  URL-state contracts (ADR 0027) are unchanged, only the control is. Shared `ComboField` +
+  `selectCombo` extracted to `src/shared`.
+- **Premium immersive landing** (ADR 0096). The MIT **Motion** library (`motion/react`)
+  animates the premium landing as **client islands**: `LandingPage` stays a Server Component
+  (its copy in the SSR HTML, crawlable), only thin animated wrappers are `"use client"`.
+  Motion animates `opacity`/`transform` only, honors `prefers-reduced-motion` globally,
+  resolves to its final state under Chromatic, and ships via `LazyMotion`. New dependency:
+  `motion`.
+- **Claude Design as design source** (ADR 0094/0095). Adopts **Claude Design**
+  (claude.ai/design) as the design source + living catalog — login-based via the `DesignSync`
+  MCP and the `/design-sync` skill — with an anti-hallucination API-approval loop sealed by a
+  `renderHash` + version drift seal (`check:seals`, inert until a project exists).
+
+### Changed
+
+- **Token-usage gate widened** (ADR 0058). `check:tokens` now lints `src/shared` in addition
+  to `src/components` and `src/widgets`, following the `ComboField`/`selectCombo` extraction.
+- **Local dev ports** moved to the project's 20000 block (Storybook `6006` → `20010`, and the
+  test-runner URL follows) to avoid cross-project collisions.
+- **ADR 0092 amended** to specify the pre-paint-resolver mechanism (while still `proposed`).
+
+### Removed
+
+- **Figma dropped from the MCP toolchain** (ADR 0094). Replaced by Claude Design as the
+  design source; `.mcp.json` no longer carries a Figma server.
+
+### Fixed
+
+- **Chart a11y double-announcement** (ADR 0093). Dropped a redundant live region on the
+  focusable bar widgets — a focusable per-datum `aria-label` plus a live region made assistive
+  tech read each value twice.
+
 ## [0.1.0] - 2026-06-29
 
 Genesis release — the first `dev → main` promotion (ADR 0011/0080). CAPCOM is a
@@ -111,5 +180,6 @@ ADR 0080 anticipates.
   Storybook smoke — the template's bootstrap deviations DEV-001 / DEV-002 — re-enabled in
   `ci.yml` ahead of this first production promotion.
 
-[Unreleased]: https://github.com/real-case/capcom/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/real-case/capcom/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/real-case/capcom/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/real-case/capcom/releases/tag/v0.1.0
