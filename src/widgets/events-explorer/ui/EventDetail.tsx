@@ -6,7 +6,7 @@ import type { AnalyticsEvent } from "@/entities/event";
 import type { Profile } from "@/entities/profile";
 import { cn } from "@/lib/utils";
 
-import { formatValue, shortId } from "../model/presentation";
+import { formatValue, jsonRecord, shortId } from "../model/presentation";
 
 import { RelativeTime } from "./RelativeTime";
 
@@ -62,7 +62,7 @@ export function EventDetail({
   nowMs,
 }: EventDetailProps) {
   const t = useTranslations("Events");
-  const props = (event.properties as Record<string, unknown> | null) ?? {};
+  const props = jsonRecord(event.properties);
   const traitKeys = ["plan", "country", "device", "referrer"] as const;
 
   return (
@@ -95,8 +95,7 @@ export function EventDetail({
           ) : profile ? (
             <>
               {traitKeys.map((key) => {
-                const traits = profile.traits as Record<string, unknown> | null;
-                const value = traits?.[key];
+                const value = jsonRecord(profile.traits)[key];
                 return typeof value === "string" ? (
                   <Row key={key} k={t(`trait_${key}`)} v={value} />
                 ) : null;

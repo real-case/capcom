@@ -51,14 +51,18 @@ export function useEventsSummary(
  * events (the activity timeline) — fetched only while a row is open (`enabled`).
  */
 export function useEventDetail(projectId: string, distinctId: string | null) {
+  // `enabled` gates the fetch, but each queryFn still narrows `distinctId` explicitly
+  // rather than assert it — the type checker (not an `as`) proves it non-null (ADR 0003).
   const profile = useQuery({
     queryKey: queryKeys.events.activity({
       projectId,
       distinctId,
       kind: "profile",
     }),
-    queryFn: () =>
-      fetchProfile(createClient(), projectId, distinctId as string),
+    queryFn: () => {
+      if (distinctId === null) throw new Error("distinctId is required");
+      return fetchProfile(createClient(), projectId, distinctId);
+    },
     enabled: distinctId !== null,
   });
   const activity = useQuery({
@@ -67,11 +71,10 @@ export function useEventDetail(projectId: string, distinctId: string | null) {
       distinctId,
       kind: "timeline",
     }),
-    queryFn: () =>
-      fetchEvents(createClient(), projectId, {
-        distinctId: distinctId as string,
-        limit: 6,
-      }),
+    queryFn: () => {
+      if (distinctId === null) throw new Error("distinctId is required");
+      return fetchEvents(createClient(), projectId, { distinctId, limit: 6 });
+    },
     enabled: distinctId !== null,
   });
   return { profile, activity };

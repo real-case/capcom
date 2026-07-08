@@ -5,6 +5,7 @@ import type { AnalyticsEvent } from "@/entities/event";
 import {
   eventHue,
   formatValue,
+  jsonRecord,
   planVariant,
   propertyChips,
   relativeParts,
@@ -37,6 +38,15 @@ describe("eventHue", () => {
   });
 });
 
+describe("jsonRecord", () => {
+  it("narrows an object bag and folds null/array/scalar to an empty record", () => {
+    expect(jsonRecord({ a: 1 })).toEqual({ a: 1 });
+    expect(jsonRecord(null)).toEqual({});
+    expect(jsonRecord([1, 2])).toEqual({});
+    expect(jsonRecord("x")).toEqual({});
+  });
+});
+
 describe("planVariant", () => {
   it("maps paid tiers to emphasized variants and everything else to outline", () => {
     expect(planVariant("pro")).toBe("default");
@@ -61,6 +71,10 @@ describe("formatValue", () => {
     );
     expect(formatValue(ev({}), "en")).toBeNull();
     expect(formatValue(ev({ amount: "149" }), "en")).toBeNull();
+    // An invalid currency code falls back to USD instead of throwing a RangeError.
+    expect(formatValue(ev({ amount: 10, currency: "bogus" }), "en")).toContain(
+      "10",
+    );
   });
 });
 

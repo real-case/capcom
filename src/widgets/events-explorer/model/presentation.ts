@@ -45,10 +45,21 @@ export function planVariant(
   return "outline";
 }
 
+/**
+ * Narrow a jsonb bag (the generated `Json` type) to a string-keyed record for property /
+ * trait reads. The runtime `typeof` / array checks justify the single cast (ADR 0003: no
+ * unchecked `as`) — a null / array / scalar bag reads as an empty record, so every caller
+ * gets a safe object to index without repeating the guard.
+ */
+export function jsonRecord(value: unknown): Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
 /** Read a top-level string trait off the event's properties bag (plan/country/device). */
 export function trait(event: AnalyticsEvent, key: string): string | undefined {
-  const props = event.properties as Record<string, unknown> | null;
-  const value = props?.[key];
+  const value = jsonRecord(event.properties)[key];
   return typeof value === "string" ? value : undefined;
 }
 
@@ -60,11 +71,14 @@ export function formatValue(
   event: AnalyticsEvent,
   locale: string,
 ): string | null {
-  const props = event.properties as Record<string, unknown> | null;
-  const amount = props?.amount;
+  const props = jsonRecord(event.properties);
+  const amount = props.amount;
   if (typeof amount !== "number" || !Number.isFinite(amount)) return null;
+  // Only accept a well-formed ISO-4217-shaped code; an invalid `currency` would make
+  // Intl.NumberFormat throw a RangeError, so fall back to USD.
+  const raw = props.currency;
   const currency =
-    typeof props?.currency === "string" ? (props.currency as string) : "USD";
+    typeof raw === "string" && /^[A-Za-z]{3}$/.test(raw) ? raw : "USD";
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
@@ -85,7 +99,7 @@ export function propertyChips(
   event: AnalyticsEvent,
   max = 2,
 ): { chips: PropertyChip[]; overflow: number } {
-  const props = (event.properties as Record<string, unknown> | null) ?? {};
+  const props = jsonRecord(event.properties);
   const entries: PropertyChip[] = [];
   for (const [key, value] of Object.entries(props)) {
     if (CHIP_EXCLUDE.has(key)) continue;
