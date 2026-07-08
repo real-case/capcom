@@ -100,3 +100,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0094](0094-claude-design-as-design-source.md) | Claude Design (claude.ai/design) as the design source and living catalog | accepted | 2026-07-02 |
 | [0095](0095-claude-design-approval-drift-seal.md) | Anti-hallucination component approval and the drift seal, adapted for Claude Design | accepted | 2026-07-02 |
 | [0096](0096-js-motion-library-for-the-premium-landing.md) | Motion (a JS animation library) for the premium landing, scoped to client islands | accepted | 2026-07-06 |
+| [0097](0097-events-explorer-data-table.md) | Events explorer — a raw-event data-table surface on TanStack Table, additive to the visx charts | accepted | 2026-07-08 |

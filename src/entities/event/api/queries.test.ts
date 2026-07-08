@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
 import {
+  fetchEvents,
+  fetchEventsSummary,
   fetchEventTrends,
   fetchFunnel,
   fetchRecentEvents,
@@ -238,5 +240,120 @@ describe("fetchRetention", () => {
   it("throws when the RPC errors", async () => {
     const { client } = rpcReturning({ data: null, error: new Error("boom") });
     await expect(fetchRetention(client, args)).rejects.toThrow();
+  });
+});
+
+// A query-builder mock for the RANGED page fetcher: records the table, every eq()
+// predicate, both order() calls, and the range() bounds, so a dropped project filter,
+// a flipped sort, a missing tiebreak, or a wrong page window fails the test (ADR 0097).
+function pageClientReturning(result: Result) {
+  const calls = {
+    from: undefined as unknown,
+    eq: [] as unknown[][],
+    order: [] as unknown[][],
+    range: undefined as unknown[] | undefined,
+  };
+  const builder = {
+    select: () => builder,
+    eq: (...a: unknown[]) => (calls.eq.push(a), builder),
+    order: (...a: unknown[]) => (calls.order.push(a), builder),
+    range: (...a: unknown[]) => ((calls.range = a), builder),
+    then: (resolve: (value: Result) => unknown) => resolve(result),
+  };
+  const client = {
+    from: (table: unknown) => ((calls.from = table), builder),
+  } as unknown as SupabaseClient;
+  return { client, calls };
+}
+
+describe("fetchEvents", () => {
+  it("returns rows on success, [] when null, and throws on error", async () => {
+    const rows = [{ id: "1", event_name: "purchase", project_id: "p1" }];
+    expect(
+      await fetchEvents(
+        pageClientReturning({ data: rows, error: null }).client,
+        "p1",
+      ),
+    ).toEqual(rows);
+    expect(
+      await fetchEvents(
+        pageClientReturning({ data: null, error: null }).client,
+        "p1",
+      ),
+    ).toEqual([]);
+    await expect(
+      fetchEvents(
+        pageClientReturning({ data: null, error: new Error("boom") }).client,
+        "p1",
+      ),
+    ).rejects.toThrow();
+  });
+
+  it("scopes to the project, sorts ts desc with an id tiebreak, and pages by default range", async () => {
+    const { client, calls } = pageClientReturning({ data: [], error: null });
+    await fetchEvents(client, "proj-42");
+    expect(calls.from).toBe("events");
+    expect(calls.eq).toEqual([["project_id", "proj-42"]]);
+    expect(calls.order).toEqual([
+      ["ts", { ascending: false }],
+      ["id", { ascending: false }],
+    ]);
+    // Default offset 0, limit 25 → inclusive range [0, 24].
+    expect(calls.range).toEqual([0, 24]);
+  });
+
+  it("applies the explicit page window and the distinct_id filter", async () => {
+    const { client, calls } = pageClientReturning({ data: [], error: null });
+    await fetchEvents(client, "proj-42", {
+      offset: 50,
+      limit: 10,
+      distinctId: "u_9f3a",
+    });
+    expect(calls.eq).toEqual([
+      ["project_id", "proj-42"],
+      ["distinct_id", "u_9f3a"],
+    ]);
+    expect(calls.range).toEqual([50, 59]);
+  });
+});
+
+describe("fetchEventsSummary", () => {
+  const args = { p_project_id: "proj-42" };
+
+  it("calls the fn_events_summary RPC with the exact name and argument bag", async () => {
+    const { client, calls } = rpcReturning({ data: [], error: null });
+    await fetchEventsSummary(client, args);
+    expect(calls.rpc).toEqual([["fn_events_summary", args]]);
+  });
+
+  it("unwraps the single summary row on success", async () => {
+    const row = { total_events: 3942, distinct_users: 1842, value_sum: 41980 };
+    expect(
+      await fetchEventsSummary(
+        rpcReturning({ data: [row], error: null }).client,
+        args,
+      ),
+    ).toEqual(row);
+  });
+
+  it("returns zeros when RLS yields no row (empty or null)", async () => {
+    const zeros = { total_events: 0, distinct_users: 0, value_sum: 0 };
+    expect(
+      await fetchEventsSummary(
+        rpcReturning({ data: [], error: null }).client,
+        args,
+      ),
+    ).toEqual(zeros);
+    expect(
+      await fetchEventsSummary(
+        rpcReturning({ data: null, error: null }).client,
+        args,
+      ),
+    ).toEqual(zeros);
+  });
+
+  it("throws when the RPC errors (no swallowing)", async () => {
+    const { client } = rpcReturning({ data: null, error: new Error("boom") });
+    await expect(fetchEventsSummary(client, args)).rejects.toThrow();
   });
 });

@@ -136,6 +136,7 @@
     "signedInAs": "Signed in as {email}",
     "nav": {
       "overview": "Overview",
+      "events": "Events",
       "trends": "Trends",
       "funnels": "Funnels",
       "retention": "Retention",
@@ -166,6 +167,9 @@
     "yourRole": "Your role",
     "lead": "Jump into an analysis surface, or compose saved reports into a dashboard.",
     "surfaces": {
+      "events": {
+        "description": "The raw event stream as an advanced, filterable data table."
+      },
       "trends": {
         "description": "Time-bucketed event counts with an optional property breakdown."
       },
@@ -185,6 +189,54 @@
         "description": "Describe an analysis in plain language and open it."
       }
     }
+  },
+  "Events": {
+    "title": "Events",
+    "subtitle": "{count, number} events match",
+    "live": "LIVE · {rate, number}/min",
+    "pauseStream": "Pause stream",
+    "resumeStream": "Resume stream",
+    "searchPlaceholder": "Search events, users, properties…",
+    "tableLabel": "Event stream",
+    "densityLabel": "Density",
+    "density_comfortable": "Comfortable",
+    "density_dense": "Dense",
+    "col_event": "Event",
+    "col_user": "User",
+    "col_plan": "Plan",
+    "col_country": "Country",
+    "col_device": "Device",
+    "col_value": "Value",
+    "col_properties": "Properties",
+    "col_time": "Time",
+    "expandRow": "Toggle event detail",
+    "detailTitle": "Event detail · {event}",
+    "copyId": "Copy ID",
+    "card_properties": "Properties (jsonb)",
+    "card_user": "User · {id}",
+    "card_context": "Context",
+    "card_recent": "This user's recent events",
+    "trait_plan": "plan",
+    "trait_country": "country",
+    "trait_device": "device",
+    "trait_referrer": "referrer",
+    "trait_firstSeen": "first seen",
+    "trait_lastSeen": "last seen",
+    "noProfile": "No tracked profile for this user yet.",
+    "loading": "Loading events…",
+    "error": "Events couldn't be loaded. Retry shortly.",
+    "empty": "No events match yet.",
+    "summary": "Σ {events, number} events · {users, number} distinct users",
+    "valueTotal": "{value}",
+    "pageInfo": "Showing {from, number}–{to, number} of {total, number} events",
+    "perPage": "{size, number} / page",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "relativeNow": "just now",
+    "relativeSeconds": "{n, number}s ago",
+    "relativeMinutes": "{n, number}m ago",
+    "relativeHours": "{n, number}h ago",
+    "relativeDays": "{n, number}d ago"
   },
   "Trends": {
     "title": "Trends",

@@ -9,6 +9,20 @@ import type { Database, Tables } from "@/lib/supabase/database.types";
 export type AnalyticsEvent = Tables<"events">;
 
 /**
+ * One-row totals from the `fn_events_summary` aggregation (ADR 0097, under the 0084
+ * strategy): `total_events`, `distinct_users`, and `value_sum` over a project's stream
+ * (optionally a `[from, to)` window). Backs the events-explorer footer — these are
+ * genuine reductions and come from the database, never a client-side reduce. Generated
+ * RPC return type (ADR 0015).
+ */
+export type EventsSummary =
+  Database["public"]["Functions"]["fn_events_summary"]["Returns"][number];
+
+/** The argument bag for the `fn_events_summary` RPC (generated, ADR 0015). */
+export type EventsSummaryArgs =
+  Database["public"]["Functions"]["fn_events_summary"]["Args"];
+
+/**
  * One reduced row from the `fn_event_trends` aggregation (ADR 0084): a single
  * time `bucket`, the `series` it belongs to (the event name, or a breakdown value /
  * 'Other'), and the `count` for that pair. Derived from the generated RPC return

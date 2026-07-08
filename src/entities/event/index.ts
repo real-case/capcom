@@ -4,6 +4,8 @@
  */
 export type {
   AnalyticsEvent,
+  EventsSummary,
+  EventsSummaryArgs,
   EventTrendBucket,
   EventTrendsArgs,
   FunnelArgs,
@@ -14,6 +16,8 @@ export type {
   TopEventsArgs,
 } from "./model/types";
 export {
+  fetchEvents,
+  fetchEventsSummary,
   fetchEventTrends,
   fetchFunnel,
   fetchRecentEvents,
