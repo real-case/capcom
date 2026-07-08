@@ -18,6 +18,7 @@ export const badgeIntent = {
       "src/app/[locale]/(app)/p/[projectId]/page.tsx",
       "src/app/[locale]/(app)/p/page.tsx",
       "src/widgets/dashboard/ui/DashboardBoard.tsx",
+      "src/widgets/events-explorer/ui/EventsTable.tsx",
     ],
   },
   usageRole: "categorical-status-indicator",
