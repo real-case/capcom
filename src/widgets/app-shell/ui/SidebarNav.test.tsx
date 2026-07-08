@@ -34,10 +34,14 @@ describe("SidebarNav", () => {
     usePathname.mockReturnValue("/p/p1");
     renderNav();
 
-    expect(screen.getAllByRole("link")).toHaveLength(7);
+    expect(screen.getAllByRole("link")).toHaveLength(8);
     expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute(
       "href",
       "/p/p1",
+    );
+    expect(screen.getByRole("link", { name: "Events" })).toHaveAttribute(
+      "href",
+      "/p/p1/events",
     );
     expect(screen.getByRole("link", { name: "Trends" })).toHaveAttribute(
       "href",

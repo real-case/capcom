@@ -382,6 +382,14 @@ export type Database = {
           series: string;
         }[];
       };
+      fn_events_summary: {
+        Args: { p_from?: string; p_project_id: string; p_to?: string };
+        Returns: {
+          distinct_users: number;
+          total_events: number;
+          value_sum: number;
+        }[];
+      };
       fn_funnel: {
         Args: {
           p_from: string;

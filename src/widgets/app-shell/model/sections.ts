@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import {
   LayoutDashboard,
+  Table2,
   TrendingUp,
   Filter,
   Repeat,
@@ -18,6 +19,7 @@ import {
  */
 export type SectionKey =
   | "overview"
+  | "events"
   | "trends"
   | "funnels"
   | "retention"
@@ -38,6 +40,7 @@ export const SECTIONS: {
   Icon: SectionIcon;
 }[] = [
   { key: "overview", segment: "", Icon: LayoutDashboard },
+  { key: "events", segment: "events", Icon: Table2 },
   { key: "trends", segment: "trends", Icon: TrendingUp },
   { key: "funnels", segment: "funnels", Icon: Filter },
   { key: "retention", segment: "retention", Icon: Repeat },

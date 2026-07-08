@@ -31,8 +31,8 @@ describe("ProjectHub", () => {
   it("renders a card link per surface, overview excluded", () => {
     renderHub();
 
-    // Six surfaces (overview is the current page, so it has no card).
-    expect(screen.getAllByRole("link")).toHaveLength(6);
+    // Seven surfaces (overview is the current page, so it has no card).
+    expect(screen.getAllByRole("link")).toHaveLength(7);
     expect(
       screen.queryByRole("link", { name: /Overview/ }),
     ).not.toBeInTheDocument();
@@ -41,6 +41,10 @@ describe("ProjectHub", () => {
   it("links each surface to its project-scoped route", () => {
     renderHub();
 
+    expect(screen.getByRole("link", { name: /Events/ })).toHaveAttribute(
+      "href",
+      "/p/p1/events",
+    );
     expect(screen.getByRole("link", { name: /Trends/ })).toHaveAttribute(
       "href",
       "/p/p1/trends",

@@ -38,6 +38,22 @@ export const queryKeys = {
     top: (args: Record<string, unknown>) =>
       [...queryKeys.trends.all, "top", args] as const,
   },
+  // PR-16 events explorer (ADR 0097). The raw-event page and the summary totals are
+  // distinct cache entries — the page keyed by project + page window, the summary by its
+  // `fn_events_summary` argument bag, and a per-user activity list by distinct_id. A
+  // broad `events.all` invalidate cascades (e.g. a live-poll refresh).
+  events: {
+    all: ["events"] as const,
+    /** A page of raw events, keyed by project + page window (offset/limit). */
+    page: (args: Record<string, unknown>) =>
+      [...queryKeys.events.all, "page", args] as const,
+    /** The footer summary, keyed by its `fn_events_summary` argument bag. */
+    summary: (args: Record<string, unknown>) =>
+      [...queryKeys.events.all, "summary", args] as const,
+    /** One tracked user's recent activity (the expanded-row timeline). */
+    activity: (args: Record<string, unknown>) =>
+      [...queryKeys.events.all, "activity", args] as const,
+  },
   // PR-5 funnel conversion (ADR 0087/0084/0086). Keyed by the exact `fn_funnel`
   // argument bag, so changing any control (steps / window / range) is a distinct
   // cache entry, and a broad `funnel.all` invalidate cascades.
