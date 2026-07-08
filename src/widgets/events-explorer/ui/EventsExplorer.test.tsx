@@ -61,13 +61,11 @@ function renderExplorer(
 describe("EventsExplorer", () => {
   beforeEach(() => {
     fetchEvents.mockReset().mockResolvedValue([ROW]);
-    fetchEventsSummary
-      .mockReset()
-      .mockResolvedValue({
-        total_events: 3942,
-        distinct_users: 1842,
-        value_sum: 41980,
-      });
+    fetchEventsSummary.mockReset().mockResolvedValue({
+      total_events: 3942,
+      distinct_users: 1842,
+      value_sum: 41980,
+    });
     fetchProfile.mockReset().mockResolvedValue(null);
   });
 
