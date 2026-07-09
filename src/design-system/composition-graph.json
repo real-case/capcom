@@ -18,7 +18,9 @@
         "src/features/auth-by-email/ui/SignOutButton.tsx",
         "src/features/auth-by-email/ui/SignUpForm.tsx",
         "src/features/theme/ui/ThemeToggle.tsx",
-        "src/widgets/dashboard/ui/DashboardBoard.tsx"
+        "src/widgets/dashboard/ui/DashboardBoard.tsx",
+        "src/widgets/events-explorer/ui/EventsToolbar.tsx",
+        "src/widgets/events-explorer/ui/FacetFilter.tsx"
       ],
       "compositionSignature": []
     },
@@ -32,7 +34,9 @@
         "src/app/[locale]/(app)/p/[projectId]/page.tsx",
         "src/app/[locale]/(app)/p/page.tsx",
         "src/widgets/dashboard/ui/DashboardBoard.tsx",
-        "src/widgets/events-explorer/ui/EventsTable.tsx"
+        "src/widgets/events-explorer/ui/EventsTable.tsx",
+        "src/widgets/events-explorer/ui/EventsToolbar.tsx",
+        "src/widgets/events-explorer/ui/FacetFilter.tsx"
       ],
       "compositionSignature": []
     },
@@ -53,7 +57,8 @@
       "composedOf": [],
       "usedIn": [
         "src/components/ui/combobox.tsx",
-        "src/components/ui/date-range-picker.tsx"
+        "src/components/ui/date-range-picker.tsx",
+        "src/widgets/events-explorer/ui/FacetFilter.tsx"
       ],
       "compositionSignature": []
     },
@@ -139,7 +144,8 @@
       "composedOf": ["dialog"],
       "usedIn": [
         "src/components/ui/combobox.tsx",
-        "src/widgets/app-shell/ui/CommandPalette.tsx"
+        "src/widgets/app-shell/ui/CommandPalette.tsx",
+        "src/widgets/events-explorer/ui/FacetFilter.tsx"
       ],
       "compositionSignature": ["dialog"]
     },

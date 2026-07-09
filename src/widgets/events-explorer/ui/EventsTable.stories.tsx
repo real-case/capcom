@@ -7,6 +7,8 @@ import type { Profile } from "@/entities/profile";
 
 import messages from "../../../../messages/en.json";
 
+import { DEFAULT_SORT } from "../model/filter";
+
 import { EventsTable } from "./EventsTable";
 
 /**
@@ -145,6 +147,8 @@ const meta = {
     page: 1,
     pageSize: 10,
     density: "comfortable",
+    sort: DEFAULT_SORT,
+    filterActive: false,
     isLoading: false,
     isError: false,
     streamPaused: false,
@@ -152,6 +156,7 @@ const meta = {
     detail: { profile: undefined, activity: undefined, isLoading: false },
     nowMs: NOW,
     onToggleExpand: fn(),
+    onToggleSort: fn(),
     onPage: fn(),
     onPageSize: fn(),
     onDensity: fn(),
@@ -194,11 +199,42 @@ export const Dense: Story = {
   args: { density: "dense" },
 };
 
+/** Multi-column sort — Event ascending, then Time descending; headers show rank badges. */
+export const MultiSorted: Story = {
+  args: {
+    sort: [
+      { id: "event", desc: false },
+      { id: "time", desc: true },
+    ],
+  },
+};
+
+/** Interactive: activating a sortable column header fires `onToggleSort` for that column. */
+export const SortsColumn: Story = {
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(
+      canvas.getByRole("button", { name: "Sort by Event" }),
+    );
+    await expect(args.onToggleSort).toHaveBeenCalledWith("event", false);
+  },
+};
+
 /** No events yet — the empty state. */
 export const Empty: Story = {
   args: {
     rows: [],
     total: 0,
+    summary: { total_events: 0, distinct_users: 0, value_sum: 0 },
+  },
+};
+
+/** A filter matched nothing — the distinct filtered-empty message. */
+export const FilteredEmpty: Story = {
+  args: {
+    rows: [],
+    total: 0,
+    filterActive: true,
     summary: { total_events: 0, distinct_users: 0, value_sum: 0 },
   },
 };

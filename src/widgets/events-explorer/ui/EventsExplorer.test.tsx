@@ -72,11 +72,20 @@ describe("EventsExplorer", () => {
   it("pages events and reduces the summary in the database (footer), not in JS", async () => {
     renderExplorer(vi.fn());
 
-    // The page fetcher runs with the default window, the summary RPC with the project bag.
+    // The page fetcher runs with the default window + the empty filter + the default sort;
+    // the summary RPC gets the bare project bag (empty filter → no predicate args).
     await waitFor(() =>
       expect(fetchEvents).toHaveBeenCalledWith(expect.anything(), "p1", {
         offset: 0,
         limit: 10,
+        filter: {
+          search: "",
+          events: [],
+          plans: [],
+          countries: [],
+          devices: [],
+        },
+        sort: [{ column: "ts", desc: true }],
       }),
     );
     expect(fetchEventsSummary).toHaveBeenCalledWith(expect.anything(), {
@@ -119,6 +128,35 @@ describe("EventsExplorer", () => {
         limit: 6,
       }),
     );
+  });
+
+  it("hydrates a filtered/sorted shared link into the fetch + summary args (ADR 0027)", async () => {
+    renderExplorer(vi.fn(), {
+      filter: JSON.stringify({ plans: ["pro"], search: "buy" }),
+      sort: JSON.stringify([{ id: "event", desc: false }]),
+    });
+
+    // The URL's closed filter maps to parameterized fetch args; the sort maps to the DB column.
+    await waitFor(() =>
+      expect(fetchEvents).toHaveBeenCalledWith(expect.anything(), "p1", {
+        offset: 0,
+        limit: 10,
+        filter: {
+          search: "buy",
+          events: [],
+          plans: ["pro"],
+          countries: [],
+          devices: [],
+        },
+        sort: [{ column: "event_name", desc: false }],
+      }),
+    );
+    // The footer summary is reduced in the DB over the SAME filter (ADR 0084), not in JS.
+    expect(fetchEventsSummary).toHaveBeenCalledWith(expect.anything(), {
+      p_project_id: "p1",
+      p_search: "buy",
+      p_plans: ["pro"],
+    });
   });
 
   it("advances the page through the URL (shareable pagination)", async () => {

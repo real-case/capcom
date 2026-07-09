@@ -4,6 +4,11 @@
  */
 export type {
   AnalyticsEvent,
+  EventsFacet,
+  EventsFacetsArgs,
+  EventsQueryFilter,
+  EventSortColumn,
+  EventsSortSpec,
   EventsSummary,
   EventsSummaryArgs,
   EventTrendBucket,
@@ -17,6 +22,7 @@ export type {
 } from "./model/types";
 export {
   fetchEvents,
+  fetchEventsFacets,
   fetchEventsSummary,
   fetchEventTrends,
   fetchFunnel,

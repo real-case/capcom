@@ -23,6 +23,50 @@ export type EventsSummaryArgs =
   Database["public"]["Functions"]["fn_events_summary"]["Args"];
 
 /**
+ * One per-value facet count from the `fn_events_facets` aggregation (ADR 0097, under the
+ * 0084 strategy): a facet `value` and its `count` under the active filter. Backs the filter
+ * popover's counts — a genuine reduction from the database, never a client-side tally.
+ * Generated RPC return type (ADR 0015).
+ */
+export type EventsFacet =
+  Database["public"]["Functions"]["fn_events_facets"]["Returns"][number];
+
+/** The argument bag for the `fn_events_facets` RPC (generated, ADR 0015). */
+export type EventsFacetsArgs =
+  Database["public"]["Functions"]["fn_events_facets"]["Args"];
+
+/**
+ * The closed filter applied to a raw-event page read (ADR 0097): a free-text `search` over
+ * the event name, multi-value predicates over the event name and the top-level `properties`
+ * keys plan / country / device, and an optional half-open `[from, to)` window. Every field is
+ * user-authored data the fetcher applies through a **parameterized** query-builder operator
+ * (`.ilike`/`.in`/`.gte`/`.lt`) — never string-concatenated SQL (ADR 0089). An empty array or
+ * blank string means "unconstrained on that dimension".
+ */
+export type EventsQueryFilter = {
+  search?: string;
+  events?: readonly string[];
+  plans?: readonly string[];
+  countries?: readonly string[];
+  devices?: readonly string[];
+  from?: string | null;
+  to?: string | null;
+};
+
+/** The `events` columns the raw-event page can be sorted by (ADR 0097). */
+export type EventSortColumn = "ts" | "event_name" | "distinct_id";
+
+/**
+ * A multi-column sort for the raw-event page — an ordered list of (column, direction). The
+ * fetcher applies each in order, then a stable `id desc` tiebreak; an empty list means the
+ * default `ts desc`.
+ */
+export type EventsSortSpec = ReadonlyArray<{
+  column: EventSortColumn;
+  desc: boolean;
+}>;
+
+/**
  * One reduced row from the `fn_event_trends` aggregation (ADR 0084): a single
  * time `bucket`, the `series` it belongs to (the event name, or a breakdown value /
  * 'Other'), and the `count` for that pair. Derived from the generated RPC return
