@@ -160,7 +160,8 @@ describe("EventsExplorer", () => {
   });
 
   it("selects rows locally (never the URL, ADR 0026) and view-user opens ?expanded", async () => {
-    const onUrlUpdate = vi.fn();
+    // Typed mock so the recorded calls carry UrlUpdateEvent — no cast needed below.
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
     renderExplorer(onUrlUpdate);
     await waitFor(() => expect(fetchEvents).toHaveBeenCalled());
 
@@ -182,7 +183,7 @@ describe("EventsExplorer", () => {
     // View user resolves to the events surface's own user-detail URL-state.
     await userEvent.click(screen.getByRole("button", { name: "View user" }));
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
-    const last = onUrlUpdate.mock.calls.at(-1)![0] as UrlUpdateEvent;
+    const last = onUrlUpdate.mock.calls.at(-1)![0];
     expect(last.searchParams.get("expanded")).toBe("e1");
 
     // Clearing the selection dismisses the bar.
