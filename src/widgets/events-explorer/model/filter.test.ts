@@ -6,6 +6,7 @@ import {
   cycleSort,
   DEFAULT_FILTER,
   eventsFilterSchema,
+  eventsSortSchema,
   facetSelection,
   isFilterActive,
   toggleFacetValue,
@@ -132,5 +133,29 @@ describe("cycleSort", () => {
     expect(cycleSort(flipped, "event", true)).toEqual([
       { id: "time", desc: true },
     ]);
+  });
+});
+
+describe("eventsSortSchema (the sort injection boundary)", () => {
+  it("rejects an out-of-vocabulary column id", () => {
+    expect(
+      eventsSortSchema.parse([{ id: "not-a-column", desc: true }]),
+    ).toEqual([]);
+  });
+
+  it("caps the number of sort keys at SORTABLE_COLUMNS.length", () => {
+    // Four keys exceed the three sortable columns → the whole value is rejected.
+    expect(
+      eventsSortSchema.parse([
+        { id: "time", desc: true },
+        { id: "event", desc: false },
+        { id: "user", desc: true },
+        { id: "time", desc: false },
+      ]),
+    ).toEqual([]);
+  });
+
+  it("rejects a non-boolean desc", () => {
+    expect(eventsSortSchema.parse([{ id: "time", desc: "true" }])).toEqual([]);
   });
 });
