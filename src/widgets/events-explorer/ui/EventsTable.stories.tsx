@@ -141,6 +141,7 @@ const meta = {
   parameters: { layout: "padded" },
   decorators: [withIntl],
   args: {
+    projectId: "p1",
     rows: ROWS,
     summary: SUMMARY,
     total: SUMMARY.total_events,
@@ -155,12 +156,16 @@ const meta = {
     expandedId: null,
     detail: { profile: undefined, activity: undefined, isLoading: false },
     nowMs: NOW,
+    rowSelection: {},
+    onRowSelectionChange: fn(),
     onToggleExpand: fn(),
     onToggleSort: fn(),
     onPage: fn(),
     onPageSize: fn(),
     onDensity: fn(),
     onToggleStream: fn(),
+    onViewUser: fn(),
+    onClearSelection: fn(),
   },
 } satisfies Meta<typeof EventsTable>;
 
@@ -220,6 +225,52 @@ export const SortsColumn: Story = {
   },
 };
 
+/**
+ * Rows selected — the highlighted rows and the bulk-actions bar (PR-18). Two distinct
+ * event names → Build funnel is a live deep-link; shared traits → Add to segment is
+ * live; View user stays disabled (needs exactly one row). No Delete exists (ADR 0083).
+ */
+export const RowsSelected: Story = {
+  args: { rowSelection: { e1: true, e4: true } },
+};
+
+/** A single selected row — the View-user bulk action becomes available. */
+export const SingleRowSelected: Story = {
+  args: { rowSelection: { e1: true } },
+};
+
+/** Interactive: clicking a row's checkbox fires the selection change. */
+export const SelectsRow: Story = {
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(
+      canvas.getByRole("checkbox", { name: "Select purchase" }),
+    );
+    await expect(args.onRowSelectionChange).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** Interactive: the header checkbox selects the whole page. */
+export const SelectsPage: Story = {
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(
+      canvas.getByRole("checkbox", { name: "Select all rows on this page" }),
+    );
+    await expect(args.onRowSelectionChange).toHaveBeenCalledTimes(1);
+  },
+};
+
+/** Interactive: View user hands the single selected row's event id to the leaf. */
+export const ViewsUser: Story = {
+  args: { rowSelection: { e1: true } },
+  play: async ({ args, canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: "View user" }));
+    await expect(args.onViewUser).toHaveBeenCalledWith("e1");
+  },
+};
+
 /** No events yet — the empty state. */
 export const Empty: Story = {
   args: {
@@ -257,4 +308,10 @@ export const StreamPaused: Story = {
 /** Dark theme (ADR 0033 semantic-token override) — the a11y run checks this axis too. */
 export const Dark: Story = {
   globals: { theme: "dark" },
+};
+
+/** Selection + bulk bar in dark — axe checks the bar's token pairs on this axis too. */
+export const SelectedDark: Story = {
+  globals: { theme: "dark" },
+  args: { rowSelection: { e1: true, e4: true } },
 };

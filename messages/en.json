@@ -253,7 +253,16 @@
     "chipFacet": "{dimension}: {value}",
     "chipRemove": "Remove {label}",
     "emptyFiltered": "No events match these filters.",
-    "sortBy": "Sort by {column}"
+    "sortBy": "Sort by {column}",
+    "selectAll": "Select all rows on this page",
+    "selectRow": "Select {event}",
+    "selectedCount": "{count, number} selected",
+    "bulkLabel": "Bulk actions",
+    "exportCsv": "Export CSV",
+    "addToSegment": "Add to segment",
+    "buildFunnel": "Build funnel",
+    "viewUser": "View user",
+    "clearSelection": "Clear selection"
   },
   "Trends": {
     "title": "Trends",

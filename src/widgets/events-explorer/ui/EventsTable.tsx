@@ -6,6 +6,8 @@ import {
   getCoreRowModel,
   useReactTable,
   type ColumnDef,
+  type OnChangeFn,
+  type RowSelectionState,
 } from "@tanstack/react-table";
 import {
   ArrowDown,
@@ -41,10 +43,13 @@ import { PAGE_SIZES, type Density } from "../model/url-state";
 /** The column ids that support server-side sorting (widget id === sort column id). */
 const SORTABLE_IDS = new Set<string>(SORTABLE_COLUMNS);
 
+import { BulkActionsBar } from "./BulkActionsBar";
 import { EventDetail } from "./EventDetail";
 import { RelativeTime } from "./RelativeTime";
 
 export type EventsTableProps = {
+  /** The project the deep-link bulk actions target (ADR 0090). */
+  projectId: string;
   rows: AnalyticsEvent[];
   summary: EventsSummary | undefined;
   /** Total matching events (from the summary RPC) — the pager denominator. */
@@ -66,17 +71,24 @@ export type EventsTableProps = {
     isLoading: boolean;
   };
   nowMs: number;
+  /** The row selection (by event id) — ephemeral local view-state at the leaf (ADR 0026). */
+  rowSelection: RowSelectionState;
+  onRowSelectionChange: OnChangeFn<RowSelectionState>;
   onToggleExpand: (id: string) => void;
   onToggleSort: (column: SortColumn, additive: boolean) => void;
   onPage: (page: number) => void;
   onPageSize: (size: number) => void;
   onDensity: (density: Density) => void;
   onToggleStream: () => void;
+  /** View-user bulk action: the leaf opens the row's user detail via `?expanded`. */
+  onViewUser: (eventId: string) => void;
+  onClearSelection: () => void;
 };
 
-const COLS = 8;
+const COLS = 9;
 
 export function EventsTable({
+  projectId,
   rows,
   summary,
   total,
@@ -91,12 +103,16 @@ export function EventsTable({
   expandedId,
   detail,
   nowMs,
+  rowSelection,
+  onRowSelectionChange,
   onToggleExpand,
   onToggleSort,
   onPage,
   onPageSize,
   onDensity,
   onToggleStream,
+  onViewUser,
+  onClearSelection,
 }: EventsTableProps) {
   // TanStack Table's `useReactTable()` returns functions the React Compiler cannot safely
   // memoize, so opt this component out of auto-memoization rather than risk stale UI
@@ -114,6 +130,30 @@ export function EventsTable({
   const multiSort = sort.length > 1;
 
   const columns: ColumnDef<AnalyticsEvent>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          aria-label={t("selectAll")}
+          checked={table.getIsAllRowsSelected()}
+          ref={(el) => {
+            if (el) el.indeterminate = table.getIsSomeRowsSelected();
+          }}
+          onChange={table.getToggleAllRowsSelectedHandler()}
+          className="size-4 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          aria-label={t("selectRow", { event: row.original.event_name })}
+          checked={row.getIsSelected()}
+          onChange={row.getToggleSelectedHandler()}
+          className="size-4 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      ),
+    },
     {
       id: "event",
       header: t("col_event"),
@@ -241,7 +281,26 @@ export function EventsTable({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => row.id,
+    enableRowSelection: true,
+    onRowSelectionChange,
+    state: { rowSelection },
+    // Filtering, sorting, and pagination all happen SERVER-SIDE (the URL-state drives the
+    // fetcher, ADR 0097) — declare them manual so TanStack never runs its client-side
+    // auto-resets. Without this, the select-all header's `getIsAllRowsSelected()` builds
+    // the filtered row model, whose recompute on every data change queues a microtask
+    // `setPageIndex(0)` state write — an extra re-render right after each fetch that
+    // remounts the (inline, per-render) cell components and detaches their DOM mid-test.
+    manualFiltering: true,
+    manualSorting: true,
+    manualPagination: true,
   });
+
+  // The selection resolved against the CURRENT page data — an id that scrolled off the
+  // page (poll refresh, page change) simply stops resolving; no stale row ever reaches
+  // the bulk actions.
+  const selectedRows = table
+    .getSelectedRowModel()
+    .rows.map((row) => row.original);
 
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
@@ -298,6 +357,15 @@ export function EventsTable({
         </div>
       </div>
 
+      {/* bulk actions over the selection (read-only, ADR 0083/0097) */}
+      <BulkActionsBar
+        rows={selectedRows}
+        projectId={projectId}
+        nowMs={nowMs}
+        onViewUser={onViewUser}
+        onClear={onClearSelection}
+      />
+
       {/* table */}
       <div className="overflow-x-auto rounded-lg border border-border bg-card">
         <table className="w-full min-w-[880px] border-collapse text-sm">
@@ -335,6 +403,7 @@ export function EventsTable({
                       className={cn(
                         "bg-muted/50 px-3 py-2.5 text-left text-xs font-medium text-muted-foreground",
                         alignRight && "text-right",
+                        columnId === "select" && "w-8",
                       )}
                     >
                       {sortable ? (
@@ -414,9 +483,14 @@ export function EventsTable({
                 return (
                   <Fragment key={row.id}>
                     <tr
+                      data-state={row.getIsSelected() ? "selected" : undefined}
                       className={cn(
                         "border-b border-border transition-colors hover:bg-muted/40",
-                        open && "bg-muted/40",
+                        // Selected rows reuse the open-row neutral tint: a primary-tinted
+                        // background drops muted-foreground below the 4.5:1 AA ratio in the
+                        // light composition (axe, ADR 0039/0092) — the checkbox +
+                        // data-state carry the selection semantics.
+                        (open || row.getIsSelected()) && "bg-muted/40",
                       )}
                     >
                       {row.getVisibleCells().map((cell) => (
@@ -463,7 +537,7 @@ export function EventsTable({
           <tfoot>
             <tr className="border-t border-border bg-muted/50">
               <td
-                colSpan={5}
+                colSpan={6}
                 className="px-3 py-2.5 text-xs text-muted-foreground"
               >
                 {t("summary", {

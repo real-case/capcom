@@ -1,5 +1,6 @@
 "use client";
 
+import type { RowSelectionState } from "@tanstack/react-table";
 import { useState } from "react";
 import { useQueryStates } from "nuqs";
 
@@ -39,12 +40,18 @@ import { EventsToolbar } from "./EventsToolbar";
  * closes any open row. The footer totals come from `fn_events_summary` and the facet counts from
  * `fn_events_facets` (ADR 0084) — never a client-side reduce. Live polling is local ephemeral
  * UI (ADR 0026): a paused stream stops the refetch interval.
+ *
+ * The row selection (PR-18) is likewise EPHEMERAL local view-state (ADR 0026), never nuqs
+ * URL-state — a selection is not a shareable view. It drives only the read-only bulk actions
+ * (export CSV + deep-links, ADR 0083/0090/0097) and is cleared whenever the visible set
+ * changes (filter, sort, page, page size).
  */
 export function EventsExplorer({ projectId }: { projectId: string }) {
   const [raw, setQuery] = useQueryStates(eventsParsers);
   const query = eventsQuerySchema.catch(DEFAULT_EVENTS_QUERY).parse(raw);
 
   const [streamPaused, setStreamPaused] = useState(false);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const refetchInterval = streamPaused ? false : 15_000;
 
   const page = useEventsPage(projectId, toFetchArgs(query), {
@@ -66,28 +73,40 @@ export function EventsExplorer({ projectId }: { projectId: string }) {
   // the first page lands.
   const nowMs = page.dataUpdatedAt || summary.dataUpdatedAt;
 
-  // Filter / sort mutations. Each resets to page 1 and closes any open row, since the visible
-  // set changes; the whole filter and sort are single nuqs-encoded values (ADR 0027).
+  // Filter / sort mutations. Each resets to page 1, closes any open row, and drops the row
+  // selection, since the visible set changes; the whole filter and sort are single
+  // nuqs-encoded values (ADR 0027) while the selection stays local (ADR 0026).
   const resetView = { page: 1, expanded: null };
-  const onSearchChange = (search: string) =>
+  const clearSelection = () => setRowSelection({});
+  const onSearchChange = (search: string) => {
+    clearSelection();
     void setQuery({ filter: withSearch(query.filter, search), ...resetView });
-  const onToggleFacet = (dimension: FacetDimension, value: string) =>
+  };
+  const onToggleFacet = (dimension: FacetDimension, value: string) => {
+    clearSelection();
     void setQuery({
       filter: toggleFacetValue(query.filter, dimension, value),
       ...resetView,
     });
-  const onClearFacet = (dimension: FacetDimension) =>
+  };
+  const onClearFacet = (dimension: FacetDimension) => {
+    clearSelection();
     void setQuery({
       filter: clearFacet(query.filter, dimension),
       ...resetView,
     });
-  const onClearAll = () =>
+  };
+  const onClearAll = () => {
+    clearSelection();
     void setQuery({ filter: DEFAULT_FILTER, ...resetView });
-  const onToggleSort = (column: SortColumn, additive: boolean) =>
+  };
+  const onToggleSort = (column: SortColumn, additive: boolean) => {
+    clearSelection();
     void setQuery({
       sort: cycleSort(query.sort, column, additive),
       ...resetView,
     });
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -100,6 +119,7 @@ export function EventsExplorer({ projectId }: { projectId: string }) {
         onClearAll={onClearAll}
       />
       <EventsTable
+        projectId={projectId}
         rows={rows}
         summary={summary.data}
         total={summary.data?.total_events ?? 0}
@@ -118,18 +138,24 @@ export function EventsExplorer({ projectId }: { projectId: string }) {
           isLoading: detail.profile.isLoading || detail.activity.isLoading,
         }}
         nowMs={nowMs}
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
         onToggleExpand={(id) =>
           void setQuery({ expanded: query.expanded === id ? null : id })
         }
         onToggleSort={onToggleSort}
-        onPage={(next) =>
-          void setQuery({ page: Math.max(1, next), expanded: null })
-        }
-        onPageSize={(size) =>
-          void setQuery({ pageSize: size, page: 1, expanded: null })
-        }
+        onPage={(next) => {
+          clearSelection();
+          void setQuery({ page: Math.max(1, next), expanded: null });
+        }}
+        onPageSize={(size) => {
+          clearSelection();
+          void setQuery({ pageSize: size, page: 1, expanded: null });
+        }}
         onDensity={(density: Density) => void setQuery({ density })}
         onToggleStream={() => setStreamPaused((paused) => !paused)}
+        onViewUser={(id) => void setQuery({ expanded: id })}
+        onClearSelection={clearSelection}
       />
     </div>
   );
