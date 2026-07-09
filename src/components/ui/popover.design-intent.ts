@@ -18,6 +18,7 @@ export const popoverIntent = {
     usedIn: [
       "src/components/ui/combobox.tsx",
       "src/components/ui/date-range-picker.tsx",
+      "src/widgets/events-explorer/ui/FacetFilter.tsx",
     ],
   },
   usageRole: null,

@@ -382,8 +382,34 @@ export type Database = {
           series: string;
         }[];
       };
+      fn_events_facets: {
+        Args: {
+          p_countries?: string[];
+          p_devices?: string[];
+          p_dimension: string;
+          p_events?: string[];
+          p_from?: string;
+          p_plans?: string[];
+          p_project_id: string;
+          p_search?: string;
+          p_to?: string;
+        };
+        Returns: {
+          count: number;
+          value: string;
+        }[];
+      };
       fn_events_summary: {
-        Args: { p_from?: string; p_project_id: string; p_to?: string };
+        Args: {
+          p_countries?: string[];
+          p_devices?: string[];
+          p_events?: string[];
+          p_from?: string;
+          p_plans?: string[];
+          p_project_id: string;
+          p_search?: string;
+          p_to?: string;
+        };
         Returns: {
           distinct_users: number;
           total_events: number;

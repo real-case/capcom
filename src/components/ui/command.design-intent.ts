@@ -19,6 +19,7 @@ export const commandIntent = {
     usedIn: [
       "src/components/ui/combobox.tsx",
       "src/widgets/app-shell/ui/CommandPalette.tsx",
+      "src/widgets/events-explorer/ui/FacetFilter.tsx",
     ],
   },
   usageRole: null,

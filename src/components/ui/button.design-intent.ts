@@ -23,6 +23,8 @@ export const buttonIntent = {
       "src/features/auth-by-email/ui/SignUpForm.tsx",
       "src/features/theme/ui/ThemeToggle.tsx",
       "src/widgets/dashboard/ui/DashboardBoard.tsx",
+      "src/widgets/events-explorer/ui/EventsToolbar.tsx",
+      "src/widgets/events-explorer/ui/FacetFilter.tsx",
     ],
   },
   usageRole: "action-trigger",

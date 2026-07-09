@@ -7,7 +7,14 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, ChevronRight as Caret } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronRight as Caret,
+} from "lucide-react";
 import { Fragment } from "react";
 
 import type { AnalyticsEvent, EventsSummary } from "@/entities/event";
@@ -17,6 +24,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 import {
+  SORTABLE_COLUMNS,
+  type EventsSort,
+  type SortColumn,
+} from "../model/filter";
+import {
   eventHue,
   formatValue,
   planVariant,
@@ -25,6 +37,9 @@ import {
   trait,
 } from "../model/presentation";
 import { PAGE_SIZES, type Density } from "../model/url-state";
+
+/** The column ids that support server-side sorting (widget id === sort column id). */
+const SORTABLE_IDS = new Set<string>(SORTABLE_COLUMNS);
 
 import { EventDetail } from "./EventDetail";
 import { RelativeTime } from "./RelativeTime";
@@ -37,6 +52,10 @@ export type EventsTableProps = {
   page: number;
   pageSize: number;
   density: Density;
+  /** The active multi-sort — drives the header indicators and aria-sort. */
+  sort: EventsSort;
+  /** Whether any filter is active — selects the empty-state message. */
+  filterActive: boolean;
   isLoading: boolean;
   isError: boolean;
   streamPaused: boolean;
@@ -48,6 +67,7 @@ export type EventsTableProps = {
   };
   nowMs: number;
   onToggleExpand: (id: string) => void;
+  onToggleSort: (column: SortColumn, additive: boolean) => void;
   onPage: (page: number) => void;
   onPageSize: (size: number) => void;
   onDensity: (density: Density) => void;
@@ -63,6 +83,8 @@ export function EventsTable({
   page,
   pageSize,
   density,
+  sort,
+  filterActive,
   isLoading,
   isError,
   streamPaused,
@@ -70,6 +92,7 @@ export function EventsTable({
   detail,
   nowMs,
   onToggleExpand,
+  onToggleSort,
   onPage,
   onPageSize,
   onDensity,
@@ -82,6 +105,13 @@ export function EventsTable({
   const t = useTranslations("Events");
   const locale = useLocale();
   const cellPad = density === "dense" ? "py-1.5" : "py-2.5";
+
+  // The active sort as a lookup (column id → direction + 1-based rank); `multiSort` shows the
+  // rank badge only when more than one key is active.
+  const sortState = new Map(
+    sort.map((key, index) => [key.id as string, { desc: key.desc, index }]),
+  );
+  const multiSort = sort.length > 1;
 
   const columns: ColumnDef<AnalyticsEvent>[] = [
     {
@@ -275,23 +305,78 @@ export function EventsTable({
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="border-b border-border">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    scope="col"
-                    className={cn(
-                      "bg-muted/50 px-3 py-2.5 text-left text-xs font-medium text-muted-foreground",
-                      (header.column.id === "value" ||
-                        header.column.id === "time") &&
-                        "text-right",
-                    )}
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
-                    )}
-                  </th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const columnId = header.column.id;
+                  const sortable = SORTABLE_IDS.has(columnId);
+                  const state = sortState.get(columnId);
+                  const alignRight =
+                    columnId === "value" || columnId === "time";
+                  const headerNode = flexRender(
+                    header.column.columnDef.header,
+                    header.getContext(),
+                  );
+                  const headerText =
+                    typeof header.column.columnDef.header === "string"
+                      ? header.column.columnDef.header
+                      : columnId;
+                  return (
+                    <th
+                      key={header.id}
+                      scope="col"
+                      aria-sort={
+                        sortable
+                          ? state
+                            ? state.desc
+                              ? "descending"
+                              : "ascending"
+                            : "none"
+                          : undefined
+                      }
+                      className={cn(
+                        "bg-muted/50 px-3 py-2.5 text-left text-xs font-medium text-muted-foreground",
+                        alignRight && "text-right",
+                      )}
+                    >
+                      {sortable ? (
+                        <button
+                          type="button"
+                          onClick={(event) =>
+                            onToggleSort(
+                              columnId as SortColumn,
+                              event.shiftKey || event.altKey,
+                            )
+                          }
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                            state && "text-foreground",
+                          )}
+                          aria-label={t("sortBy", { column: headerText })}
+                        >
+                          {headerNode}
+                          {state ? (
+                            state.desc ? (
+                              <ArrowDown aria-hidden className="size-3" />
+                            ) : (
+                              <ArrowUp aria-hidden className="size-3" />
+                            )
+                          ) : (
+                            <ArrowUpDown
+                              aria-hidden
+                              className="size-3 opacity-40"
+                            />
+                          )}
+                          {multiSort && state ? (
+                            <span className="tabular-nums text-[0.625rem] text-muted-foreground">
+                              {state.index + 1}
+                            </span>
+                          ) : null}
+                        </button>
+                      ) : (
+                        headerNode
+                      )}
+                    </th>
+                  );
+                })}
               </tr>
             ))}
           </thead>
@@ -320,7 +405,7 @@ export function EventsTable({
                   colSpan={COLS}
                   className="px-3 py-10 text-center text-sm text-muted-foreground"
                 >
-                  {t("empty")}
+                  {filterActive ? t("emptyFiltered") : t("empty")}
                 </td>
               </tr>
             ) : (

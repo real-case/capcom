@@ -5,7 +5,11 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import {
   fetchEvents,
+  fetchEventsFacets,
   fetchEventsSummary,
+  type EventsFacetsArgs,
+  type EventsQueryFilter,
+  type EventsSortSpec,
   type EventsSummaryArgs,
 } from "@/entities/event";
 import { fetchProfile } from "@/entities/profile";
@@ -13,22 +17,30 @@ import { queryKeys } from "@/lib/query/keys";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * Server-state hooks for the events explorer (ADR 0025/0097). The page and the summary
- * are distinct cache entries; the browser Supabase client (ADR 0013) runs both as the
- * signed-in member, so the raw-event SELECT and the `SECURITY INVOKER` summary RPC inherit
- * that member's RLS scope (ADR 0083). The hooks own no aggregation — the SQL function does
- * (ADR 0084) — and the presentational table that consumes them owns no fetching.
+ * Server-state hooks for the events explorer (ADR 0025/0097). The page, the summary, and each
+ * facet dimension are distinct cache entries; the browser Supabase client (ADR 0013) runs all
+ * of them as the signed-in member, so the raw-event SELECT and the `SECURITY INVOKER` RPCs
+ * inherit that member's RLS scope (ADR 0083). The hooks own no aggregation — the SQL functions
+ * do (ADR 0084) — and the presentational table that consumes them owns no fetching.
  */
+
+/** The full page read: window + closed filter + multi-sort (ADR 0097). */
+export type EventsPageArgs = {
+  offset: number;
+  limit: number;
+  filter: EventsQueryFilter;
+  sort: EventsSortSpec;
+};
 
 /** A page of raw events; `keepPreviousData` holds the last page visible while the next loads. */
 export function useEventsPage(
   projectId: string,
-  window: { offset: number; limit: number },
+  args: EventsPageArgs,
   options?: { refetchInterval?: number | false },
 ) {
   return useQuery({
-    queryKey: queryKeys.events.page({ projectId, ...window }),
-    queryFn: () => fetchEvents(createClient(), projectId, window),
+    queryKey: queryKeys.events.page({ projectId, ...args }),
+    queryFn: () => fetchEvents(createClient(), projectId, args),
     placeholderData: keepPreviousData,
     refetchInterval: options?.refetchInterval ?? false,
   });
@@ -43,6 +55,22 @@ export function useEventsSummary(
     queryKey: queryKeys.events.summary(args),
     queryFn: () => fetchEventsSummary(createClient(), args),
     refetchInterval: options?.refetchInterval ?? false,
+  });
+}
+
+/**
+ * One facet dimension's per-value counts from fn_events_facets (ADR 0097/0084). `enabled`
+ * gates the fetch to when the facet popover is open, so closed facets cost nothing; the counts
+ * re-fetch when the active filter (in `args`) changes, keeping them honest.
+ */
+export function useEventsFacets(
+  args: EventsFacetsArgs,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: queryKeys.events.facets(args),
+    queryFn: () => fetchEventsFacets(createClient(), args),
+    enabled: options?.enabled ?? true,
   });
 }
 

@@ -50,6 +50,9 @@ export const queryKeys = {
     /** The footer summary, keyed by its `fn_events_summary` argument bag. */
     summary: (args: Record<string, unknown>) =>
       [...queryKeys.events.all, "summary", args] as const,
+    /** One facet dimension's per-value counts, keyed by its `fn_events_facets` args. */
+    facets: (args: Record<string, unknown>) =>
+      [...queryKeys.events.all, "facets", args] as const,
     /** One tracked user's recent activity (the expanded-row timeline). */
     activity: (args: Record<string, unknown>) =>
       [...queryKeys.events.all, "activity", args] as const,

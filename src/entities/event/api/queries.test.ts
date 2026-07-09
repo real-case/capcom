@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   fetchEvents,
+  fetchEventsFacets,
   fetchEventsSummary,
   fetchEventTrends,
   fetchFunnel,
@@ -243,19 +244,29 @@ describe("fetchRetention", () => {
   });
 });
 
-// A query-builder mock for the RANGED page fetcher: records the table, every eq()
-// predicate, both order() calls, and the range() bounds, so a dropped project filter,
-// a flipped sort, a missing tiebreak, or a wrong page window fails the test (ADR 0097).
+// A query-builder mock for the RANGED page fetcher: records the table, every filter
+// predicate (eq / ilike / in / gte / lt), all order() calls, and the range() bounds, so a
+// dropped project filter, a coerced/concatenated predicate, a flipped sort, a missing
+// tiebreak, or a wrong page window fails the test (ADR 0097). Every predicate is a
+// parameterized builder call — the test asserts the operator + arguments, never a SQL string.
 function pageClientReturning(result: Result) {
   const calls = {
     from: undefined as unknown,
     eq: [] as unknown[][],
+    ilike: [] as unknown[][],
+    in: [] as unknown[][],
+    gte: [] as unknown[][],
+    lt: [] as unknown[][],
     order: [] as unknown[][],
     range: undefined as unknown[] | undefined,
   };
   const builder = {
     select: () => builder,
     eq: (...a: unknown[]) => (calls.eq.push(a), builder),
+    ilike: (...a: unknown[]) => (calls.ilike.push(a), builder),
+    in: (...a: unknown[]) => (calls.in.push(a), builder),
+    gte: (...a: unknown[]) => (calls.gte.push(a), builder),
+    lt: (...a: unknown[]) => (calls.lt.push(a), builder),
     order: (...a: unknown[]) => (calls.order.push(a), builder),
     range: (...a: unknown[]) => ((calls.range = a), builder),
     then: (resolve: (value: Result) => unknown) => resolve(result),
@@ -314,6 +325,101 @@ describe("fetchEvents", () => {
       ["distinct_id", "u_9f3a"],
     ]);
     expect(calls.range).toEqual([50, 59]);
+  });
+
+  it("applies the closed filter as parameterized predicates (ADR 0089)", async () => {
+    const { client, calls } = pageClientReturning({ data: [], error: null });
+    await fetchEvents(client, "proj-42", {
+      filter: {
+        search: "  buy  ",
+        events: ["purchase"],
+        plans: ["pro", "enterprise"],
+        countries: [], // empty → no predicate
+        devices: ["mobile"],
+        from: "2026-06-01T00:00:00.000Z",
+        to: "2026-07-01T00:00:00.000Z",
+      },
+    });
+    // Search is trimmed and wrapped as a parameterized ILIKE pattern, never concatenated SQL.
+    expect(calls.ilike).toEqual([["event_name", "%buy%"]]);
+    // `in` over the event name and the jsonb `->>'` paths; the empty country selection is skipped.
+    expect(calls.in).toEqual([
+      ["event_name", ["purchase"]],
+      ["properties->>plan", ["pro", "enterprise"]],
+      ["properties->>device", ["mobile"]],
+    ]);
+    expect(calls.gte).toEqual([["ts", "2026-06-01T00:00:00.000Z"]]);
+    expect(calls.lt).toEqual([["ts", "2026-07-01T00:00:00.000Z"]]);
+  });
+
+  it("skips every predicate for an empty filter (blank search, no selections)", async () => {
+    const { client, calls } = pageClientReturning({ data: [], error: null });
+    await fetchEvents(client, "proj-42", {
+      filter: {
+        search: "   ",
+        events: [],
+        plans: [],
+        countries: [],
+        devices: [],
+      },
+    });
+    expect(calls.ilike).toEqual([]);
+    expect(calls.in).toEqual([]);
+    expect(calls.gte).toEqual([]);
+    expect(calls.lt).toEqual([]);
+  });
+
+  it("applies a multi-column sort in order, then the id tiebreak", async () => {
+    const { client, calls } = pageClientReturning({ data: [], error: null });
+    await fetchEvents(client, "proj-42", {
+      sort: [
+        { column: "event_name", desc: false },
+        { column: "ts", desc: true },
+      ],
+    });
+    expect(calls.order).toEqual([
+      ["event_name", { ascending: true }],
+      ["ts", { ascending: false }],
+      ["id", { ascending: false }],
+    ]);
+  });
+});
+
+describe("fetchEventsFacets", () => {
+  const args = {
+    p_project_id: "proj-42",
+    p_dimension: "plan",
+    p_devices: ["mobile"],
+  };
+
+  it("calls the fn_events_facets RPC with the exact name and argument bag", async () => {
+    const { client, calls } = rpcReturning({ data: [], error: null });
+    await fetchEventsFacets(client, args);
+    expect(calls.rpc).toEqual([["fn_events_facets", args]]);
+  });
+
+  it("returns the rows on success and [] when data is null", async () => {
+    const rows = [
+      { value: "pro", count: 12 },
+      { value: "free", count: 8 },
+    ];
+    expect(
+      await fetchEventsFacets(
+        rpcReturning({ data: rows, error: null }).client,
+        args,
+      ),
+    ).toEqual(rows);
+    expect(
+      await fetchEventsFacets(
+        rpcReturning({ data: null, error: null }).client,
+        args,
+      ),
+    ).toEqual([]);
+  });
+
+  it("throws when the RPC errors", async () => {
+    const { client } = rpcReturning({ data: null, error: new Error("boom") });
+    await expect(fetchEventsFacets(client, args)).rejects.toThrow();
   });
 });
 

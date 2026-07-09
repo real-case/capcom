@@ -4,6 +4,10 @@ import type { Database } from "@/lib/supabase/database.types";
 
 import type {
   AnalyticsEvent,
+  EventsFacet,
+  EventsFacetsArgs,
+  EventsQueryFilter,
+  EventsSortSpec,
   EventsSummary,
   EventsSummaryArgs,
   EventTrendBucket,
@@ -41,14 +45,16 @@ export async function fetchRecentEvents(
 }
 
 /**
- * A page of raw events for the events explorer (ADR 0097), newest-first. A
+ * A page of raw events for the events explorer (ADR 0097), newest-first by default. A
  * filtered, ordered, RANGED select over `public.events` under the caller's RLS
  * (ADR 0013/0083) — the raw-listing sibling of `fetchRecentEvents`, NOT an
  * aggregation (the footer totals come from `fetchEventsSummary`). `distinctId`
- * narrows to a single tracked user (the detail panel's recent-activity timeline).
- * Ordering pins `ts desc` with an `id` tiebreak so pagination is stable when
- * timestamps collide. No user input is ever assembled into SQL — every predicate is
- * a parameterized query-builder operator.
+ * narrows to a single tracked user (the detail panel's recent-activity timeline);
+ * `filter` applies the closed `[events-filter]` grammar (PR-17); `sort` is a bounded
+ * multi-column order. No user input is ever assembled into SQL — every predicate is a
+ * parameterized query-builder operator (`.ilike`/`.in`/`.gte`/`.lt`) and the sort
+ * columns come from a closed union (ADR 0089). A trailing `id desc` tiebreak keeps
+ * pagination stable when the requested sort keys collide.
  */
 export async function fetchEvents(
   supabase: SupabaseClient<Database>,
@@ -57,14 +63,61 @@ export async function fetchEvents(
     offset = 0,
     limit = 25,
     distinctId,
-  }: { offset?: number; limit?: number; distinctId?: string } = {},
+    filter,
+    sort,
+  }: {
+    offset?: number;
+    limit?: number;
+    distinctId?: string;
+    filter?: EventsQueryFilter;
+    sort?: EventsSortSpec;
+  } = {},
 ): Promise<AnalyticsEvent[]> {
   let query = supabase.from("events").select("*").eq("project_id", projectId);
   if (distinctId !== undefined) query = query.eq("distinct_id", distinctId);
+
+  if (filter) {
+    const search = filter.search?.trim();
+    if (search) query = query.ilike("event_name", `%${search}%`);
+    if (filter.events?.length)
+      query = query.in("event_name", [...filter.events]);
+    // jsonb top-level keys read via the `->>'` path operator; PostgREST applies the
+    // `in` predicate parameterized (values from the closed vocabulary, ADR 0089).
+    if (filter.plans?.length)
+      query = query.in("properties->>plan", [...filter.plans]);
+    if (filter.countries?.length)
+      query = query.in("properties->>country", [...filter.countries]);
+    if (filter.devices?.length)
+      query = query.in("properties->>device", [...filter.devices]);
+    if (filter.from) query = query.gte("ts", filter.from);
+    if (filter.to) query = query.lt("ts", filter.to);
+  }
+
+  const order = sort?.length ? sort : [{ column: "ts", desc: true } as const];
+  for (const key of order) {
+    query = query.order(key.column, { ascending: !key.desc });
+  }
   const { data, error } = await query
-    .order("ts", { ascending: false })
     .order("id", { ascending: false })
     .range(offset, offset + limit - 1);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * Per-value facet counts for one dimension of the events-explorer filter popover
+ * (ADR 0097, under the 0084 strategy), via the `SECURITY INVOKER` `fn_events_facets`
+ * RPC — reduced in the database under the caller's RLS, never a client-side tally. The
+ * function honours every OTHER active filter but not the facet's own dimension (so each
+ * value's count reflects what selecting it would yield). Returns an empty list when RLS
+ * yields no rows (a non-member, ADR 0083); this fetcher forwards the typed argument bag
+ * verbatim and performs no reduction.
+ */
+export async function fetchEventsFacets(
+  supabase: SupabaseClient<Database>,
+  args: EventsFacetsArgs,
+): Promise<EventsFacet[]> {
+  const { data, error } = await supabase.rpc("fn_events_facets", args);
   if (error) throw error;
   return data ?? [];
 }
