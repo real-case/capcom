@@ -20,8 +20,11 @@
         "src/features/theme/ui/ThemeToggle.tsx",
         "src/widgets/dashboard/ui/DashboardBoard.tsx",
         "src/widgets/events-explorer/ui/BulkActionsBar.tsx",
+        "src/widgets/events-explorer/ui/ColumnsMenu.tsx",
         "src/widgets/events-explorer/ui/EventsToolbar.tsx",
-        "src/widgets/events-explorer/ui/FacetFilter.tsx"
+        "src/widgets/events-explorer/ui/FacetFilter.tsx",
+        "src/widgets/events-explorer/ui/GroupByMenu.tsx",
+        "src/widgets/events-explorer/ui/SaveViewPopover.tsx"
       ],
       "compositionSignature": []
     },
@@ -59,7 +62,8 @@
       "usedIn": [
         "src/components/ui/combobox.tsx",
         "src/components/ui/date-range-picker.tsx",
-        "src/widgets/events-explorer/ui/FacetFilter.tsx"
+        "src/widgets/events-explorer/ui/FacetFilter.tsx",
+        "src/widgets/events-explorer/ui/SaveViewPopover.tsx"
       ],
       "compositionSignature": []
     },
@@ -87,7 +91,10 @@
       "archetype": "collection",
       "module": "src/components/ui/dropdown-menu.tsx",
       "composedOf": [],
-      "usedIn": [],
+      "usedIn": [
+        "src/widgets/events-explorer/ui/ColumnsMenu.tsx",
+        "src/widgets/events-explorer/ui/GroupByMenu.tsx"
+      ],
       "compositionSignature": []
     },
     {

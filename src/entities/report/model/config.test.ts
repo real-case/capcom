@@ -16,6 +16,7 @@ describe("report config contract (ADR 0090)", () => {
         funnel: "funnels",
         retention: "retention",
         segment: "segments",
+        events: "events",
       });
     });
   });
@@ -126,6 +127,37 @@ describe("report config contract (ADR 0090)", () => {
       expect(qs.get("rule")).toBe(JSON.stringify(rule));
       expect(JSON.parse(qs.get("rule")!)).toEqual(rule);
       expect(qs.get("dimension")).toBe("country");
+    });
+
+    it("JSON-encodes the events view fields (matching the widget's parseAsJson, ADR 0098)", () => {
+      const filter = {
+        search: "buy",
+        events: [],
+        plans: ["pro"],
+        countries: [],
+        devices: [],
+      };
+      const sort = [{ id: "event", desc: false }];
+      const qs = new URLSearchParams(
+        reportConfigToSearchParams("events", {
+          filter,
+          sort,
+          hidden: ["plan"],
+          pageSize: 25,
+          density: "dense",
+          groupBy: "none",
+        }),
+      );
+      expect(JSON.parse(qs.get("filter")!)).toEqual(filter);
+      expect(JSON.parse(qs.get("sort")!)).toEqual(sort);
+      expect(JSON.parse(qs.get("hidden")!)).toEqual(["plan"]);
+      expect(qs.get("pageSize")).toBe("25");
+      expect(qs.get("density")).toBe("dense");
+      expect(qs.get("groupBy")).toBe("none");
+      // Navigation state is never part of a view config (ADR 0098).
+      expect(qs.get("page")).toBeNull();
+      expect(qs.get("expanded")).toBeNull();
+      expect(qs.get("view")).toBeNull();
     });
 
     it("omits fields absent from the config (the widget reads its own default)", () => {

@@ -15,7 +15,10 @@ export const dropdownMenuIntent = {
     archetype: "collection",
     compositionSignature: [],
     composedOf: [],
-    usedIn: [],
+    usedIn: [
+      "src/widgets/events-explorer/ui/ColumnsMenu.tsx",
+      "src/widgets/events-explorer/ui/GroupByMenu.tsx",
+    ],
   },
   usageRole: null,
   variants: {
