@@ -274,6 +274,24 @@
   --c-font-size-mono-data: 13px;
 }
 
+/*
+ * Density axis (ADR 0082): [data-density="dense"] swaps DIMENSION primitives only —
+ * the swap-only invariant is enforced by gen:tokens (a name that is not an existing
+ * --c-* primitive fails the build). Components read the semantic --space-* /
+ * --row-height names, so one attribute on a container re-resolves every dependent
+ * dimension with no per-density code (first consumer: the events explorer, ADR 0098).
+ */
+[data-density="dense"] {
+  --c-space-1: 3px;
+  --c-space-2: 6px;
+  --c-space-3: 8px;
+  --c-space-4: 12px;
+  --c-space-5: 16px;
+  --c-space-6: 24px;
+  --c-row-height: 32px;
+  --c-control-height: 30px;
+}
+
 /* ---- LAYER 1 — SEMANTIC LAYER (role-named, references primitives; ADR 0081) ---- */
 :root {
   /* Surface hierarchy (dark-first) */

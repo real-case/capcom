@@ -19,6 +19,7 @@ export const popoverIntent = {
       "src/components/ui/combobox.tsx",
       "src/components/ui/date-range-picker.tsx",
       "src/widgets/events-explorer/ui/FacetFilter.tsx",
+      "src/widgets/events-explorer/ui/SaveViewPopover.tsx",
     ],
   },
   usageRole: null,

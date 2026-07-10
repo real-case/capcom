@@ -30,6 +30,7 @@ import {
   type EventsSort,
   type SortColumn,
 } from "../model/filter";
+import { toColumnVisibility, type HideableColumn } from "../model/url-state";
 import {
   eventHue,
   formatValue,
@@ -74,6 +75,10 @@ export type EventsTableProps = {
   /** The row selection (by event id) — ephemeral local view-state at the leaf (ADR 0026). */
   rowSelection: RowSelectionState;
   onRowSelectionChange: OnChangeFn<RowSelectionState>;
+  /** Hidden columns (URL-state, ADR 0098) — drives TanStack columnVisibility. */
+  hidden: readonly HideableColumn[];
+  /** Events in the trailing minute (fn_events_summary, ADR 0098) — the LIVE badge. */
+  liveRate: number | undefined;
   onToggleExpand: (id: string) => void;
   onToggleSort: (column: SortColumn, additive: boolean) => void;
   onPage: (page: number) => void;
@@ -84,8 +89,6 @@ export type EventsTableProps = {
   onViewUser: (eventId: string) => void;
   onClearSelection: () => void;
 };
-
-const COLS = 9;
 
 export function EventsTable({
   projectId,
@@ -105,6 +108,8 @@ export function EventsTable({
   nowMs,
   rowSelection,
   onRowSelectionChange,
+  hidden,
+  liveRate,
   onToggleExpand,
   onToggleSort,
   onPage,
@@ -120,7 +125,10 @@ export function EventsTable({
   "use no memo";
   const t = useTranslations("Events");
   const locale = useLocale();
-  const cellPad = density === "dense" ? "py-1.5" : "py-2.5";
+  // Cell padding reads the ADR 0082 dimension semantics — the [data-density] attribute
+  // on the widget root swaps the underlying --c-space-* primitives, so density needs no
+  // per-component branch (ADR 0098).
+  const cellPad = "py-(--space-2)";
 
   // The active sort as a lookup (column id → direction + 1-based rank); `multiSort` shows the
   // rank badge only when more than one key is active.
@@ -283,7 +291,9 @@ export function EventsTable({
     getRowId: (row) => row.id,
     enableRowSelection: true,
     onRowSelectionChange,
-    state: { rowSelection },
+    // columnVisibility is fully controlled by the hidden-column URL-state (ADR 0098);
+    // changes arrive through the leaf's ColumnsMenu, never from the table itself.
+    state: { rowSelection, columnVisibility: toColumnVisibility(hidden) },
     // Filtering, sorting, and pagination all happen SERVER-SIDE (the URL-state drives the
     // fetcher, ADR 0097) — declare them manual so TanStack never runs its client-side
     // auto-resets. Without this, the select-all header's `getIsAllRowsSelected()` builds
@@ -301,6 +311,12 @@ export function EventsTable({
   const selectedRows = table
     .getSelectedRowModel()
     .rows.map((row) => row.original);
+
+  // Visible-column geometry: full-width cells (empty/loading/detail) and the footer
+  // split around the value column must track the hidden-column set (ADR 0098).
+  const visibleIds = table.getVisibleLeafColumns().map((column) => column.id);
+  const COLS = visibleIds.length;
+  const valueIdx = visibleIds.indexOf("value");
 
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
@@ -333,6 +349,13 @@ export function EventsTable({
           />
           {streamPaused ? t("resumeStream") : t("pauseStream")}
         </button>
+        {liveRate !== undefined ? (
+          // Events in the trailing minute — reduced by fn_events_summary over a
+          // [from, to) window (ADR 0098/0084), never counted client-side.
+          <span className="text-xs font-medium tabular-nums text-muted-foreground">
+            {t("live", { rate: liveRate })}
+          </span>
+        ) : null}
         <div
           className="ms-auto flex items-center gap-1"
           role="group"
@@ -535,9 +558,11 @@ export function EventsTable({
             )}
           </tbody>
           <tfoot>
+            {/* The footer splits around the value column; both spans track the
+                hidden-column set (ADR 0098). */}
             <tr className="border-t border-border bg-muted/50">
               <td
-                colSpan={6}
+                colSpan={valueIdx === -1 ? COLS : valueIdx}
                 className="px-3 py-2.5 text-xs text-muted-foreground"
               >
                 {t("summary", {
@@ -545,10 +570,16 @@ export function EventsTable({
                   users: summary?.distinct_users ?? 0,
                 })}
               </td>
-              <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold text-foreground">
-                {formatSummaryValue(summary?.value_sum ?? 0, locale)}
-              </td>
-              <td colSpan={2} />
+              {valueIdx !== -1 ? (
+                <>
+                  <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold text-foreground">
+                    {formatSummaryValue(summary?.value_sum ?? 0, locale)}
+                  </td>
+                  {COLS - valueIdx - 1 > 0 ? (
+                    <td colSpan={COLS - valueIdx - 1} />
+                  ) : null}
+                </>
+              ) : null}
             </tr>
           </tfoot>
         </table>

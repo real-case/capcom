@@ -74,6 +74,36 @@ export function useEventsFacets(
   });
 }
 
+/** The trailing window the LIVE rate is reduced over (ADR 0098). */
+const LIVE_RATE_WINDOW_MS = 60_000;
+
+/**
+ * The header's "LIVE · n/min" rate (ADR 0098): total events in the trailing minute,
+ * reduced by `fn_events_summary` over a `[from, to)` window (ADR 0084) — never a
+ * client-side count. The key is stable (no timestamp in it); each poll computes a
+ * fresh window at fetch time, and pausing the stream stops the poll with the others.
+ */
+export function useLiveRate(
+  projectId: string,
+  options?: { refetchInterval?: number | false },
+) {
+  return useQuery({
+    queryKey: queryKeys.events.summary({
+      p_project_id: projectId,
+      window: "live-1m",
+    }),
+    queryFn: () => {
+      const to = Date.now();
+      return fetchEventsSummary(createClient(), {
+        p_project_id: projectId,
+        p_from: new Date(to - LIVE_RATE_WINDOW_MS).toISOString(),
+        p_to: new Date(to).toISOString(),
+      });
+    },
+    refetchInterval: options?.refetchInterval ?? false,
+  });
+}
+
 /**
  * The expanded row's detail data — the tracked user's profile and their most recent
  * events (the activity timeline) — fetched only while a row is open (`enabled`).

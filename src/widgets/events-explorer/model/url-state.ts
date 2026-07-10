@@ -13,12 +13,14 @@ import type {
   EventsSortSpec,
   EventsSummaryArgs,
 } from "@/entities/event";
+import type { ReportConfig } from "@/entities/report";
 
 import {
   DEFAULT_FILTER,
   DEFAULT_SORT,
   eventsFilterSchema,
   eventsSortSchema,
+  FACET_DIMENSIONS,
   type EventsFilter,
   type EventsSort,
   type FacetDimension,
@@ -36,9 +38,31 @@ import {
 
 /** Page-size options the pager offers. */
 export const PAGE_SIZES = [10, 25, 50] as const;
-/** Row-density options (local row padding; distinct from the global ADR 0082 axis). */
+/** Row-density options — applied as the ADR 0082 `[data-density]` axis (ADR 0098). */
 export const DENSITIES = ["comfortable", "dense"] as const;
 export type Density = (typeof DENSITIES)[number];
+
+/**
+ * The roll-up dimensions (ADR 0098): "none" = the raw-row grid; a facet dimension swaps
+ * in the in-database roll-up view (per-value counts from `fn_events_facets`, ADR 0084).
+ */
+export const GROUP_BY_VALUES = ["none", ...FACET_DIMENSIONS] as const;
+export type GroupBy = (typeof GROUP_BY_VALUES)[number];
+
+/**
+ * The columns the visibility menu may hide (ADR 0098). The selection checkbox, the
+ * event name, and the time column are the row's spine and are never hideable.
+ */
+export const HIDEABLE_COLUMNS = [
+  "user",
+  "plan",
+  "country",
+  "device",
+  "value",
+  "properties",
+] as const;
+export type HideableColumn = (typeof HIDEABLE_COLUMNS)[number];
+const hiddenSchema = z.array(z.enum(HIDEABLE_COLUMNS)).catch([]);
 
 /** Validation authority for the resolved URL-state (ADR 0017). */
 export const eventsQuerySchema = z.object({
@@ -48,6 +72,11 @@ export const eventsQuerySchema = z.object({
   // The closed filter and bounded sort — each self-heals a malformed value to its default.
   filter: eventsFilterSchema.catch(DEFAULT_FILTER),
   sort: eventsSortSchema,
+  // The roll-up dimension and the hidden-column set (ADR 0098).
+  groupBy: z.enum(GROUP_BY_VALUES).catch("none"),
+  hidden: hiddenSchema,
+  // The active saved-view report id, or null on the default "All events" view (ADR 0098).
+  view: z.string().min(1).nullable().catch(null),
   // The expanded event id, or null when no row is open.
   expanded: z.string().min(1).nullable().catch(null),
 });
@@ -59,6 +88,9 @@ export const DEFAULT_EVENTS_QUERY: EventsQuery = {
   density: "comfortable",
   filter: DEFAULT_FILTER,
   sort: DEFAULT_SORT,
+  groupBy: "none",
+  hidden: [],
+  view: null,
   expanded: null,
 };
 
@@ -81,9 +113,66 @@ export const eventsParsers = {
   sort: parseAsJson((value) => eventsSortSchema.parse(value)).withDefault(
     DEFAULT_SORT,
   ),
-  // Absent → null (no open row); parseAsString reads a present value verbatim.
+  groupBy: parseAsStringEnum<GroupBy>([...GROUP_BY_VALUES]).withDefault(
+    DEFAULT_EVENTS_QUERY.groupBy,
+  ),
+  hidden: parseAsJson((value) => hiddenSchema.parse(value)).withDefault(
+    DEFAULT_EVENTS_QUERY.hidden,
+  ),
+  // Absent → null; parseAsString reads a present value verbatim (view id / open row id).
+  view: parseAsString,
   expanded: parseAsString,
 };
+
+/**
+ * The persistable slice of the URL-state — a saved view's `config` (ADR 0098/0090).
+ * `page`, `expanded`, and `view` are navigation state and are never part of a view;
+ * the same keys reopen through `reportConfigToSearchParams("events", …)`.
+ */
+export function toViewConfig(query: EventsQuery): ReportConfig {
+  return {
+    filter: query.filter,
+    sort: query.sort,
+    pageSize: query.pageSize,
+    density: query.density,
+    groupBy: query.groupBy,
+    hidden: query.hidden,
+  };
+}
+
+/** TanStack `columnVisibility` for the hidden-column set (absent = visible). */
+export function toColumnVisibility(
+  hidden: readonly HideableColumn[],
+): Record<string, boolean> {
+  return Object.fromEntries(hidden.map((id) => [id, false]));
+}
+
+/**
+ * Hydrate a saved view's opaque `config` (ADR 0098/0090) into the URL-state fields it
+ * governs. Each field re-validates through its own schema — the grammar stays the
+ * single authority (ADR 0017) — so a malformed or stale config degrades that field to
+ * its default, never errors. An empty config yields exactly the defaults, which is the
+ * "All events" tab.
+ */
+export function fromViewConfig(
+  config: Record<string, unknown>,
+): Pick<
+  EventsQuery,
+  "filter" | "sort" | "pageSize" | "density" | "groupBy" | "hidden"
+> {
+  const shape = eventsQuerySchema.shape;
+  return {
+    filter: shape.filter.parse(config.filter),
+    // An absent sort hydrates to the DISPLAY default (time desc) rather than the
+    // schema's `[]` fallback, so the "All events" tab matches a fresh load exactly.
+    sort:
+      config.sort === undefined ? DEFAULT_SORT : shape.sort.parse(config.sort),
+    pageSize: shape.pageSize.parse(config.pageSize),
+    density: shape.density.parse(config.density),
+    groupBy: shape.groupBy.parse(config.groupBy),
+    hidden: shape.hidden.parse(config.hidden),
+  };
+}
 
 /** The half-open page window (offset/limit) for the raw-event fetcher (ADR 0097). */
 export function toPageWindow(query: EventsQuery): {

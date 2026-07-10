@@ -49,6 +49,7 @@ export const reportKindRoute: Record<ReportKind, string> = {
   funnel: "funnels",
   retention: "retention",
   segment: "segments",
+  events: "events",
 };
 
 /**
@@ -78,6 +79,17 @@ export const defaultConfigForKind: Record<ReportKind, ReportConfig> = {
     },
     dimension: "country",
     range: "90d",
+  },
+  // A saved events VIEW (ADR 0098): the persistable slice of the explorer's URL-state —
+  // filter/sort/pageSize/density/groupBy/hidden; `page` and `expanded` are navigation
+  // state and are never part of a view.
+  events: {
+    filter: { search: "", events: [], plans: [], countries: [], devices: [] },
+    sort: [{ id: "time", desc: true }],
+    pageSize: 10,
+    density: "comfortable",
+    groupBy: "none",
+    hidden: [],
   },
 };
 
@@ -118,6 +130,19 @@ export function reportConfigToSearchParams(
         params.set("rule", JSON.stringify(config.rule));
       }
       ["dimension", "range"].forEach(setString);
+      break;
+    }
+    case "events": {
+      // Mirrors the events widget's nuqs encoding (ADR 0098): filter/sort/hidden are
+      // parseAsJson values, the scalars pass through. Transient fields (page,
+      // expanded) are never in a config, so nothing is skipped here.
+      for (const key of ["filter", "sort", "hidden"] as const) {
+        const value = config[key];
+        if (value !== undefined && value !== null) {
+          params.set(key, JSON.stringify(value));
+        }
+      }
+      ["pageSize", "density", "groupBy"].forEach(setString);
       break;
     }
   }

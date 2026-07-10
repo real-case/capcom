@@ -11,22 +11,40 @@ import messages from "../../../../messages/en.json";
 
 // Mock the data layer only — the REAL hooks run, so the test exercises the query wiring
 // (queryKey + fetcher call + nuqs round-trip), not a stub of it. `importOriginal` keeps
-// the entity types the widget/url-state depend on (ADR 0017).
-const { fetchEvents, fetchEventsSummary, fetchProfile } = vi.hoisted(() => ({
+// the entity types the widget/url-state depend on (ADR 0017). The report-actions
+// feature is a "use server" module (its Supabase server client imports `server-only`),
+// so it is replaced wholesale under jsdom — the same posture as the dashboards tests.
+const {
+  fetchEvents,
+  fetchEventsFacets,
+  fetchEventsSummary,
+  fetchProfile,
+  fetchReports,
+  createReport,
+} = vi.hoisted(() => ({
   fetchEvents: vi.fn(),
+  fetchEventsFacets: vi.fn(),
   fetchEventsSummary: vi.fn(),
   fetchProfile: vi.fn(),
+  fetchReports: vi.fn(),
+  createReport: vi.fn(),
 }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({}) }));
 vi.mock("@/entities/event", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/event")>()),
   fetchEvents,
+  fetchEventsFacets,
   fetchEventsSummary,
 }));
 vi.mock("@/entities/profile", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/profile")>()),
   fetchProfile,
 }));
+vi.mock("@/entities/report", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/report")>()),
+  fetchReports,
+}));
+vi.mock("@/features/report-actions", () => ({ createReport }));
 
 import { EventsExplorer } from "./EventsExplorer";
 
@@ -67,6 +85,12 @@ describe("EventsExplorer", () => {
       value_sum: 41980,
     });
     fetchProfile.mockReset().mockResolvedValue(null);
+    fetchEventsFacets.mockReset().mockResolvedValue([
+      { value: "pro", count: 5 },
+      { value: "free", count: 3 },
+    ]);
+    fetchReports.mockReset().mockResolvedValue([]);
+    createReport.mockReset();
   });
 
   it("pages events and reduces the summary in the database (footer), not in JS", async () => {
@@ -203,5 +227,167 @@ describe("EventsExplorer", () => {
     await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
     const last = onUrlUpdate.mock.calls.at(-1)![0] as UrlUpdateEvent;
     expect(last.searchParams.get("page")).toBe("2");
+  });
+
+  it("opens a saved view: hydrates its config through the grammar and stamps ?view (ADR 0098)", async () => {
+    fetchReports.mockResolvedValue([
+      {
+        id: "r1",
+        project_id: "p1",
+        owner_id: null,
+        name: "Pro purchases",
+        kind: "events",
+        config: {
+          filter: {
+            ...{ search: "", events: [], countries: [], devices: [] },
+            plans: ["pro"],
+          },
+          sort: [{ id: "event", desc: false }],
+          pageSize: 25,
+          density: "dense",
+          groupBy: "none",
+          hidden: ["properties"],
+        },
+        created_at: "2026-07-09T00:00:00.000Z",
+        updated_at: "2026-07-09T00:00:00.000Z",
+      },
+      // A non-events report never becomes a tab.
+      {
+        id: "r2",
+        project_id: "p1",
+        owner_id: null,
+        name: "Signups trend",
+        kind: "trends",
+        config: {},
+        created_at: "2026-07-09T00:00:00.000Z",
+        updated_at: "2026-07-09T00:00:00.000Z",
+      },
+    ]);
+    const onUrlUpdate = vi.fn();
+    renderExplorer(onUrlUpdate);
+
+    const tab = await screen.findByRole("button", { name: "Pro purchases" });
+    expect(screen.queryByRole("button", { name: "Signups trend" })).toBeNull();
+    await userEvent.click(tab);
+
+    await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+    const last = onUrlUpdate.mock.calls.at(-1)![0] as UrlUpdateEvent;
+    expect(last.searchParams.get("view")).toBe("r1");
+    expect(JSON.parse(last.searchParams.get("filter")!)).toMatchObject({
+      plans: ["pro"],
+    });
+    expect(last.searchParams.get("pageSize")).toBe("25");
+    expect(last.searchParams.get("density")).toBe("dense");
+    expect(JSON.parse(last.searchParams.get("hidden")!)).toEqual([
+      "properties",
+    ]);
+  });
+
+  it("saves the current view as an events report and activates it (ADR 0098/0090)", async () => {
+    createReport.mockResolvedValue({
+      ok: true,
+      report: {
+        id: "r9",
+        project_id: "p1",
+        owner_id: "u1",
+        name: "My view",
+        kind: "events",
+        config: {},
+        created_at: "2026-07-10T00:00:00.000Z",
+        updated_at: "2026-07-10T00:00:00.000Z",
+      },
+    });
+    const onUrlUpdate = vi.fn();
+    renderExplorer(onUrlUpdate);
+    await waitFor(() => expect(fetchEvents).toHaveBeenCalled());
+
+    await userEvent.click(screen.getByRole("button", { name: "Save view" }));
+    await userEvent.type(
+      await screen.findByRole("textbox", { name: "View name" }),
+      "My view",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    // The Server Action gets the PERSISTABLE slice only (no page/expanded/view).
+    await waitFor(() =>
+      expect(createReport).toHaveBeenCalledWith({
+        projectId: "p1",
+        name: "My view",
+        kind: "events",
+        config: {
+          filter: {
+            search: "",
+            events: [],
+            plans: [],
+            countries: [],
+            devices: [],
+          },
+          sort: [{ id: "time", desc: true }],
+          pageSize: 10,
+          density: "comfortable",
+          groupBy: "none",
+          hidden: [],
+        },
+      }),
+    );
+    // The saved view becomes the active tab via ?view (server truth id).
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)![0] as UrlUpdateEvent;
+      expect(last.searchParams.get("view")).toBe("r9");
+    });
+  });
+
+  it("group-by swaps in the in-database roll-up; picking a value filters and returns (ADR 0098/0084)", async () => {
+    const onUrlUpdate = vi.fn();
+    renderExplorer(onUrlUpdate, { groupBy: "plan" });
+
+    // The roll-up rows come from fn_events_facets — never a client-side tally.
+    await waitFor(() =>
+      expect(fetchEventsFacets).toHaveBeenCalledWith(expect.anything(), {
+        p_project_id: "p1",
+        p_dimension: "plan",
+      }),
+    );
+    expect(await screen.findByText("pro")).toBeInTheDocument();
+    expect(screen.getByText("5")).toBeInTheDocument();
+    // The raw-row grid is swapped out while grouped.
+    expect(screen.queryByRole("table")).toBeNull();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Filter by pro" }),
+    );
+    await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+    const last = onUrlUpdate.mock.calls.at(-1)![0] as UrlUpdateEvent;
+    expect(JSON.parse(last.searchParams.get("filter")!)).toMatchObject({
+      plans: ["pro"],
+    });
+    // Returning to the row grid = groupBy back to its default (absent from the URL).
+    expect(last.searchParams.get("groupBy")).toBeNull();
+  });
+
+  it("the group-by and columns menus write their URL-state (ADR 0098/0027)", async () => {
+    const onUrlUpdate = vi.fn();
+    renderExplorer(onUrlUpdate);
+    await waitFor(() => expect(fetchEvents).toHaveBeenCalled());
+
+    // Group by → Plan.
+    await userEvent.click(screen.getByRole("button", { name: "Group by" }));
+    await userEvent.click(
+      await screen.findByRole("menuitemradio", { name: "Plan" }),
+    );
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)![0] as UrlUpdateEvent;
+      expect(last.searchParams.get("groupBy")).toBe("plan");
+    });
+
+    // Columns → hide Plan (the menu shows the hideable set as checked items).
+    await userEvent.click(screen.getByRole("button", { name: /Columns/ }));
+    await userEvent.click(
+      await screen.findByRole("menuitemcheckbox", { name: "Plan" }),
+    );
+    await waitFor(() => {
+      const last = onUrlUpdate.mock.calls.at(-1)![0] as UrlUpdateEvent;
+      expect(JSON.parse(last.searchParams.get("hidden")!)).toEqual(["plan"]);
+    });
   });
 });

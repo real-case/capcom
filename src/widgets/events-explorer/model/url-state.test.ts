@@ -1,14 +1,20 @@
 import { describe, expect, it } from "vitest";
 
+import { reportConfigToSearchParams } from "@/entities/report";
+
 import { DEFAULT_FILTER, DEFAULT_SORT, type EventsFilter } from "./filter";
 import {
   DEFAULT_EVENTS_QUERY,
   eventsQuerySchema,
+  fromViewConfig,
+  toColumnVisibility,
   toFacetsArgs,
   toFetchArgs,
   toPageWindow,
   toSortSpec,
   toSummaryArgs,
+  toViewConfig,
+  type EventsQuery,
 } from "./url-state";
 
 describe("eventsQuerySchema", () => {
@@ -25,6 +31,9 @@ describe("eventsQuerySchema", () => {
         devices: [],
       },
       sort: [{ id: "event" as const, desc: false }],
+      groupBy: "plan" as const,
+      hidden: ["properties" as const],
+      view: "report-1",
       expanded: "evt_1",
     };
     expect(eventsQuerySchema.parse(valid)).toEqual(valid);
@@ -47,6 +56,9 @@ describe("eventsQuerySchema", () => {
       density: "comfortable",
       filter: { ...DEFAULT_FILTER, devices: ["mobile"] },
       sort: [],
+      groupBy: "none",
+      hidden: [],
+      view: null,
       expanded: null,
     });
   });
@@ -58,6 +70,9 @@ describe("eventsQuerySchema", () => {
       density: "comfortable",
       filter: DEFAULT_FILTER,
       sort: DEFAULT_SORT,
+      groupBy: "none",
+      hidden: [],
+      view: null,
       expanded: null,
     });
   });
@@ -141,6 +156,9 @@ describe("toFetchArgs", () => {
       density: "comfortable",
       filter: { ...DEFAULT_FILTER, events: ["sign_up"] },
       sort: [{ id: "time", desc: true }],
+      groupBy: "none",
+      hidden: [],
+      view: null,
       expanded: null,
     });
     expect(args).toEqual({
@@ -155,5 +173,88 @@ describe("toFetchArgs", () => {
       },
       sort: [{ column: "ts", desc: true }],
     });
+  });
+});
+
+describe("saved-view config (ADR 0098)", () => {
+  const QUERY: EventsQuery = {
+    page: 3,
+    pageSize: 25,
+    density: "dense",
+    filter: { ...DEFAULT_FILTER, plans: ["pro"], search: "buy" },
+    sort: [{ id: "event", desc: false }],
+    groupBy: "plan",
+    hidden: ["properties"],
+    view: "some-report-id",
+    expanded: "e1",
+  };
+
+  it("toViewConfig captures the persistable slice and drops navigation state", () => {
+    expect(toViewConfig(QUERY)).toEqual({
+      filter: QUERY.filter,
+      sort: QUERY.sort,
+      pageSize: 25,
+      density: "dense",
+      groupBy: "plan",
+      hidden: ["properties"],
+    });
+  });
+
+  it("round-trips through the report serializer back into the grammar (reopen path)", () => {
+    const qs = new URLSearchParams(
+      reportConfigToSearchParams("events", toViewConfig(QUERY)),
+    );
+    // Reopen = parse each param exactly the way the nuqs parsers do.
+    const reopened = fromViewConfig({
+      filter: JSON.parse(qs.get("filter")!),
+      sort: JSON.parse(qs.get("sort")!),
+      hidden: JSON.parse(qs.get("hidden")!),
+      pageSize: Number(qs.get("pageSize")),
+      density: qs.get("density") ?? undefined,
+      groupBy: qs.get("groupBy") ?? undefined,
+    });
+    expect(reopened).toEqual(toViewConfig(QUERY));
+    // Navigation state never rides in a config.
+    expect(qs.get("page")).toBeNull();
+    expect(qs.get("expanded")).toBeNull();
+    expect(qs.get("view")).toBeNull();
+  });
+
+  it("fromViewConfig hydrates an empty config to the display defaults (All events)", () => {
+    expect(fromViewConfig({})).toEqual({
+      filter: DEFAULT_FILTER,
+      sort: DEFAULT_SORT,
+      pageSize: DEFAULT_EVENTS_QUERY.pageSize,
+      density: DEFAULT_EVENTS_QUERY.density,
+      groupBy: "none",
+      hidden: [],
+    });
+  });
+
+  it("fromViewConfig degrades malformed fields to their defaults, never errors", () => {
+    const hydrated = fromViewConfig({
+      filter: { plans: ["not-a-plan"] },
+      sort: "garbage",
+      pageSize: 999,
+      density: "cosy",
+      groupBy: "nope",
+      hidden: ["select"],
+    });
+    expect(hydrated.filter.plans).toEqual([]);
+    expect(hydrated.sort).toEqual([]);
+    expect(hydrated.pageSize).toBe(10);
+    expect(hydrated.density).toBe("comfortable");
+    expect(hydrated.groupBy).toBe("none");
+    expect(hydrated.hidden).toEqual([]);
+  });
+});
+
+describe("toColumnVisibility", () => {
+  it("maps hidden ids to false and leaves visible columns absent", () => {
+    expect(toColumnVisibility(["plan", "value"])).toEqual({
+      plan: false,
+      value: false,
+    });
+    expect(toColumnVisibility([])).toEqual({});
   });
 });

@@ -158,6 +158,8 @@ const meta = {
     nowMs: NOW,
     rowSelection: {},
     onRowSelectionChange: fn(),
+    hidden: [],
+    liveRate: 1284,
     onToggleExpand: fn(),
     onToggleSort: fn(),
     onPage: fn(),
@@ -199,9 +201,25 @@ export const Expanded: Story = {
   },
 };
 
-/** Dense rows — the row-padding density axis. */
+/**
+ * Dense rows — the ADR 0082 `[data-density]` axis (ADR 0098): the attribute swaps the
+ * dimension primitives the cell padding reads; the leaf sets it on the widget root, so
+ * the story reproduces that wrapper.
+ */
 export const Dense: Story = {
   args: { density: "dense" },
+  decorators: [
+    (Story) => (
+      <div data-density="dense">
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+/** Hidden columns (ADR 0098) — plan/properties removed; the footer re-spans. */
+export const ColumnsHidden: Story = {
+  args: { hidden: ["plan", "properties"] },
 };
 
 /** Multi-column sort — Event ascending, then Time descending; headers show rank badges. */
