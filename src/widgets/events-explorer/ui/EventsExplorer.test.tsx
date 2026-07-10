@@ -159,6 +159,40 @@ describe("EventsExplorer", () => {
     });
   });
 
+  it("selects rows locally (never the URL, ADR 0026) and view-user opens ?expanded", async () => {
+    // Typed mock so the recorded calls carry UrlUpdateEvent — no cast needed below.
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+    renderExplorer(onUrlUpdate);
+    await waitFor(() => expect(fetchEvents).toHaveBeenCalled());
+
+    await userEvent.click(
+      await screen.findByRole("checkbox", { name: "Select purchase" }),
+    );
+
+    // The bulk bar reflects the selection; the selection wrote NOTHING to the URL —
+    // it is ephemeral local view-state, not a shareable view (ADR 0026/0027).
+    expect(await screen.findByText("1 selected")).toBeInTheDocument();
+    expect(onUrlUpdate).not.toHaveBeenCalled();
+
+    // Read-only bulk actions only: deep-links + export, never a mutation (ADR 0083).
+    expect(
+      screen.getByRole("link", { name: "Add to segment" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /delete/i })).toBeNull();
+
+    // View user resolves to the events surface's own user-detail URL-state.
+    await userEvent.click(screen.getByRole("button", { name: "View user" }));
+    await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+    const last = onUrlUpdate.mock.calls.at(-1)![0];
+    expect(last.searchParams.get("expanded")).toBe("e1");
+
+    // Clearing the selection dismisses the bar.
+    await userEvent.click(
+      screen.getByRole("button", { name: "Clear selection" }),
+    );
+    await waitFor(() => expect(screen.queryByText("1 selected")).toBeNull());
+  });
+
   it("advances the page through the URL (shareable pagination)", async () => {
     const onUrlUpdate = vi.fn();
     renderExplorer(onUrlUpdate);
