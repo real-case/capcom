@@ -101,4 +101,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0095](0095-claude-design-approval-drift-seal.md) | Anti-hallucination component approval and the drift seal, adapted for Claude Design | accepted | 2026-07-02 |
 | [0096](0096-js-motion-library-for-the-premium-landing.md) | Motion (a JS animation library) for the premium landing, scoped to client islands | accepted | 2026-07-06 |
 | [0097](0097-events-explorer-data-table.md) | Events explorer — a raw-event data-table surface on TanStack Table, additive to the visx charts | accepted | 2026-07-08 |
-| [0098](0098-events-explorer-saved-views-and-completion.md) | Events explorer completion — saved views as an `events` report kind, in-database group-by roll-up, column visibility, density axis, live rate | proposed | 2026-07-10 |
+| [0098](0098-events-explorer-saved-views-and-completion.md) | Events explorer completion — saved views as an `events` report kind, in-database group-by roll-up, column visibility, density axis, live rate | accepted | 2026-07-10 |
