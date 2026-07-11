@@ -40,14 +40,15 @@ drafted from the merge history and human-edited before release (ADR 0050).
 
 ### Security
 
-## [0.2.0] - 2026-07-07
+## [0.2.0] - 2026-07-11
 
 The premium product surface. PR-0…PR-10 delivered a functionally complete analytics
 platform on real RLS, real SQL aggregation, and token-governed visx charts; this release
 raises that surface to the demo's actual purpose — a visually premium, production-grade
-product — without loosening a governance invariant. The genuinely new decisions land as
-human-accepted ADRs before their code (theme, chart interaction, design source, motion);
-the rest is additive under existing records (shadcn primitives, FSD widgets).
+product — without loosening a governance invariant, and adds a raw-event explorer as a new
+first-class surface beside the aggregation charts. The genuinely new decisions land as
+human-accepted ADRs before their code (theme, chart interaction, design source, motion, the
+events explorer); the rest is additive under existing records (shadcn primitives, FSD widgets).
 
 ### Added
 
@@ -89,6 +90,18 @@ the rest is additive under existing records (shadcn primitives, FSD widgets).
   (claude.ai/design) as the design source + living catalog — login-based via the `DesignSync`
   MCP and the `/design-sync` skill — with an anti-hallucination API-approval loop sealed by a
   `renderHash` + version drift seal (`check:seals`, inert until a project exists).
+- **Events explorer** (ADR 0097/0098). A raw-event data-table surface at
+  `/(app)/p/[projectId]/events` — the append-only `events` stream a user inspects to answer
+  "what happened, to whom, just now" — built on headless **TanStack Table**, additive beside the
+  visx chart surfaces. Filtering runs over a **closed AND-only Zod grammar** (the injection
+  boundary, reusing ADR 0089's discipline) with DB-computed facet counts from a `SECURITY INVOKER`
+  RPC (no client-side reduction, ADR 0084); plus free-text search, multi-column sort, and row
+  selection with **read-only** bulk actions (CSV export + deep-links into the analysis surfaces,
+  ADR 0090 — events stay immutable, ADR 0083). All control state serializes to nuqs URL-state so
+  any view is a shareable link (ADR 0027). Completion (ADR 0098) adds **saved views** persisted as
+  a `kind='events'` report (reusing the ADR 0090 model — no new table), **in-database group-by
+  roll-ups**, **column configuration**, a **density** toggle on the ratified `[data-density]` axis
+  (ADR 0082), and a DB-reduced **live rate** indicator. New dependency: `@tanstack/react-table`.
 
 ### Changed
 
