@@ -31,6 +31,11 @@ export const Secondary: Story = {
   args: { tone: "secondary", children: "2026-07-13T09:41:22Z" },
 };
 
+// contentBounds:max-content — a long technical value stays on one line (whitespace-nowrap).
+export const LongValue: Story = {
+  args: { children: "evt_0x7f3a91c2e4b6d8a05f1c3e9b27d4a6f8" },
+};
+
 // Tabular alignment — a stacked column of values lines up on the mono digits.
 export const TabularColumn: Story = {
   render: (args) => (

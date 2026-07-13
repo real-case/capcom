@@ -12,6 +12,12 @@
  * **Ratified baseline (2026-06-11)**, transcribed from the plan's Appendix A1 /
  * ADR 0061; extend via the same 👤 process. The trailing comment on each line lists
  * illustrative members (not an exhaustive mapping).
+ *
+ * **Extension 2026-07-13 (👤, ADR 0099 console re-skin):** added `data-display` for the
+ * mission-control value/metric leaves (MetricHero, MonoData) — presentational primitives
+ * that render a single present value and previously fell to the `archetype: null`
+ * exception. The absence/loading/error of the DATA stays the composing widget's job, so the
+ * class owns only the contentBounds axis (see `states.ts`).
  */
 export const ARCHETYPES = [
   "action-trigger", // button, icon-button, link
@@ -24,6 +30,7 @@ export const ARCHETYPES = [
   "navigation", // tabs, breadcrumb, stepper
   "media", // avatar, image, thumbnail
   "disclosure", // accordion, popover, tooltip
+  "data-display", // metric hero, stat, mono value (ADR 0099; extension 2026-07-13)
 ] as const;
 
 export type Archetype = (typeof ARCHETYPES)[number];

@@ -30,7 +30,7 @@ export function MetricHero({
       )}
       <span
         data-slot="metric-hero-value"
-        className="text-metric-hero text-text-primary font-mono tabular-nums"
+        className="text-metric-hero text-text-primary font-mono tabular-nums whitespace-nowrap"
       >
         {children}
       </span>
