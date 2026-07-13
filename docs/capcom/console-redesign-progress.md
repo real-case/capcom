@@ -19,14 +19,14 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 
 ## Status
 
-| Phase | Theme                                                           | State         | PR  | Updated    |
-| ----- | --------------------------------------------------------------- | ------------- | --- | ---------- |
-| 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done       | —   | 2026-07-13 |
-| A     | Skin foundation — console primitives + stories                  | ✅ done       | —   | 2026-07-13 |
-| B     | App shell re-skin (`app-shell`)                                 | ✅ done       | —   | 2026-07-13 |
-| C     | Events explorer re-skin (`events-explorer`)                     | ☐ not started | —   | —          |
-| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —   | —          |
-| E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —   | —          |
+| Phase | Theme                                                           | State         | PR                                                 | Updated    |
+| ----- | --------------------------------------------------------------- | ------------- | -------------------------------------------------- | ---------- |
+| 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done       | —                                                  | 2026-07-13 |
+| A     | Skin foundation — console primitives + stories                  | ✅ done       | —                                                  | 2026-07-13 |
+| B     | App shell re-skin (`app-shell`)                                 | ✅ done       | [#35](https://github.com/real-case/capcom/pull/35) | 2026-07-13 |
+| C     | Events explorer re-skin (`events-explorer`)                     | ☐ not started | —                                                  | —          |
+| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —                                                  | —          |
+| E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —                                                  | —          |
 
 Legend: ☐ not started · 🔧 in progress · ✅ done · ⛔ blocked (note why).
 
@@ -113,7 +113,8 @@ use site — `badge`-through-surface vs a new mission-control categorical pill).
 - **Process:** produced via the marvin task pipeline — sealed spec
   [`001-console-phase-b-app-shell-reskin.md`](../../.marvin/task/001-console-phase-b-app-shell-reskin.md)
   (DoR gate PASS, spec-critic BLOCK → PASS-with-warnings), then interactive implementation.
-- **PR:** pending — branch `feat/console-phase-b-app-shell` off `dev`.
+- **PR:** [#35](https://github.com/real-case/capcom/pull/35) — branch `feat/console-phase-b-app-shell` →
+  `dev`; merged to dev? **no** (awaiting human review + repo-wide Chromatic re-baseline).
 - **Next:** Phase C — events-explorer re-skin (see Resume point).
 
 ### Phase A — Skin foundation (console primitives) — 2026-07-13 — ✅ done
