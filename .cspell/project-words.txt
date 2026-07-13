@@ -126,3 +126,6 @@ naïvely
 untokenized
 # events explorer (PR-16…PR-19)
 hideable
+# mission-control console re-skin (ADR 0099)
+bento
+ARPU
