@@ -7,15 +7,17 @@ import { ProjectHub } from "./ProjectHub";
 
 /**
  * ADR 0036/0042: colocated CSF 3 stories for the project hub — the designed grid of
- * analysis surfaces that replaces the PR-2 placeholder — in both themes. It is a
- * presentational `container` (whole-card links, no data fetching or interaction beyond
- * navigation), so no `play` is required (ADR 0038); the axe gate (ADR 0039) covers the
- * card semantics and focus order. next-intl messages come from the canonical catalog so
- * the copy matches production (ADR 0030).
+ * analysis surfaces that replaces the PR-2 placeholder — re-skinned onto the mission-control
+ * surface (ADR 0099): the shadcn `Card` is now the `Panel` primitive on the `--surface-*`
+ * tokens. Presentational (whole-Panel links, no data fetching or interaction beyond
+ * navigation), so no `play` is required (ADR 0038); the axe gate (ADR 0039) covers the panel
+ * semantics and focus order in both compositions (the toolbar drives `[data-theme]`,
+ * preview.tsx). next-intl messages come from the canonical catalog so the copy matches
+ * production (ADR 0030). The grid sits on `--surface-background` as it does in the shell.
  */
 const withIntl: Decorator = (Story) => (
   <NextIntlClientProvider locale="en" messages={messages}>
-    <div className="mx-auto max-w-5xl p-6">
+    <div className="bg-surface-background mx-auto max-w-5xl p-6">
       <Story />
     </div>
   </NextIntlClientProvider>

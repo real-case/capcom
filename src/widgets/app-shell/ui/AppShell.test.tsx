@@ -82,4 +82,19 @@ describe("AppShell", () => {
       screen.getByRole("option", { name: /Retention/ }),
     ).toBeInTheDocument();
   });
+
+  it("opens the command palette and renders the telemetry footer", async () => {
+    renderShell();
+
+    // The mission-control telemetry footer (reference dressing, ADR 0099) is present.
+    expect(
+      screen.getByRole("contentinfo", { name: "System telemetry" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Ingestion")).toBeInTheDocument();
+
+    // Behavior preserved: ⌘K still opens the palette after the re-skin.
+    expect(screen.queryByRole("option")).not.toBeInTheDocument();
+    await userEvent.keyboard("{Meta>}k{/Meta}");
+    expect(screen.getByRole("option", { name: /Trends/ })).toBeInTheDocument();
+  });
 });

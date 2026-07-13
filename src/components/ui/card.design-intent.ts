@@ -14,7 +14,7 @@ export const cardIntent = {
     archetype: "container",
     compositionSignature: [],
     composedOf: [],
-    usedIn: ["src/widgets/app-shell/ui/ProjectHub.tsx"],
+    usedIn: [],
   },
   usageRole: null,
   variants: {

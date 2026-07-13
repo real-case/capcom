@@ -161,6 +161,13 @@
       "empty": "No results found.",
       "goTo": "Go to",
       "switchProject": "Switch project"
+    },
+    "telemetry": {
+      "label": "System telemetry",
+      "ingestion": "Ingestion",
+      "rls": "RLS",
+      "freshness": "Freshness",
+      "events": "Events"
     }
   },
   "ProjectOverview": {

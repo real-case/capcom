@@ -16,7 +16,7 @@ export const panelIntent = {
     archetype: "container",
     compositionSignature: [],
     composedOf: [],
-    usedIn: [],
+    usedIn: ["src/widgets/app-shell/ui/ProjectHub.tsx"],
   },
   usageRole: null,
   variants: {
