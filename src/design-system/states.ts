@@ -113,4 +113,9 @@ export const ARCHETYPE_STATES: Record<Archetype, ArchetypeStateSpec> = {
     mandatoryAxes: ["interaction", "contentBounds"],
     extraStates: ARCHETYPE_SPECIFIC_STATES.disclosure,
   },
+  "data-display": {
+    mandatoryAxes: ["contentBounds"],
+    notes:
+      "Presentational value/metric leaves (metric hero, mono value) — the leaf owns only how a PRESENT value renders across width and script (contentBounds). The absence / loading / error of the DATA (empty, still fetching) is the composing widget's responsibility — a Skeleton swap or empty state — not the leaf (ADR 0100; ADR 0099 console re-skin — the archetype:null → data-display reclassification).",
+  },
 };

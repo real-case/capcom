@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 // primary/secondary text roles are exposed — they are the AA-verified pairs over the
 // surfaces (`check:contrast`, ADR 0081/0092); `--text-tertiary` is not AA-guaranteed for
 // small text and is deliberately not a MonoData tone.
-const monoDataVariants = cva("font-mono tabular-nums", {
+const monoDataVariants = cva("font-mono tabular-nums whitespace-nowrap", {
   variants: {
     tone: {
       primary: "text-text-primary",

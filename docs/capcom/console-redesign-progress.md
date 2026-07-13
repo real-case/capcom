@@ -40,14 +40,18 @@ light/dark in the workbench like production (Phase A stories work around this wi
 `[data-theme="light"]` wrappers — see the Phase-A log). Phase B DoD adds axe + a **human-approved
 Chromatic re-baseline**.
 
-**Two 👤 decisions carried out of Phase A** (flagged in the Phase-A PR):
+**Two 👤 decisions from Phase A — RESOLVED 2026-07-13** (implemented in the
+`chore/ds-data-display-archetype` PR):
 
-1. **StatusPill** was **not** built — it would duplicate the existing `status-indicator` (severity) +
-   `badge` (category), a composition-signature + usage-role collision (ADR 0059/0061). Decide: reuse
-   those two, or author a **new human-authored usage role** for a distinct mission-control categorical
-   pill (ADR 0061 escalation).
-2. **`archetype: null`** on `MetricHero` / `MonoData` / `Hairline` (the `skeleton`/`label`
-   presentational-leaf exception) is a 👤 confirmation point (ADR 0061) — confirm or reclassify.
+1. **StatusPill → reuse, no new component.** Severity uses `status-indicator` (already
+   mission-control); category uses `badge`, themed through the console surface at the call site. A
+   bespoke mission-control categorical pill is **deferred to Phase C**, where the events-explorer plan
+   pills / category chips are the concrete use site that would fix its API. No new usage role added.
+2. **`archetype` → added a `data-display` class** (👤 extension of ADR 0061's ratified vocabulary).
+   `MetricHero` + `MonoData` reclassified `null → data-display` (mandates only contentBounds; data
+   absence/loading stays the widget's job). **`Hairline` stays `null` — CONFIRMED** (a rule renders no
+   value, so it fits no archetype). Landed in `archetypes.ts` / `states.ts` + the two design-intents +
+   the graph.
 
 ## Phase log
 

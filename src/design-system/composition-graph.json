@@ -147,22 +147,22 @@
     {
       "id": "metric-hero",
       "kind": "primitive",
-      "archetype": null,
+      "archetype": "data-display",
       "module": "src/components/ui/metric-hero.tsx",
       "composedOf": [],
       "usedIn": [],
       "compositionSignature": [],
-      "notes": "Mission-control metric hero (ADR 0099/0081) — a large KPI value in the geist-mono numeric face at the metric-hero type role, with an optional label. Presentational leaf like `skeleton`/`label`; archetype:null per the presentational-leaf exception (ADR 0061). Flagged for 👤 confirmation. usedIn empty until the Overview home consumes it (Phase D)."
+      "notes": "Mission-control metric hero (ADR 0099/0081) — a large KPI value in the geist-mono numeric face at the metric-hero type role, with an optional label. Presentational value leaf; classified `data-display` (👤 2026-07-13, the archetype added for the console value leaves — ADR 0061/0099; reclassified from the interim archetype:null). Mandates only contentBounds; data absence/loading is the widget's job. usedIn empty until the Overview home consumes it (Phase D)."
     },
     {
       "id": "mono-data",
       "kind": "primitive",
-      "archetype": null,
+      "archetype": "data-display",
       "module": "src/components/ui/mono-data.tsx",
       "composedOf": [],
       "usedIn": [],
       "compositionSignature": [],
-      "notes": "Mission-control mono-data value (ADR 0099/0081) — an inline tabular value in the geist-mono face at the mono-data type role. Presentational leaf like `skeleton`/`label`; archetype:null per the presentational-leaf exception (ADR 0061). Flagged for 👤 confirmation. usedIn empty until the events-explorer/overview re-skin consumes it (Phases C–D)."
+      "notes": "Mission-control mono-data value (ADR 0099/0081) — an inline tabular value in the geist-mono face at the mono-data type role. Presentational value leaf; classified `data-display` (👤 2026-07-13, ADR 0061/0099; reclassified from the interim archetype:null). Mandates only contentBounds; data absence/loading is the widget's job. usedIn empty until the events-explorer/overview re-skin consumes it (Phases C–D)."
     },
     {
       "id": "hairline",
@@ -172,7 +172,7 @@
       "composedOf": [],
       "usedIn": [],
       "compositionSignature": [],
-      "notes": "Mission-control hairline (ADR 0099/0081) — a 1px rule on the hairline/divider token. Presentational leaf like `skeleton`; archetype:null per the presentational-leaf exception (ADR 0061). Flagged for 👤 confirmation. usedIn empty until the app-shell/events-explorer re-skin consumes it (Phases B–C)."
+      "notes": "Mission-control hairline (ADR 0099/0081) — a 1px rule on the hairline/divider token. Presentational structural leaf like `skeleton`; archetype:null CONFIRMED (👤 2026-07-13) — a rule fits no archetype, including the new `data-display` (it renders no value). usedIn empty until the app-shell/events-explorer re-skin consumes it (Phases B–C)."
     },
     {
       "id": "sonner",
