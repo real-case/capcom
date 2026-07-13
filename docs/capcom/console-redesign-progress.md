@@ -22,7 +22,7 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 | Phase | Theme                                                           | State         | PR  | Updated    |
 | ----- | --------------------------------------------------------------- | ------------- | --- | ---------- |
 | 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done       | —   | 2026-07-13 |
-| A     | Skin foundation — light composition + primitives                | ☐ not started | —   | —          |
+| A     | Skin foundation — console primitives + stories                  | ☐ not started | —   | —          |
 | B     | App shell re-skin (`app-shell`)                                 | ☐ not started | —   | —          |
 | C     | Events explorer re-skin (`events-explorer`)                     | ☐ not started | —   | —          |
 | D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —   | —          |
