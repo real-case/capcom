@@ -13,5 +13,9 @@ package-lock.json
 docs/decisions/
 CLAUDE.md
 
+# Frozen design reference — a byte-faithful mirror of the published build-reference
+# artifact (ADR 0099); the formatter must not rewrite it.
+docs/capcom/design-reference/
+
 # Agent toolchain (skills/agents mirrored from a shared source)
 .claude/
