@@ -19,27 +19,30 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 
 ## Status
 
-| Phase | Theme                                                           | State         | PR  | Updated |
-| ----- | --------------------------------------------------------------- | ------------- | --- | ------- |
-| 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ☐ not started | —   | —       |
-| A     | Skin foundation — light composition + primitives                | ☐ not started | —   | —       |
-| B     | App shell re-skin (`app-shell`)                                 | ☐ not started | —   | —       |
-| C     | Events explorer re-skin (`events-explorer`)                     | ☐ not started | —   | —       |
-| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —   | —       |
-| E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —   | —       |
+| Phase | Theme                                                           | State         | PR  | Updated    |
+| ----- | --------------------------------------------------------------- | ------------- | --- | ---------- |
+| 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done       | —   | 2026-07-13 |
+| A     | Skin foundation — console primitives + stories                  | ☐ not started | —   | —          |
+| B     | App shell re-skin (`app-shell`)                                 | ☐ not started | —   | —          |
+| C     | Events explorer re-skin (`events-explorer`)                     | ☐ not started | —   | —          |
+| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —   | —          |
+| E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —   | —          |
 
 Legend: ☐ not started · 🔧 in progress · ✅ done · ⛔ blocked (note why).
 
 ## Resume point
 
-**Next step:** Phase 0 — the human accepts ADR 0099
-(`python3 .claude/skills/adr/scripts/adr.py accept 0099`, then run the `adr-sync-claude-md` skill).
-The agent does **not** set `accepted` and does **not** start Phase A until 0099 is accepted and
-CLAUDE.md is synced.
+**Next step:** Phase A — Skin foundation. Add the console-surface primitives to the kit (`Panel`,
+`MetricHero`, `StatusPill`, `MonoData`, `Hairline`), themed **only** through the mission-control
+semantic tokens, each with a dark + light story. Run the Phase A gates: `check:contrast` (both
+themes) · `gen:tokens` swap-only self-test (must stay unchanged — no new semantic names) ·
+`check:tokens` · stories.
 
-**Open question to resolve in Phase A:** does ADR 0092's light composition already make the
-mission-control `--surface-*` / `--text-*` set AA-legible in the **light** theme, or must that light
-composition be built? This determines Phase A's true size (see the plan's Risks).
+**Resolved — the Phase-A crux (read-only check, 2026-07-13):** ADR 0092's light composition
+**already** makes the mission-control `--surface-*` / `--text-*` set AA-legible in the light theme —
+`check:contrast` is green in **both** compositions today (all 8 pairs, incl. the four surface/text
+pairs). So Phase A does **not** need to build a light composition; it is primitive + story work. Watch
+the light _status_ pairs (tightest ≈ 4.79 : 1 vs the 4.5 minimum) when adding any new status pair.
 
 ## Phase log
 
@@ -54,7 +57,24 @@ composition be built? This determines Phase A's true size (see the plan's Risks)
 > - **Next:** <the next concrete step>
 > ```
 
-_(no entries yet — the first will be written when Phase 0 completes)_
+### Phase 0 — Accept ADR 0099 + CLAUDE.md sync — 2026-07-13 — ✅ done
+
+- **Landed:** ADR 0099 accepted by the human (`adr.py accept 0099`). CLAUDE.md synced to the accepted
+  corpus via the `adr-sync-claude-md` skill — a **full faithful sync** that folded in the three
+  accepted ADRs that were missing from CLAUDE.md: **0097** + **0098** (events-explorer) and **0099**
+  (console surface). Added their Stack / Conventions / Restrictions bullets; Commands unchanged (no new
+  npm scripts).
+- **Gates:** `adr.py lint` clean (99 records, 0 errors) · `check:claude-md` OK (96 accepted, all
+  reflected, every citation resolves) · `check:claude` OK. Crux de-risked (read-only): `check:contrast`
+  already green in **both** compositions incl. the four surface/text pairs — the light composition of
+  the mission-control surface/text set is already AA-legible, so Phase A is primitives-and-stories, not
+  a token-layer rebuild.
+- **Chromatic:** n/a — no visual change in Phase 0.
+- **PR:** pending — Phase 0's governance changes (ADR accept + CLAUDE.md sync + this progress update)
+  to be committed on a feature branch and human-merged to `dev`.
+- **Next:** Phase A — add console primitives (`Panel`, `MetricHero`, `StatusPill`, `MonoData`,
+  `Hairline`) themed only through mission-control semantic tokens, each with dark + light stories; run
+  the Phase A gates.
 
 ## Environment reminders (shared with the whole-project PROGRESS.md)
 

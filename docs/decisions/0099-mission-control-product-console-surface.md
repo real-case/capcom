@@ -1,5 +1,5 @@
 ---
-status: "proposed"
+status: "accepted"
 date: 2026-07-13
 decision-makers: Yurii Anichkin
 consulted: design-system governance (ADR 0081/0082/0092), CAPCOM product goal
