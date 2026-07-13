@@ -166,6 +166,26 @@ still-proposed._
   `"use client"`; motion animates `opacity`/`transform` (any animated color via tokens, 0058/0081),
   reduced-motion-guarded (0039/0052), Chromatic-pinned to its final state (0043), and `LazyMotion`-
   bundled for supply-chain discipline (0069/0071).
+- **Events explorer — TanStack Table** (0097): `@tanstack/react-table` (headless) as the tabular
+  analogue of the visx charting posture (0086) — repo-owned markup fed only generated token values,
+  added **additively** beside the visx charts, not replacing them. A raw-event data-table surface
+  (multi-column sort, row selection, expansion, column visibility) whose state serializes cleanly to
+  nuqs URL-state (0027) and is React-19 / React-Compiler compatible (0029).
+- **Events explorer completion** (0098): the 0097 surface's remaining mockup features land as bounded
+  extensions of already-accepted records with **zero new SQL surface** — saved views as a new `events`
+  `report_kind` enum value (0090, no new table), in-database group-by roll-up over the existing
+  `fn_events_facets` RPC (0084), show/hide column configuration, the density axis wired to 0082's
+  `[data-density]` dimension tokens, and a poll-based `LIVE · n/min` rate over `fn_events_summary`.
+- **Mission-control product console** (0099): the authenticated product console — `src/widgets/app-shell`
+  plus the analytics widgets (events-explorer, funnel-builder, retention-grid, segment-builder, trends)
+  and a new curated `overview-dashboard` — adopts the mission-control instrument-panel **surface**
+  vocabulary as its chrome so chrome and data-viz read as one instrument panel. **Zero new tokens**: it
+  consumes the existing semantic layer (`--surface-*` / `--text-*` / `--status-*` / `--border-hairline` /
+  `--viz-*` / the `mono-data` type role, 0081), flips light/dark as one unit under `check:contrast`
+  (0092), and rides the density/tenant swaps (0082). It **extends 0081** (the surface vocabulary now
+  clothes product chrome, not only charts) and **completes 0092's** chrome/chart unification; the
+  statically-generated marketing/landing (0031/0096) and auth screens deliberately stay on the shadcn
+  value layer (0033).
 
 ## Commands
 
@@ -402,6 +422,34 @@ still-proposed._
   **deterministic offline interpreter** produces the same spec for curated demo intents (labeled
   offline-demo mode) so the surface never crashes (0075). Conversational refinement, multi-analysis
   output, streaming, and model-driven save-as-report are stated scope boundaries.
+- The events explorer is one `src/widgets/events-explorer` slice (0097): a `"use client"` interactive
+  TanStack table reads nuqs URL-state and calls a `fetchEvents` fetcher on the `event` entity (0013) — a
+  **parameterized**, filtered/ordered/ranged `SELECT` over `events` under the caller's RLS (0083), the
+  raw-listing sibling of `fetchRecentEvents`, not an aggregation. Its filter set is a **closed, AND-only,
+  Zod-validated** grammar (`[events-filter]`, one nuqs-encodable shareable value, 0089/0027); genuine
+  footer/facet reductions come from a `SECURITY INVOKER` `fn_events_summary` / `fn_events_facets` RPC
+  (0084), never a client tally. Selection drives **read-only** bulk actions only — Export CSV and 0090
+  deep-links (add-to-segment / build-funnel / view-user); the live stream is poll-based and pausable
+  (0084, no realtime).
+- Events-explorer completion reuses existing machinery (0098): **saved views** persist through the
+  existing `createReport` Server Action as `kind='events'` reports (their `config` is the events URL-state
+  minus transient `page` / `expanded`), rendered as tabs with the active `view` id in the URL; **group-by**
+  swaps the row grid for an in-database roll-up served by `fn_events_facets` (activating a roll-up row
+  applies that value as a facet), **not** TanStack `getGroupedRowModel`; **column config** is show/hide
+  only via Zod-validated `columnVisibility` URL-state (selection / event / time columns are fixed);
+  **density** sets `data-density="dense"` and reads the 0082 dimension tokens (no hand-rolled padding);
+  the **LIVE rate** polls `fn_events_summary` over a trailing 60s window.
+- The authenticated console wears the mission-control surface (0099): its chrome consumes only the existing
+  semantic tokens — surfaces from `--surface-background|panel|elevated|overlay`, text from
+  `--text-primary|secondary|tertiary`, structure from `--border-hairline` / `--divider`, state from
+  `--status-{nominal|caution|warning|critical}-{fg|bg|border}`, series from `--viz-*`, numeric values in the
+  geist-mono `mono-data` role (0081); **no shadcn `bg-card` / `bg-background` in the console** and no raw
+  literals (0058). Where a shadcn primitive is reused in the console it is themed **through** the console
+  surface at the call site, never forked (0033). The console is **dark-first but theme-aware** (0092's light
+  composition applies, `check:contrast` gates both). Its **Overview** home is a **first-class, curated** bento
+  of KPI cards + signal charts — distinct from the **user-composed** dashboards of 0090 — with KPI
+  aggregations as new `SECURITY INVOKER` RPCs (0084) and visx presentational charts (0086/0093).
+  Marketing/landing and auth stay on the shadcn value layer (a documented seam).
 
 ## Restrictions
 
@@ -506,3 +554,23 @@ still-proposed._
   in application code, and no chart renderer — it **deep-links** to the existing surfaces (0084/0090).
   The deployed demo stays inert-but-alive without a key via the bounded deterministic interpreter;
   provisioning a key upgrades to live translation with no code change (0075).
+- The events explorer assembles **no SQL string from user input** — the read path uses the Supabase query
+  builder's parameterized operators under RLS (0097/0083), and the closed `[events-filter]` grammar is the
+  injection boundary (out-of-grammar predicates are rejected, never coerced, 0089). Events are immutable:
+  there is **no `DELETE` / `UPDATE` path** against `events` and no client-side reduction — every total traces
+  to an RPC or a returned column (0083/0084). The mockup's "Delete" action is dropped; OR/nested filters and
+  arbitrary `properties`-path predicates are stated scope boundaries.
+- Events-explorer completion adds **no new SQL surface** — a single irreversible `ALTER TYPE report_kind ADD
+  VALUE 'events'` is the entire database delta (0098); there is no new table, policy, or GRANT (the 0090
+  RLS/RBAC applies to the new kind untouched). TanStack `getGroupedRowModel` is disallowed (its group
+  aggregates are client-side reductions, 0084); column reorder/resize stays deferred; no realtime transport
+  is introduced (0084/0012).
+- The mission-control console re-skin is scoped and clean-swap (0099): **in** are `app-shell`,
+  `events-explorer`, `funnel-builder`, `retention-grid`, `segment-builder`, `trends`, and the new
+  `overview-dashboard`; **out** are `widgets/landing`, the auth screens, and the `src/components/ui` shadcn
+  kit itself. Adoption is a **clean surface swap per component, never a half-mix** — the mission-control
+  surface/text set pairs only with itself for AA, so mixing it with shadcn foregrounds breaks contrast (axe
+  catches it). No new tokens and no per-theme semantic overrides (the `gen:tokens` swap-only self-test stays
+  unchanged); `check:contrast` must stay green in **both** compositions and each re-skinned widget keeps a
+  dark **and** light story. The two deliberate visual worlds (marketing shadcn vs console mission-control)
+  require the palette **seam** documented so the two are never cross-paired (0099).
