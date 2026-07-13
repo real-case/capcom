@@ -22,7 +22,7 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 | Phase | Theme                                                           | State         | PR  | Updated    |
 | ----- | --------------------------------------------------------------- | ------------- | --- | ---------- |
 | 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done       | —   | 2026-07-13 |
-| A     | Skin foundation — console primitives + stories                  | ☐ not started | —   | —          |
+| A     | Skin foundation — console primitives + stories                  | ✅ done       | —   | 2026-07-13 |
 | B     | App shell re-skin (`app-shell`)                                 | ☐ not started | —   | —          |
 | C     | Events explorer re-skin (`events-explorer`)                     | ☐ not started | —   | —          |
 | D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —   | —          |
@@ -32,17 +32,22 @@ Legend: ☐ not started · 🔧 in progress · ✅ done · ⛔ blocked (note why
 
 ## Resume point
 
-**Next step:** Phase A — Skin foundation. Add the console-surface primitives to the kit (`Panel`,
-`MetricHero`, `StatusPill`, `MonoData`, `Hairline`), themed **only** through the mission-control
-semantic tokens, each with a dark + light story. Run the Phase A gates: `check:contrast` (both
-themes) · `gen:tokens` swap-only self-test (must stay unchanged — no new semantic names) ·
-`check:tokens` · stories.
+**Next step:** Phase B — App shell re-skin (`src/widgets/app-shell`). Move `AppShell`, `SidebarNav`,
+`CommandPalette`, `ProjectHub` chrome onto the mission-control surfaces using the Phase-A primitives
+(`Panel` / `Hairline` / `MonoData` / `MetricHero`); add the telemetry footer. **Before starting**, wire
+the Storybook theme toolbar to drive `[data-theme]` (not only `.dark`) so the app-shell chrome flips
+light/dark in the workbench like production (Phase A stories work around this with per-story
+`[data-theme="light"]` wrappers — see the Phase-A log). Phase B DoD adds axe + a **human-approved
+Chromatic re-baseline**.
 
-**Resolved — the Phase-A crux (read-only check, 2026-07-13):** ADR 0092's light composition
-**already** makes the mission-control `--surface-*` / `--text-*` set AA-legible in the light theme —
-`check:contrast` is green in **both** compositions today (all 8 pairs, incl. the four surface/text
-pairs). So Phase A does **not** need to build a light composition; it is primitive + story work. Watch
-the light _status_ pairs (tightest ≈ 4.79 : 1 vs the 4.5 minimum) when adding any new status pair.
+**Two 👤 decisions carried out of Phase A** (flagged in the Phase-A PR):
+
+1. **StatusPill** was **not** built — it would duplicate the existing `status-indicator` (severity) +
+   `badge` (category), a composition-signature + usage-role collision (ADR 0059/0061). Decide: reuse
+   those two, or author a **new human-authored usage role** for a distinct mission-control categorical
+   pill (ADR 0061 escalation).
+2. **`archetype: null`** on `MetricHero` / `MonoData` / `Hairline` (the `skeleton`/`label`
+   presentational-leaf exception) is a 👤 confirmation point (ADR 0061) — confirm or reclassify.
 
 ## Phase log
 
@@ -56,6 +61,41 @@ the light _status_ pairs (tightest ≈ 4.79 : 1 vs the 4.5 minimum) when adding 
 > - **PR:** <link> · merged to dev? <yes/no>
 > - **Next:** <the next concrete step>
 > ```
+
+### Phase A — Skin foundation (console primitives) — 2026-07-13 — ✅ done
+
+- **Landed:** four console-surface primitives in `src/components/ui/` (component + `design-intent.ts`
+  - stories + test each), registered in `composition-graph.json`:
+  * **`Panel`** — `container` archetype (the `card` precedent), `--surface-*` elevation axis
+    (panel/elevated/overlay), hairline border.
+  * **`MetricHero`** — `archetype: null` leaf: large KPI value, geist-mono numeric face at the
+    `metric-hero` type role, optional label.
+  * **`MonoData`** — `archetype: null` leaf: inline tabular value at the `mono-data` role; `tone` =
+    primary/secondary only (the AA-verified text roles; `--text-tertiary` deliberately excluded —
+    not AA-guaranteed for small text).
+  * **`Hairline`** — `archetype: null` leaf: 1px rule on the hairline/divider token, orientation +
+    tone axes, `role="separator"` passthrough.
+  * **Infra fix:** `src/lib/utils.ts` `cn()` now `extendTailwindMerge`s the generated `@theme`
+    font-size roles (sourced from `SEMANTIC_OTHER_TOKENS`, single-source per ADR 0058) — without it
+    twMerge misclassified `text-mono-data`/`text-metric-hero` as a color and silently dropped the size
+    when merged with a `text-*` color. Zero existing components use these roles, so no regression
+    (411 unit tests green).
+- **Scope change vs the plan's "e.g." list:** **StatusPill dropped** (duplicate of `status-indicator`
+  - `badge`, ADR 0059/0061 collision) — 👤 decision flagged in the PR + Resume point. Built 4, not 5.
+- **Crux (from Phase 0) confirmed in practice:** the light `--surface-*`/`--text-*` composition is
+  already AA-legible — no token-layer rebuild needed; Phase A was primitives + stories.
+- **Gates:** `check:contrast` ✅ both compositions (8/8) · axe a11y ✅ over all **20** new stories in
+  **both** compositions (dark default + `[data-theme="light"]`) · `check:tokens` ✅ (0 errors) ·
+  `gen:tokens` swap-only self-test ✅ + **zero token drift** (no new tokens) · `check:design-intent` ✅
+  (20 specs) · `check:graph` ✅ (20 nodes) · `check:boundaries` ✅ · `check:stories` ✅ (26 modules) ·
+  `tsc` ✅ · unit ✅ (411) · full `check:design-system` bundle ✅.
+- **Chromatic:** new snapshots for the 4 primitives' stories — **pending human approval** (the agent
+  never approves its own baseline, ADR 0043/0095).
+- **PR:** pending — Phase A branch `feat/console-phase-a-primitives`, **stacked on** the Phase-0 branch
+  (`chore/adr-sync-0097-0099`, PR #32) since it depends on the accepted 0099 + CLAUDE.md sync. Rebase
+  onto `dev` once #32 merges.
+- **Next:** Phase B — app-shell re-skin (see Resume point; wire the Storybook theme toolbar to
+  `[data-theme]` first).
 
 ### Phase 0 — Accept ADR 0099 + CLAUDE.md sync — 2026-07-13 — ✅ done
 
