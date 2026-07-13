@@ -13,7 +13,8 @@
  * ADR 0061; extend via the same 👤 process. The trailing comment on each line lists
  * illustrative members (not an exhaustive mapping).
  *
- * **Extension 2026-07-13 (👤, ADR 0099 console re-skin):** added `data-display` for the
+ * **Extension 2026-07-13 (👤, ADR 0100; under ADR 0061's additive-entry clause, for the
+ * ADR 0099 console re-skin):** added `data-display` for the
  * mission-control value/metric leaves (MetricHero, MonoData) — presentational primitives
  * that render a single present value and previously fell to the `archetype: null`
  * exception. The absence/loading/error of the DATA stays the composing widget's job, so the
