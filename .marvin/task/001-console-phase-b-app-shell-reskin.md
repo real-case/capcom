@@ -26,32 +26,28 @@ chrome and data-viz read as one panel (ADR 0099), extracting two reusable consol
 ## Context
 
 - Related patterns:
-  - Phase-A primitives to consume — `Panel` (mission-control card, [panel.tsx](src/components/ui/panel.tsx)),
-    `MonoData` ([mono-data.tsx](src/components/ui/mono-data.tsx)), `Hairline`
-    ([hairline.tsx](src/components/ui/hairline.tsx)), `StatusIndicator`
-    ([status-indicator.tsx](src/components/ui/status-indicator.tsx)).
-  - Current shadcn-layer chrome to swap: [AppShell.tsx](src/widgets/app-shell/ui/AppShell.tsx) (`border-border`,
+  - Phase-A primitives to consume — `Panel` (mission-control card, `src/components/ui/panel.tsx`),
+    `MonoData` (`src/components/ui/mono-data.tsx`), `Hairline` (`src/components/ui/hairline.tsx`),
+    `StatusIndicator` (`src/components/ui/status-indicator.tsx`).
+  - Current shadcn-layer chrome to swap: `src/widgets/app-shell/ui/AppShell.tsx` (`border-border`,
     `text-muted-foreground`, `bg-background`, `border-input`, `bg-muted`),
-    [SidebarNav.tsx:34](src/widgets/app-shell/ui/SidebarNav.tsx) (`bg-accent`/`text-accent-foreground`),
-    [ProjectHub.tsx:39](src/widgets/app-shell/ui/ProjectHub.tsx) (shadcn `Card`).
+    `src/widgets/app-shell/ui/SidebarNav.tsx:34` (`bg-accent`/`text-accent-foreground`),
+    `src/widgets/app-shell/ui/ProjectHub.tsx:39` (shadcn `Card`).
   - **`asChild` engine:** the repo's kit imports Radix through the **`radix-ui` umbrella** (a direct
-    dependency) — [dialog.tsx:4](src/components/ui/dialog.tsx), [popover.tsx:4](src/components/ui/popover.tsx),
-    [tabs.tsx:5](src/components/ui/tabs.tsx), [tooltip.tsx:4](src/components/ui/tooltip.tsx),
-    [dropdown-menu.tsx:4](src/components/ui/dropdown-menu.tsx), [scroll-area.tsx:4](src/components/ui/scroll-area.tsx)
-    all `import { … } from "radix-ui"`. The umbrella exports `Slot`, so `NavItem` follows the same
-    convention with **no new dependency**.
-  - Production theme resolver — [theme.ts:22](src/features/theme/model/theme.ts) sets **both** `.dark`
-    and `[data-theme]`; the Storybook toolbar ([preview.tsx:25](.storybook/preview.tsx)) toggles only
-    `.dark`, so mission-control surfaces (which flip via `[data-theme="light"]`,
-    [globals.css:515](src/app/globals.css)) never flip in the workbench — the gap the resume point flags.
-  - Governance registries — archetypes [archetypes.ts](src/design-system/archetypes.ts) (`data-display`
-    added by ADR 0100; `action-trigger` existing), states [states.ts](src/design-system/states.ts),
-    design-intent schema [design-intent.ts](src/design-system/design-intent.ts), graph
-    [composition-graph.json](src/design-system/composition-graph.json).
+    dependency) — `src/components/ui/dialog.tsx`, `popover.tsx`, `tabs.tsx`, `tooltip.tsx`,
+    `dropdown-menu.tsx`, `scroll-area.tsx` all `import { … } from "radix-ui"`. The umbrella exports
+    `Slot`, so `NavItem` follows the same convention with **no new dependency**.
+  - Production theme resolver — `src/features/theme/model/theme.ts:22` sets **both** `.dark` and
+    `[data-theme]`; the Storybook toolbar (`.storybook/preview.tsx:25`) toggles only `.dark`, so
+    mission-control surfaces (which flip via `[data-theme="light"]`, `src/app/globals.css:515`) never
+    flip in the workbench — the gap the resume point flags.
+  - Governance registries — archetypes `src/design-system/archetypes.ts` (`data-display` added by ADR
+    0100; `action-trigger` existing), states `src/design-system/states.ts`, design-intent schema
+    `src/design-system/design-intent.ts`, graph `src/design-system/composition-graph.json`.
 - Callers / reverse-deps (UNCHANGED — presentational, props are stable):
-  [p/[projectId]/layout.tsx:47](<src/app/[locale]/(app)/p/[projectId]/layout.tsx>) renders `<AppShell>`;
-  [p/[projectId]/page.tsx:67](<src/app/[locale]/(app)/p/[projectId]/page.tsx>) renders `<ProjectHub>`. The
-  telemetry footer is static reference dressing, so no new props → callers stay out of the allowlist.
+  `src/app/[locale]/(app)/p/[projectId]/layout.tsx:47` renders `<AppShell>`;
+  `src/app/[locale]/(app)/p/[projectId]/page.tsx:67` renders `<ProjectHub>`. The telemetry footer is
+  static reference dressing, so no new props → callers stay out of the allowlist.
 - Constraints:
   - **Palette trap** (memory `capcom-token-palette-trap`): the mission-control surface/text set is AA
     only when paired with itself; a leftover shadcn foreground on a `--surface-*` bg = ~1:1 contrast,
@@ -393,7 +389,7 @@ primitives' stories give the axe gate full coverage. All coupled graph/design-in
 - Test locations: colocated — `src/components/ui/*.test.tsx` and `*.stories.tsx` for the primitives;
   `src/widgets/app-shell/ui/*.test.tsx` / `*.stories.tsx` for the shell.
 - Conventions (from neighbors): stories wrap in `NextIntlClientProvider` with the canonical `messages`
-  (see [ProjectHub.stories.tsx](src/widgets/app-shell/ui/ProjectHub.stories.tsx)); a `Dark` story uses
+  (see `src/widgets/app-shell/ui/ProjectHub.stories.tsx`); a `Dark` story uses
   `globals: { theme: "dark" }`; AppShell stories additionally need app-router context
   (`parameters.nextjs`) for `usePathname`/`useRouter`. Interactive primitives use `play` with
   `@storybook/test`. Gate suite beyond `npm run test`: `tsc --noEmit`, `npm run lint`,
