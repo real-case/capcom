@@ -9,10 +9,10 @@ import { cn } from "@/lib/utils";
  * Chart tooltip surface (ADR 0093) — the hover/focus readout composed by every chart
  * widget over the visx primitive layer (ADR 0086). State is `@visx/tooltip`'s
  * `useTooltip` (re-exported as `useChartTooltip`), which is unstyled by construction,
- * so the surface below is ours and every value is a semantic token (ADR 0058/0081) —
- * `bg-popover` / `text-popover-foreground` / `border-border`, the same card vocabulary
- * as the shadcn popover. It reads the active theme composition automatically (ADR 0092)
- * because those tokens flip with `.dark`.
+ * so the surface below is ours and every value is a semantic token (ADR 0058/0081) — the
+ * mission-control overlay surface (surface-overlay / text-primary / hairline, ADR 0099),
+ * so the chart tooltip reads as part of the instrument panel it floats over. It reads the
+ * active theme composition automatically (ADR 0092) because those tokens flip with the theme.
  *
  * Accessibility split (ADR 0039/0052): the floating box is **decorative**
  * (`aria-hidden`) because it is pointer-positioned and `pointer-events-none`; the
@@ -61,7 +61,7 @@ export function ChartTooltip({
       data-slot="chart-tooltip"
       className={cn(
         "pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full",
-        "rounded-md border border-border bg-popover px-2.5 py-1.5 text-popover-foreground shadow-md",
+        "rounded-md border border-border-hairline bg-surface-overlay px-2.5 py-1.5 text-text-primary shadow-md",
         "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95",
         "motion-safe:[animation-duration:var(--motion-duration-fast)]",
         className,
@@ -76,7 +76,9 @@ export function ChartTooltip({
 /** A tooltip title row — the focused x value (e.g. the bucket date). */
 export function ChartTooltipTitle({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-1 text-caption font-medium text-foreground">{children}</p>
+    <p className="mb-1 text-caption font-medium text-text-primary">
+      {children}
+    </p>
   );
 }
 
@@ -96,14 +98,14 @@ export function ChartTooltipRow({
   value: ReactNode;
 }) {
   return (
-    <p className="flex items-center gap-1.5 text-caption text-muted-foreground">
+    <p className="flex items-center gap-1.5 text-caption text-text-secondary">
       <span
         aria-hidden
         className="inline-block size-2 shrink-0 rounded-full"
         style={{ backgroundColor: color }}
       />
-      <span className="text-foreground">{name}</span>
-      <span className="ml-auto pl-3 font-mono tabular-nums text-foreground">
+      <span className="text-text-primary">{name}</span>
+      <span className="ml-auto pl-3 font-mono tabular-nums text-text-primary">
         {value}
       </span>
     </p>

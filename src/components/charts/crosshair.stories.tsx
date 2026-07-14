@@ -20,7 +20,7 @@ const meta = {
         height={H}
         role="img"
         aria-label="Crosshair demo"
-        className="rounded-md border border-border"
+        className="rounded-md border border-border-hairline bg-surface-panel"
       >
         <Story />
       </svg>

@@ -39,7 +39,7 @@ const LABEL_FONT_SIZE = 12;
 const VALUE_FONT_SIZE = 11;
 const MIN_BAR = 2; // a sliver so a tiny non-zero bucket is still visible
 const DIM_OPACITY = 0.4;
-const FOCUS_RING = "var(--color-foreground)";
+const FOCUS_RING = "var(--color-text-primary)";
 const VIEW_W = PAD + LABEL_W + BAR_AREA + VALUE_W + PAD;
 
 // Categorical data-viz scale (ADR 0081): a colorblind-safe hue per bucket, cycled. Each is
@@ -85,8 +85,8 @@ function Message({ tone, text }: { tone: "muted" | "error"; text: string }) {
     <div
       role={tone === "error" ? "alert" : "status"}
       data-state={tone === "error" ? "error" : "empty"}
-      className={`flex h-24 w-full items-center justify-center rounded-md border border-dashed border-border text-sm ${
-        tone === "error" ? "text-destructive" : "text-muted-foreground"
+      className={`flex h-24 w-full items-center justify-center rounded-md border border-dashed border-border-hairline text-sm ${
+        tone === "error" ? "text-status-critical-fg" : "text-text-secondary"
       }`}
     >
       {text}
@@ -121,8 +121,8 @@ export function SegmentDistribution({
       className="flex flex-col gap-4"
       data-state={data.length ? "data" : "empty"}
     >
-      <p className="text-sm text-muted-foreground">
-        <span className="text-2xl font-semibold tabular-nums text-foreground">
+      <p className="text-sm text-text-secondary">
+        <span className="text-2xl font-semibold tabular-nums text-text-primary">
           {nf.format(total)}
         </span>{" "}
         {usersLabel}
@@ -226,7 +226,7 @@ function Distribution({
                   x={PAD}
                   y={rowTop + ROW_H / 2 + 4}
                   fontSize={LABEL_FONT_SIZE}
-                  fill="var(--color-foreground)"
+                  fill="var(--color-text-primary)"
                 >
                   {row.bucket}
                 </text>
@@ -237,7 +237,7 @@ function Distribution({
                   width={BAR_AREA}
                   height={BAR_H}
                   rx={BAR_RADIUS}
-                  fill="var(--color-muted)"
+                  fill="var(--color-surface-elevated)"
                 />
                 <Bar
                   x={PAD + LABEL_W}
@@ -255,7 +255,7 @@ function Distribution({
                   y={rowTop + ROW_H / 2 + 4}
                   textAnchor="end"
                   fontSize={VALUE_FONT_SIZE}
-                  fill="var(--color-muted-foreground)"
+                  fill="var(--color-text-secondary)"
                 >
                   {`${nf.format(users)} · ${pct(share)}`}
                 </text>

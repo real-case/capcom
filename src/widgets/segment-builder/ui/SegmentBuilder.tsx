@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
 
 import { Combobox } from "@/components/ui/combobox";
+import { Panel } from "@/components/ui/panel";
 import { ComboField } from "@/shared/ui";
 
 import {
@@ -141,7 +142,7 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
 
       {/* Attribute predicates (over profiles.traits). */}
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-xs font-medium text-muted-foreground">
+        <legend className="mb-1 text-xs font-medium text-text-secondary">
           {t("attributesLegend")}
         </legend>
         <ul className="flex flex-col gap-2">
@@ -206,7 +207,7 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
 
       {/* Behavioural predicates (over the events stream). */}
       <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-xs font-medium text-muted-foreground">
+        <legend className="mb-1 text-xs font-medium text-text-secondary">
           {t("behaviorsLegend")}
         </legend>
         <ul className="flex flex-col gap-2">
@@ -252,7 +253,7 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
                   setBehavior(i, { ...pred, count: clampCount(e.target.value) })
                 }
               />
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-text-secondary">
                 {t("timesSuffix")}
               </span>
               <RemoveButton
@@ -275,11 +276,8 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
         </div>
       </fieldset>
 
-      <section
-        aria-label={t("distributionSectionLabel")}
-        className="rounded-lg border border-border bg-card p-4"
-      >
-        <h2 className="mb-3 text-sm font-medium text-foreground">
+      <Panel role="region" aria-label={t("distributionSectionLabel")}>
+        <h2 className="mb-3 text-sm font-medium text-text-primary">
           {t("distributionSectionLabel")}
         </h2>
         <SegmentDistribution
@@ -293,7 +291,7 @@ export function SegmentBuilder({ projectId }: { projectId: string }) {
           errorLabel={t("error")}
           emptyLabel={t("noData")}
         />
-      </section>
+      </Panel>
     </div>
   );
 }
@@ -331,7 +329,7 @@ function AttributeValue({
         {values.map((v) => (
           <label
             key={v}
-            className="flex items-center gap-1 text-xs text-foreground"
+            className="flex items-center gap-1 text-xs text-text-primary"
           >
             <input
               type="checkbox"
@@ -412,11 +410,11 @@ function clampCount(raw: string): number {
 }
 
 const countInputClass =
-  "rounded-md border border-input bg-background px-2 py-1 text-sm text-foreground";
+  "rounded-md border border-border-hairline bg-surface-elevated px-2 py-1 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary";
 const removeBtnClass =
-  "rounded-md border border-input bg-background px-2 py-1 text-xs text-muted-foreground hover:text-foreground";
+  "rounded-md border border-border-hairline bg-surface-elevated px-2 py-1 text-xs text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary";
 const addBtnClass =
-  "rounded-md border border-input bg-background px-3 py-1 text-xs font-medium text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50";
+  "rounded-md border border-border-hairline bg-surface-elevated px-3 py-1 text-xs font-medium text-text-primary hover:bg-surface-panel focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary disabled:cursor-not-allowed disabled:opacity-50";
 
 // Translation-key helpers: keep the dynamic `t(...)` calls inside the typed namespace.
 type RangeKey = `range_${Range}`;

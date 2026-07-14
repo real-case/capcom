@@ -34,7 +34,7 @@ const BAR_COLOR = "var(--color-viz-categorical-1)";
 // provenance is reviewable — SVG font-size has no token utility (ADR 0058/0081).
 const LABEL_FONT_SIZE = 11;
 const DIM_OPACITY = 0.4;
-const FOCUS_RING = "var(--color-foreground)";
+const FOCUS_RING = "var(--color-text-primary)";
 
 export type TopEventsBarProps = {
   /** Reduced rows from fn_top_events (event_name, count), pre-ranked desc. */
@@ -57,8 +57,8 @@ function Message({ tone, text }: { tone: "muted" | "error"; text: string }) {
     <div
       role={tone === "error" ? "alert" : "status"}
       data-state={tone === "error" ? "error" : "empty"}
-      className={`flex h-24 w-full items-center justify-center rounded-md border border-dashed border-border text-sm ${
-        tone === "error" ? "text-destructive" : "text-muted-foreground"
+      className={`flex h-24 w-full items-center justify-center rounded-md border border-dashed border-border-hairline text-sm ${
+        tone === "error" ? "text-status-critical-fg" : "text-text-secondary"
       }`}
     >
       {text}
@@ -96,8 +96,8 @@ export function TopEventsBar({
   });
   const xScale = scaleLinear({ domain: [0, maxCount], range: [0, INNER_W] });
 
-  const labelColor = "var(--color-foreground)";
-  const valueColor = "var(--color-muted-foreground)";
+  const labelColor = "var(--color-text-primary)";
+  const valueColor = "var(--color-text-secondary)";
   const nf = new Intl.NumberFormat(locale);
 
   const activeRow = active !== null ? data[active] : undefined;

@@ -28,8 +28,8 @@ export type CrosshairProps = {
 
 // Geometry in viewBox units. Named (not inline literals) so provenance is reviewable —
 // SVG stroke width / radius have no token utility (ADR 0058/0081).
-const LINE_STROKE = "var(--color-muted-foreground)";
-const DOT_RING = "var(--color-background)";
+const LINE_STROKE = "var(--color-text-secondary)";
+const DOT_RING = "var(--color-surface-background)";
 const STROKE_W = 1;
 const DASH = "3 3";
 const DOT_R = 3.5;

@@ -20,7 +20,7 @@ const meta = {
   parameters: { layout: "padded" },
   decorators: [
     (Story) => (
-      <div className="w-[560px] max-w-full">
+      <div className="w-[560px] max-w-full rounded-lg bg-surface-panel p-4">
         <Story />
       </div>
     ),
@@ -49,7 +49,7 @@ function Live() {
   return (
     <div className="flex flex-col gap-2">
       <ChartBrush domain={DOMAIN} value={range} onChange={setRange} />
-      <p className="text-caption text-muted-foreground">
+      <p className="text-caption text-text-secondary">
         {range ? `${range.from} → ${range.to}` : "Whole window"}
       </p>
     </div>

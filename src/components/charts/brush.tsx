@@ -64,9 +64,9 @@ const HANDLE_RADIUS = 2;
 const TRACK_RADIUS = 4;
 
 const SELECTED_BOX = {
-  fill: "var(--color-primary)",
+  fill: "var(--color-text-primary)",
   fillOpacity: 0.14,
-  stroke: "var(--color-primary)",
+  stroke: "var(--color-text-primary)",
   strokeWidth: 1,
 } as const;
 
@@ -111,7 +111,7 @@ export function ChartBrush({
           width={INNER_W}
           height={INNER_H}
           rx={TRACK_RADIUS}
-          fill="var(--color-muted)"
+          fill="var(--color-surface-elevated)"
         />
         <Brush
           xScale={xScale}
@@ -134,8 +134,8 @@ export function ChartBrush({
                 width={HANDLE_W}
                 height={12}
                 rx={HANDLE_RADIUS}
-                fill="var(--color-primary)"
-                stroke="var(--color-background)"
+                fill="var(--color-text-primary)"
+                stroke="var(--color-surface-background)"
                 strokeWidth={1}
               />
             ) : null
