@@ -131,3 +131,5 @@ bento
 ARPU
 reskin
 stmts
+sparkline
+sparklines
