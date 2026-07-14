@@ -17,7 +17,7 @@ export const monoDataIntent = {
     archetype: "data-display",
     compositionSignature: [],
     composedOf: [],
-    usedIn: [],
+    usedIn: ["src/components/ui/telemetry-stat.tsx"],
   },
   usageRole: null,
   variants: {

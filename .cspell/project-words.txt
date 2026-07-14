@@ -129,3 +129,5 @@ hideable
 # mission-control console re-skin (ADR 0099)
 bento
 ARPU
+reskin
+stmts

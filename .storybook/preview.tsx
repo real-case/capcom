@@ -8,10 +8,14 @@ import type { Decorator, Preview } from "@storybook/nextjs-vite";
 import "../src/app/globals.css";
 
 /**
- * Toggles the `.dark` root class so the `@custom-variant dark (&:is(.dark *))` in
- * globals.css resolves (ADR 0033: light/dark is a semantic-variable override, not a
- * component change). The class is applied via an effect with cleanup so the dark
- * state never bleeds across stories in the browser-mode test run (ADR 0037).
+ * Drives BOTH theme axes from the toolbar, mirroring the production pre-paint resolver
+ * (src/features/theme/model/theme.ts): the `.dark` root class for the shadcn value layer
+ * (`@custom-variant dark`, ADR 0033) AND the `[data-theme]` attribute for the mission-control
+ * `--c-*` layer (which is dark-first in `:root` and flips to light via `[data-theme="light"]`,
+ * ADR 0081/0092). Before this, the toolbar only toggled `.dark`, so mission-control surfaces
+ * never flipped in the workbench — the app-shell console chrome (ADR 0099) now does. Applied
+ * via an effect with cleanup so no theme state bleeds across stories in the browser-mode test
+ * run (ADR 0037).
  */
 function ThemeFrame({
   theme,
@@ -22,8 +26,13 @@ function ThemeFrame({
 }) {
   React.useEffect(() => {
     const root = document.documentElement;
-    root.classList.toggle("dark", theme === "dark");
-    return () => root.classList.remove("dark");
+    const dark = theme === "dark";
+    root.classList.toggle("dark", dark);
+    root.setAttribute("data-theme", dark ? "dark" : "light");
+    return () => {
+      root.classList.remove("dark");
+      root.removeAttribute("data-theme");
+    };
   }, [theme]);
 
   return <div className="bg-background text-foreground p-6">{children}</div>;

@@ -14,7 +14,7 @@ export const statusIndicatorIntent = {
     archetype: "categorical-indicator",
     compositionSignature: [],
     composedOf: [],
-    usedIn: [],
+    usedIn: ["src/components/ui/telemetry-stat.tsx"],
   },
   usageRole: "risk-level-indicator",
   variants: {

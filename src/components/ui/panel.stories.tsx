@@ -52,3 +52,9 @@ export const LongContent: Story = {
 export const Dark: Story = {
   globals: { theme: "dark" },
 };
+
+// The light composition (ADR 0092) — now that the toolbar drives `[data-theme]` (preview.tsx),
+// Panel flips to the light surface ramp; axe checks it too (ADR 0039).
+export const Light: Story = {
+  globals: { theme: "light" },
+};

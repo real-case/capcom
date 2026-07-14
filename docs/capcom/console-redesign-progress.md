@@ -19,26 +19,33 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 
 ## Status
 
-| Phase | Theme                                                           | State         | PR  | Updated    |
-| ----- | --------------------------------------------------------------- | ------------- | --- | ---------- |
-| 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done       | —   | 2026-07-13 |
-| A     | Skin foundation — console primitives + stories                  | ✅ done       | —   | 2026-07-13 |
-| B     | App shell re-skin (`app-shell`)                                 | ☐ not started | —   | —          |
-| C     | Events explorer re-skin (`events-explorer`)                     | ☐ not started | —   | —          |
-| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —   | —          |
-| E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —   | —          |
+| Phase | Theme                                                           | State         | PR                                                 | Updated    |
+| ----- | --------------------------------------------------------------- | ------------- | -------------------------------------------------- | ---------- |
+| 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done       | —                                                  | 2026-07-13 |
+| A     | Skin foundation — console primitives + stories                  | ✅ done       | —                                                  | 2026-07-13 |
+| B     | App shell re-skin (`app-shell`)                                 | ✅ done       | [#35](https://github.com/real-case/capcom/pull/35) | 2026-07-13 |
+| C     | Events explorer re-skin (`events-explorer`)                     | ☐ not started | —                                                  | —          |
+| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —                                                  | —          |
+| E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —                                                  | —          |
 
 Legend: ☐ not started · 🔧 in progress · ✅ done · ⛔ blocked (note why).
 
 ## Resume point
 
-**Next step:** Phase B — App shell re-skin (`src/widgets/app-shell`). Move `AppShell`, `SidebarNav`,
-`CommandPalette`, `ProjectHub` chrome onto the mission-control surfaces using the Phase-A primitives
-(`Panel` / `Hairline` / `MonoData` / `MetricHero`); add the telemetry footer. **Before starting**, wire
-the Storybook theme toolbar to drive `[data-theme]` (not only `.dark`) so the app-shell chrome flips
-light/dark in the workbench like production (Phase A stories work around this with per-story
-`[data-theme="light"]` wrappers — see the Phase-A log). Phase B DoD adds axe + a **human-approved
-Chromatic re-baseline**.
+**Next step:** Phase C — Events explorer re-skin (`src/widgets/events-explorer`). Re-skin the shipped
+flagship (`EventsTable`, `EventsToolbar`, `FacetFilter`, `BulkActionsBar`, `ViewTabs`, `SaveViewPopover`,
+`ColumnsMenu`, `GroupRollup`, `EventDetail`, `RelativeTime`) onto the mission-control surfaces + mono-data
+values + status pills — **behavior unchanged** (the 0097/0098 filters / selection / saved-views / density
+/ group-by). Reuse the Phase-B primitives (`Panel` / `NavItem` / `TelemetryStat` / `MonoData`) and the
+now-global Storybook `[data-theme]` toolbar (wired in Phase B — stories use `globals: { theme }`, no local
+`mcTheme` wrapper). Wire dense mode to `[data-density]` (ADR 0082). DoD: `check:contrast` · axe (dark +
+light) · `design-intent` + story refresh · behavior tests green · human-approved **Chromatic re-baseline**.
+
+**Watch in Phase C — the palette trap (confirmed live in Phase B):** `--text-tertiary` is **not**
+AA-guaranteed for small text (axe flagged 3.99:1 on `--surface-background`). Use `--text-secondary` for
+any small chrome text; `--text-tertiary` only for large/decorative. The **bespoke categorical pill**
+deferred from Phase A also lands its decision here (the events plan pills / category chips are the concrete
+use site — `badge`-through-surface vs a new mission-control categorical pill).
 
 **Two 👤 decisions from Phase A — RESOLVED 2026-07-13** (implemented in the
 `chore/ds-data-display-archetype` PR):
@@ -65,6 +72,50 @@ Chromatic re-baseline**.
 > - **PR:** <link> · merged to dev? <yes/no>
 > - **Next:** <the next concrete step>
 > ```
+
+### Phase B — App shell re-skin (V2: extract chrome sub-primitives) — 2026-07-13 — ✅ done
+
+- **Landed:** the app-shell chrome (`AppShell`, `SidebarNav`, `CommandPalette`, `ProjectHub`) re-skinned
+  off the shadcn value layer onto the mission-control surface (ADR 0099), plus a static-reference-dressing
+  `TelemetryFooter` (Ingestion / RLS / freshness / events-min). **Two new governed kit primitives** (the
+  V2 choice, over the recommended V1): **`NavItem`** (`action-trigger`; `asChild` via the **`radix-ui`
+  umbrella `Slot`** — no new dependency; the first interactive mission-control primitive) and
+  **`TelemetryStat`** (`data-display` composite of `MonoData` + `StatusIndicator`). The Storybook theme
+  toolbar was wired to drive `[data-theme]` **and** `.dark` (`preview.tsx`), mirroring production, so the
+  console chrome flips light/dark in the workbench; new `AppShell` dark+light stories, a `Panel` light
+  story, and the coupled composition-graph / design-intent `usedIn` reconciliation (card − ProjectHub,
+  panel + ProjectHub, mono-data / status-indicator + telemetry-stat, two new nodes).
+- **Gates:** `check:contrast` ✅ both compositions (8/8) · axe a11y ✅ over **all** stories in **both**
+  compositions (228 storybook browser tests) · `check:tokens` ✅ (0 errors) · `check:graph` ✅ (22 nodes) ·
+  `check:design-intent` ✅ (22 specs) · `check:boundaries` ✅ · `check:fsd` ✅ · `check:i18n` ✅ ·
+  `check:stories` ✅ (28 modules) · `gen:tokens` swap-only self-test ✅ + **zero token drift** · `tsc` ✅ ·
+  lint ✅ (source clean) · unit ✅ (418) · build ✅ · coverage ✅ (89.8% stmts / 82.2% br / 87.7% fn /
+  91.9% ln, all ≥ 80%).
+- **Palette-trap caught + fixed:** the axe **dark** story flagged `--text-tertiary` on
+  `--surface-background` at 3.99:1 (< AA) in the breadcrumb — swapped to the AA-verified `--text-secondary`;
+  re-ran green. (`check:tokens`/`check:contrast` don't catch this; only the axe story does.)
+- **SPEC GAPs (3, minor):** (1) the telemetry footer separator is a `border-border-hairline` **utility**,
+  not the `Hairline` component — importing it would need an out-of-allowlist `hairline.design-intent` edit;
+  same token/visual, no graph churn. (2) dropped the `@radix-ui/react-slot` scoped dep for the existing
+  `radix-ui` umbrella `Slot` (critic finding) — marker EXTENSION → **NATIVE**, no new dependency. (3) the
+  **CommandPalette** is a Radix Dialog that **portals to `body`** (outside the story canvas), and no repo
+  precedent axes a portal, so its themed-through overlay is **not** reached by the story axe run. Its
+  contrast was instead verified by **direct oklch computation** (the diff-critic's finding): the
+  `--surface-overlay` + `--text-secondary`/`--text-primary` pairs — which `check:contrast` does not cover —
+  clear AA in **both** compositions (secondary ≈ 6–6.5:1, primary ≈ 12:1); the un-overridable
+  `command-input-wrapper` `bg-input/30` (≈4% lightening) leaves it above AA. Final visual sign-off is the
+  human Chromatic re-baseline. So the "228 axe" figure covers the **persistent chrome + primitives**, not
+  the transient palette overlay.
+- **Chromatic:** new/changed snapshots — the 4 chrome files, `NavItem` / `TelemetryStat` /
+  `TelemetryFooter`, plus the `F22` global `[data-theme]` toolbar wiring flips several **existing**
+  primitive default stories (mono-data / metric-hero / hairline / panel) dark → light, so the re-baseline
+  is repo-wide — **pending human approval** (the agent never approves its own baseline, ADR 0043/0095).
+- **Process:** produced via the marvin task pipeline — sealed spec
+  [`001-console-phase-b-app-shell-reskin.md`](../../.marvin/task/001-console-phase-b-app-shell-reskin.md)
+  (DoR gate PASS, spec-critic BLOCK → PASS-with-warnings), then interactive implementation.
+- **PR:** [#35](https://github.com/real-case/capcom/pull/35) — branch `feat/console-phase-b-app-shell` →
+  `dev`; merged to dev? **no** (awaiting human review + repo-wide Chromatic re-baseline).
+- **Next:** Phase C — events-explorer re-skin (see Resume point).
 
 ### Phase A — Skin foundation (console primitives) — 2026-07-13 — ✅ done
 

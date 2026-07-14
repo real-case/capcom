@@ -78,4 +78,17 @@ describe("SidebarNav", () => {
       "aria-current",
     );
   });
+
+  it("marks the active section with aria-current", () => {
+    usePathname.mockReturnValue("/p/p1/events");
+    renderNav();
+
+    const events = screen.getByRole("link", { name: "Events" });
+    expect(events).toHaveAttribute("aria-current", "page");
+    // Each row is the NavItem primitive, Slot-merged onto the i18n Link (ADR 0099).
+    expect(events).toHaveAttribute("data-slot", "nav-item");
+    expect(screen.getByRole("link", { name: "Trends" })).not.toHaveAttribute(
+      "aria-current",
+    );
+  });
 });
