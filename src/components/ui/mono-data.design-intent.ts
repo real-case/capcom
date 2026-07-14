@@ -22,6 +22,7 @@ export const monoDataIntent = {
       "src/widgets/events-explorer/ui/EventDetail.tsx",
       "src/widgets/events-explorer/ui/EventsTable.tsx",
       "src/widgets/events-explorer/ui/GroupRollup.tsx",
+      "src/widgets/overview-dashboard/ui/KpiCard.tsx",
     ],
   },
   usageRole: null,

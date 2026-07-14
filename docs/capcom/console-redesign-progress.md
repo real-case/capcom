@@ -25,25 +25,40 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 | A     | Skin foundation — console primitives + stories                  | ✅ done       | —                                                  | 2026-07-13 |
 | B     | App shell re-skin (`app-shell`)                                 | ✅ done       | [#35](https://github.com/real-case/capcom/pull/35) | 2026-07-13 |
 | C     | Events explorer re-skin (`events-explorer`)                     | ✅ done       | [#36](https://github.com/real-case/capcom/pull/36) | 2026-07-14 |
-| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —                                                  | —          |
+| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ✅ done       | [#37](https://github.com/real-case/capcom/pull/37) | 2026-07-14 |
 | E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —                                                  | —          |
 
 Legend: ☐ not started · 🔧 in progress · ✅ done · ⛔ blocked (note why).
 
 ## Resume point
 
-**Next step:** Phase D — Overview home (new `src/widgets/overview-dashboard` + KPI RPCs). The curated
-bento console home (first-class, distinct from the user-composed dashboards of ADR 0090): a migration
-adding KPI aggregations as `SECURITY INVOKER` RPCs (active users / new sign-ups / conversion / ARPU / goal
-pacing, ADR 0084) under the membership join (ADR 0083) + `gen:types`; a new widget of KPI cards + visx
-signal charts (ADR 0086/0093) fed reduced rows via TanStack Query; a new "Overview" nav section in the
-shell. **Reuse the Phase-A/B/C primitives** — `Panel`, `MetricHero`, `MonoData`, `TelemetryStat`, and the
-new **`CategoryPill`** (Phase C). DoD: RLS test on the new RPCs · no aggregation in app code (0084) · state
-coverage empty/loading/error (0061/0062) · axe (dark + light) · `check:contrast` · FSD boundaries
-(0066/0060) · human-approved **Chromatic re-baseline** · progress doc updated. Author the spec via the
-marvin task pipeline first (as Phases B/C did).
+**Next step:** Phase E — the final phase: re-skin the remaining analytics widgets (`funnel-builder`,
+`retention-grid`, `segment-builder`, `trends-explorer`) off the shadcn value layer onto the mission-control
+surface (may split per-widget if the diffs are large), and **document the marketing↔console palette seam** so
+contributors never cross-pair the two palettes (the token-palette trap). Reuse the Phase-A/B/C/D primitives
+(`Panel`, `MetricHero`, `MonoData`, `TelemetryStat`, `CategoryPill`, `Hairline`, `StatusIndicator`). DoD:
+final `check:contrast` / axe (dark + light per widget) / `check:tokens` sweep · each re-skinned widget keeps a
+dark **and** light story · human-approved **Chromatic re-baseline** · seam documented · progress doc updated ·
+initiative marked complete. Author the spec via the marvin task pipeline first (as Phases B/C/D did).
 
-**Carry forward — the palette trap (confirmed live in Phase B, held clean in Phase C):**
+**Phase-D reusable facts (for E):**
+
+- **Aggregation RPCs** live at `supabase/migrations/*_create_overview_kpis.sql`; the fetcher-idiom is the
+  `rpcReturning` mock in `src/entities/event/api/queries.test.ts`; the executable RPC-math proof is a
+  Playwright e2e SQL-fixture spec (`e2e/overview.spec.ts`, modeled on `e2e/funnels.spec.ts`) run locally
+  (`npm run test:e2e` after `db:reset` + `SEED_EVENTS_ANCHOR=… npm run seed:events`) — the "RLS test on new
+  RPCs" the plan asks for. Windowed KPI deltas/ratios are **presentation** (a ratio of already-reduced
+  scalars, ADR 0087/0088), never app-code aggregation — the `_prev`-columns-in-the-same-RPC-row design is
+  what keeps it so.
+- **Coupled graph reconciliation (SPEC GAP, reuse in E):** a new widget consuming an EXISTING kit primitive
+  is **not** "no graph change" — `check:graph` demands the primitive's node `usedIn` gain the new consumer,
+  AND the primitive's `design-intent.ts` `meta.usedIn` must be updated in lockstep (the coupled
+  reconciliation). Phase D updated `panel` / `metric-hero` / `mono-data` / `status-indicator`. Budget for
+  this in E for every primitive the re-skinned widgets touch.
+- **Steiger `insignificant-slice` warning** is expected for every widget imported only by its app-router
+  page (trends-explorer, overview-dashboard both show it); `check:fsd` exits 0 — non-blocking.
+
+**Carry forward — the palette trap (confirmed live in Phase B, held clean in Phase C/D):**
 `--text-tertiary` is **not** AA-guaranteed for small text. Use `--text-secondary` for any small text;
 `--text-tertiary` only for large/decorative. `check:tokens`/`check:contrast` do NOT catch a leftover
 shadcn foreground on a `--surface-*` bg — only an **axe story** does, so every re-skinned surface needs a
@@ -73,6 +88,53 @@ categorical-indicator`, `usageRole null`) — a distinct signature that reuses r
 > - **PR:** <link> · merged to dev? <yes/no>
 > - **Next:** <the next concrete step>
 > ```
+
+### Phase D — Overview home (`overview-dashboard` + KPI RPCs) — 2026-07-14 — ✅ done
+
+- **Landed:** the curated bento Overview home — the console's first-class instrument-panel home (ADR 0099),
+  deliberately distinct from the user-composed dashboards of ADR 0090.
+  - **Two `SECURITY INVOKER` KPI RPCs** (`supabase/migrations/20260714120000_create_overview_kpis.sql`,
+    ADR 0084, mirroring the `fn_events_summary` / `fn_event_trends` idiom): `fn_overview_kpis` returns one
+    row of the scalar KPIs over the current window **and** the equal-length preceding window (`*_prev`
+    columns) — active users / new sign-ups / purchasers / revenue; `fn_overview_signal` returns the
+    zero-filled per-bucket signal series. No new table/policy/GRANT; `gen:types` regenerated.
+  - **New widget `src/widgets/overview-dashboard`:** a `"use client"` fetching container reading a nuqs
+    `range` (7d/30d/90d, Zod-validated) → the two TanStack Query hooks → `deriveKpis` (conversion,
+    ARPU, deltas, goal-pacing computed as **presentation** — a ratio of already-reduced scalars,
+    ADR 0087/0088, never app-code aggregation) → a bento of **presentational** children composing the
+    shipped primitives: `KpiCard` ×4 + `PacingCard` (Panel + MetricHero + MonoData + StatusIndicator) +
+    `SignalChart` (a token-only visx sparkline, non-interactive `role="img"` + summary — no live region).
+    **No new kit primitive.**
+  - **Overview route** (`p/[projectId]/page.tsx`): the bento is the hero; `ProjectHub` is retained below
+    under an "Explore" heading. The page **header was re-skinned** off the shadcn value layer onto
+    mission-control (`text-text-primary/secondary`, Badge themed-through) — the palette-trap half-mix the
+    spec-critic caught. New `Overview` i18n namespace (one catalog, key parity).
+- **Gates:** `check:contrast` ✅ both compositions (8/8) · axe a11y ✅ over the new KpiCard / PacingCard /
+  SignalChart stories in **both** compositions (719 tests pass, 0 fail) · `check:tokens` ✅ (0 errors) ·
+  `check:graph` ✅ (23 nodes) · `check:design-intent` ✅ (23 specs) · `check:boundaries` ✅ · `check:fsd` ✅
+  (exit 0) · `check:i18n` ✅ (413 keys) · `check:stories` ✅ · `gen:tokens` swap-only self-test ✅ + **zero
+  token drift** · `tsc` ✅ · lint ✅ (`src` clean) · unit ✅ (52 new: queries/window/kpis/OverviewDashboard) ·
+  **e2e ✅ `e2e/overview.spec.ts` 4/4** (the `_prev` adjacent-window identity + cross-tenant isolation,
+  against the seeded DB) · build ✅ · coverage ✅ (90.4% stmts / 82.97% br / 87.11% fn / 92.5% ln, all ≥ 80%).
+- **SPEC GAPs (recorded, mechanical):** (1) **coupled graph reconciliation** — the spec's AC8 said "no
+  composition-graph/design-intent change", true only for a _new_ primitive; a new widget consuming EXISTING
+  primitives requires each primitive's node `usedIn` **and** its `design-intent.ts` `meta.usedIn` to gain the
+  new consumers. Updated `panel` / `metric-hero` / `mono-data` / `status-indicator` (graph + design-intent,
+  in lockstep) — the design-intent comments already anticipated Phase D. (2) The RPC verification was
+  upgraded (spec-critic round-1) from prose-review-only to the existing Playwright e2e SQL-fixture harness
+  (`e2e/overview.spec.ts`). (3) ARPU currency formatted as USD (the demo amount unit) — presentation detail.
+- **Process:** produced via the marvin task pipeline — sealed spec
+  [`003-console-phase-d-overview-dashboard.md`](../../.marvin/task/003-console-phase-d-overview-dashboard.md)
+  (contract_sha `dd6eb6e46d3b72a1`; DoR PASS-with-warnings, spec-critic **BLOCK → PASS WITH WARNINGS** over 2
+  rounds — the critic found the e2e harness the draft missed and the page-header palette-trap), then
+  interactive implementation.
+- **Chromatic:** new snapshots — the `KpiCard` / `PacingCard` / `SignalChart` stories (dark + light) and the
+  re-skinned Overview route — **pending human approval** (the agent never approves its own baseline, ADR
+  0043/0095).
+- **PR:** [#37](https://github.com/real-case/capcom/pull/37) — branch `feat/console-phase-d-overview-dashboard`
+  → `dev`; merged to dev? **no** (awaiting human review + Chromatic re-baseline). Reviews before opening:
+  `supabase-rls-reviewer` **CLEAN** (AC1) + `marvin-tm-diff-critic` **PASS WITH WARNINGS** (no blockers).
+- **Next:** Phase E — remaining analytics widgets + seam docs (see Resume point); initiative completion.
 
 ### Phase C — Events explorer re-skin (+ a governed CategoryPill) — 2026-07-14 — ✅ done
 

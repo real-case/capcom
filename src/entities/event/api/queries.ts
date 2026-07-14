@@ -14,6 +14,10 @@ import type {
   EventTrendsArgs,
   FunnelArgs,
   FunnelStep,
+  OverviewKpis,
+  OverviewKpisArgs,
+  OverviewSignalArgs,
+  OverviewSignalBucket,
   RetentionArgs,
   RetentionCell,
   TopEvent,
@@ -196,6 +200,50 @@ export async function fetchRetention(
   args: RetentionArgs,
 ): Promise<RetentionCell[]> {
   const { data, error } = await supabase.rpc("fn_retention", args);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * The curated Overview KPIs (ADR 0099, under the 0084 strategy): one row of the reduced
+ * scalars over the current window and the equal-length preceding window, from the
+ * `SECURITY INVOKER` `fn_overview_kpis` RPC — reduced in the database under the caller's
+ * RLS, never in application code. Returns zeros when RLS yields no row (a non-member,
+ * ADR 0083); this fetcher forwards the typed argument bag verbatim and performs no
+ * reduction (the deltas/conversion/ARPU/pacing are presentation, computed by the widget).
+ */
+export async function fetchOverviewKpis(
+  supabase: SupabaseClient<Database>,
+  args: OverviewKpisArgs,
+): Promise<OverviewKpis> {
+  const { data, error } = await supabase.rpc("fn_overview_kpis", args);
+  if (error) throw error;
+  return (
+    data?.[0] ?? {
+      active_users: 0,
+      active_users_prev: 0,
+      new_signups: 0,
+      new_signups_prev: 0,
+      purchasers: 0,
+      purchasers_prev: 0,
+      value_sum: 0,
+      value_sum_prev: 0,
+    }
+  );
+}
+
+/**
+ * The Overview signal series (ADR 0099, under the 0084 strategy): per-bucket distinct
+ * active users, distinct new sign-ups, and purchase value, from the `SECURITY INVOKER`
+ * `fn_overview_signal` RPC — reduced (and zero-filled) in the database under the caller's
+ * RLS, never a client-side tally. Returns an empty list when RLS yields no rows (a
+ * non-member, ADR 0083); this fetcher forwards the typed argument bag verbatim.
+ */
+export async function fetchOverviewSignal(
+  supabase: SupabaseClient<Database>,
+  args: OverviewSignalArgs,
+): Promise<OverviewSignalBucket[]> {
+  const { data, error } = await supabase.rpc("fn_overview_signal", args);
   if (error) throw error;
   return data ?? [];
 }

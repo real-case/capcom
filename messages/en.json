@@ -173,6 +173,7 @@
   "ProjectOverview": {
     "yourRole": "Your role",
     "lead": "Jump into an analysis surface, or compose saved reports into a dashboard.",
+    "exploreHeading": "Explore",
     "surfaces": {
       "events": {
         "description": "The raw event stream as an advanced, filterable data table."
@@ -195,6 +196,36 @@
       "ask": {
         "description": "Describe an analysis in plain language and open it."
       }
+    }
+  },
+  "Overview": {
+    "title": "Overview",
+    "lead": "Project health at a glance — the last window versus the one before it.",
+    "rangeLabel": "Range",
+    "range": {
+      "7d": "Last 7 days",
+      "30d": "Last 30 days",
+      "90d": "Last 90 days"
+    },
+    "kpi": {
+      "activeUsers": "Active users",
+      "newSignups": "New sign-ups",
+      "conversion": "Conversion",
+      "arpu": "ARPU",
+      "pacing": "Goal pacing"
+    },
+    "deltaCaption": "vs the previous period",
+    "pacingCaption": "revenue vs the previous period",
+    "signalHeading": "Signals",
+    "signal": {
+      "active_users": "Active users",
+      "new_signups": "New sign-ups",
+      "value_sum": "Revenue"
+    },
+    "state": {
+      "loading": "Loading…",
+      "error": "Couldn’t load this metric.",
+      "empty": "No data in this range."
     }
   },
   "Events": {

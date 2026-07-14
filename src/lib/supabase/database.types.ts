@@ -430,6 +430,33 @@ export type Database = {
           users: number;
         }[];
       };
+      fn_overview_kpis: {
+        Args: { p_from: string; p_project_id: string; p_to: string };
+        Returns: {
+          active_users: number;
+          active_users_prev: number;
+          new_signups: number;
+          new_signups_prev: number;
+          purchasers: number;
+          purchasers_prev: number;
+          value_sum: number;
+          value_sum_prev: number;
+        }[];
+      };
+      fn_overview_signal: {
+        Args: {
+          p_from: string;
+          p_interval: string;
+          p_project_id: string;
+          p_to: string;
+        };
+        Returns: {
+          active_users: number;
+          bucket: string;
+          new_signups: number;
+          value_sum: number;
+        }[];
+      };
       fn_retention: {
         Args: {
           p_from: string;

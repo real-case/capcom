@@ -16,7 +16,10 @@ export const metricHeroIntent = {
     archetype: "data-display",
     compositionSignature: [],
     composedOf: [],
-    usedIn: [],
+    usedIn: [
+      "src/widgets/overview-dashboard/ui/KpiCard.tsx",
+      "src/widgets/overview-dashboard/ui/PacingCard.tsx",
+    ],
   },
   usageRole: null,
   variants: {

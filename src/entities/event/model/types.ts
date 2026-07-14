@@ -119,3 +119,32 @@ export type RetentionCell =
 /** The argument bag for the `fn_retention` RPC (generated, ADR 0015). */
 export type RetentionArgs =
   Database["public"]["Functions"]["fn_retention"]["Args"];
+
+/**
+ * One row of curated Overview KPIs from the `fn_overview_kpis` aggregation (ADR 0099,
+ * under the 0084 strategy): the reduced scalars over the current window AND over the
+ * equal-length preceding window (the `_prev` columns) — `active_users`, `new_signups`,
+ * `purchasers`, and purchase `value_sum`. Backs the console Overview bento; the deltas,
+ * conversion, ARPU, and goal-pace are PRESENTATION derived from these already-reduced
+ * scalars (a ratio of two counts, ADR 0087/0088), never a client-side reduction.
+ * Generated RPC return type (ADR 0015).
+ */
+export type OverviewKpis =
+  Database["public"]["Functions"]["fn_overview_kpis"]["Returns"][number];
+
+/** The argument bag for the `fn_overview_kpis` RPC (generated, ADR 0015). */
+export type OverviewKpisArgs =
+  Database["public"]["Functions"]["fn_overview_kpis"]["Args"];
+
+/**
+ * One per-bucket row from the `fn_overview_signal` aggregation (ADR 0099, under the 0084
+ * strategy): a time `bucket` and its distinct `active_users`, distinct `new_signups`, and
+ * purchase `value_sum`. Zero-filled over the window so the Overview sparklines are
+ * contiguous. Generated RPC return type (ADR 0015).
+ */
+export type OverviewSignalBucket =
+  Database["public"]["Functions"]["fn_overview_signal"]["Returns"][number];
+
+/** The argument bag for the `fn_overview_signal` RPC (generated, ADR 0015). */
+export type OverviewSignalArgs =
+  Database["public"]["Functions"]["fn_overview_signal"]["Args"];
