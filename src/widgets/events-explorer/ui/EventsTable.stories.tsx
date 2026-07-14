@@ -333,3 +333,20 @@ export const SelectedDark: Story = {
   globals: { theme: "dark" },
   args: { rowSelection: { e1: true, e4: true } },
 };
+
+/**
+ * Expanded detail in dark — EventDetail (Panel + MonoData) renders only when a row is
+ * open, and the light `Expanded` story is the only other one that opens it, so this is
+ * the sole dark-composition axe coverage for the re-skinned detail panel (ADR 0092/0099).
+ */
+export const ExpandedDark: Story = {
+  globals: { theme: "dark" },
+  args: {
+    expandedId: "e1",
+    detail: {
+      profile: PROFILE,
+      activity: [ROWS[0]!, ROWS[2]!, ROWS[4]!],
+      isLoading: false,
+    },
+  },
+};

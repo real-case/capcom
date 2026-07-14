@@ -21,7 +21,8 @@ import { Fragment } from "react";
 
 import type { AnalyticsEvent, EventsSummary } from "@/entities/event";
 import type { Profile } from "@/entities/profile";
-import { Badge } from "@/components/ui/badge";
+import { CategoryPill } from "@/components/ui/category-pill";
+import { MonoData } from "@/components/ui/mono-data";
 import { useLocale, useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,6 @@ import { toColumnVisibility, type HideableColumn } from "../model/url-state";
 import {
   eventHue,
   formatValue,
-  planVariant,
   propertyChips,
   shortId,
   trait,
@@ -149,7 +149,7 @@ export function EventsTable({
             if (el) el.indeterminate = table.getIsSomeRowsSelected();
           }}
           onChange={table.getToggleAllRowsSelectedHandler()}
-          className="size-4 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="size-4 cursor-pointer accent-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
         />
       ),
       cell: ({ row }) => (
@@ -158,7 +158,7 @@ export function EventsTable({
           aria-label={t("selectRow", { event: row.original.event_name })}
           checked={row.getIsSelected()}
           onChange={row.getToggleSelectedHandler()}
-          className="size-4 cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="size-4 cursor-pointer accent-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
         />
       ),
     },
@@ -175,13 +175,13 @@ export function EventsTable({
             aria-controls={`event-detail-${event.id}`}
             aria-label={t("expandRow")}
             onClick={() => onToggleExpand(event.id)}
-            className="flex items-center gap-2 rounded-sm text-left font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex items-center gap-2 rounded-sm text-left font-medium text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
           >
             <Caret
               aria-hidden
               className={cn(
-                "size-3.5 shrink-0 text-muted-foreground transition-transform",
-                open && "rotate-90 text-primary",
+                "size-3.5 shrink-0 text-text-secondary transition-transform",
+                open && "rotate-90 text-text-primary",
               )}
             />
             <span
@@ -198,9 +198,9 @@ export function EventsTable({
       id: "user",
       header: t("col_user"),
       cell: ({ row }) => (
-        <span className="font-mono text-muted-foreground">
+        <MonoData tone="secondary">
           {shortId(row.original.distinct_id)}
-        </span>
+        </MonoData>
       ),
     },
     {
@@ -209,11 +209,11 @@ export function EventsTable({
       cell: ({ row }) => {
         const plan = trait(row.original, "plan");
         return plan ? (
-          <Badge variant={planVariant(plan)} className="capitalize">
+          <CategoryPill hue={eventHue(plan)} className="capitalize">
             {plan}
-          </Badge>
+          </CategoryPill>
         ) : (
-          <span className="text-muted-foreground">—</span>
+          <span className="text-text-secondary">—</span>
         );
       },
     },
@@ -221,16 +221,16 @@ export function EventsTable({
       id: "country",
       header: t("col_country"),
       cell: ({ row }) => (
-        <span className="font-mono text-muted-foreground">
+        <MonoData tone="secondary">
           {trait(row.original, "country") ?? "—"}
-        </span>
+        </MonoData>
       ),
     },
     {
       id: "device",
       header: t("col_device"),
       cell: ({ row }) => (
-        <span className="capitalize text-muted-foreground">
+        <span className="capitalize text-text-secondary">
           {trait(row.original, "device") ?? "—"}
         </span>
       ),
@@ -241,11 +241,9 @@ export function EventsTable({
       cell: ({ row }) => {
         const value = formatValue(row.original, locale);
         return value ? (
-          <span className="font-mono font-semibold text-foreground">
-            {value}
-          </span>
+          <MonoData className="font-semibold">{value}</MonoData>
         ) : (
-          <span className="font-mono text-muted-foreground">—</span>
+          <MonoData tone="secondary">—</MonoData>
         );
       },
     },
@@ -259,13 +257,14 @@ export function EventsTable({
             {chips.map((chip) => (
               <span
                 key={chip.key}
-                className="rounded border border-border px-1.5 py-0.5 font-mono text-[0.6875rem] text-muted-foreground"
+                className="rounded border border-border-hairline px-1.5 py-0.5 font-mono text-[0.6875rem] text-text-secondary"
               >
-                <span className="text-foreground">{chip.key}</span>={chip.value}
+                <span className="text-text-primary">{chip.key}</span>=
+                {chip.value}
               </span>
             ))}
             {overflow > 0 ? (
-              <span className="text-[0.6875rem] text-muted-foreground">
+              <span className="text-[0.6875rem] text-text-secondary">
                 +{overflow}
               </span>
             ) : null}
@@ -277,9 +276,9 @@ export function EventsTable({
       id: "time",
       header: t("col_time"),
       cell: ({ row }) => (
-        <span className="font-mono text-muted-foreground">
+        <MonoData tone="secondary">
           <RelativeTime tsIso={row.original.ts} nowMs={nowMs} />
-        </span>
+        </MonoData>
       ),
     },
   ];
@@ -326,14 +325,14 @@ export function EventsTable({
     <div className="flex flex-col gap-3">
       {/* toolbar */}
       <div className="flex flex-wrap items-center gap-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-text-secondary">
           {t("subtitle", { count: total })}
         </p>
         <button
           type="button"
           aria-pressed={streamPaused}
           onClick={onToggleStream}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border-hairline bg-surface-panel px-2.5 py-1 text-xs text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
         >
           <span
             aria-hidden
@@ -343,7 +342,7 @@ export function EventsTable({
             )}
             style={{
               background: streamPaused
-                ? "var(--color-muted-foreground)"
+                ? "var(--color-text-tertiary)"
                 : "var(--color-viz-categorical-3)",
             }}
           />
@@ -352,9 +351,9 @@ export function EventsTable({
         {liveRate !== undefined ? (
           // Events in the trailing minute — reduced by fn_events_summary over a
           // [from, to) window (ADR 0098/0084), never counted client-side.
-          <span className="text-xs font-medium tabular-nums text-muted-foreground">
+          <MonoData tone="secondary" className="font-medium">
             {t("live", { rate: liveRate })}
-          </span>
+          </MonoData>
         ) : null}
         <div
           className="ms-auto flex items-center gap-1"
@@ -368,10 +367,10 @@ export function EventsTable({
               aria-pressed={density === option}
               onClick={() => onDensity(option)}
               className={cn(
-                "rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary",
                 density === option
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "bg-surface-elevated text-text-primary"
+                  : "text-text-secondary hover:text-text-primary",
               )}
             >
               {t(`density_${option}`)}
@@ -390,12 +389,15 @@ export function EventsTable({
       />
 
       {/* table */}
-      <div className="overflow-x-auto rounded-lg border border-border bg-card">
+      <div className="overflow-x-auto rounded-lg border border-border-hairline bg-surface-panel">
         <table className="w-full min-w-[880px] border-collapse text-sm">
           <caption className="sr-only">{t("tableLabel")}</caption>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-border">
+              <tr
+                key={headerGroup.id}
+                className="border-b border-border-hairline"
+              >
                 {headerGroup.headers.map((header) => {
                   const columnId = header.column.id;
                   const sortable = SORTABLE_IDS.has(columnId);
@@ -424,7 +426,7 @@ export function EventsTable({
                           : undefined
                       }
                       className={cn(
-                        "bg-muted/50 px-3 py-2.5 text-left text-xs font-medium text-muted-foreground",
+                        "bg-surface-elevated px-3 py-2.5 text-left text-xs font-medium text-text-secondary",
                         alignRight && "text-right",
                         columnId === "select" && "w-8",
                       )}
@@ -439,8 +441,8 @@ export function EventsTable({
                             )
                           }
                           className={cn(
-                            "inline-flex items-center gap-1 rounded-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            state && "text-foreground",
+                            "inline-flex items-center gap-1 rounded-sm transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary",
+                            state && "text-text-primary",
                           )}
                           aria-label={t("sortBy", { column: headerText })}
                         >
@@ -458,7 +460,7 @@ export function EventsTable({
                             />
                           )}
                           {multiSort && state ? (
-                            <span className="tabular-nums text-[0.625rem] text-muted-foreground">
+                            <span className="tabular-nums text-[0.625rem] text-text-secondary">
                               {state.index + 1}
                             </span>
                           ) : null}
@@ -477,7 +479,7 @@ export function EventsTable({
               <tr>
                 <td
                   colSpan={COLS}
-                  className="px-3 py-10 text-center text-sm text-muted-foreground"
+                  className="px-3 py-10 text-center text-sm text-text-secondary"
                 >
                   {t("error")}
                 </td>
@@ -486,7 +488,7 @@ export function EventsTable({
               <tr>
                 <td
                   colSpan={COLS}
-                  className="px-3 py-10 text-center text-sm text-muted-foreground"
+                  className="px-3 py-10 text-center text-sm text-text-secondary"
                 >
                   {t("loading")}
                 </td>
@@ -495,7 +497,7 @@ export function EventsTable({
               <tr>
                 <td
                   colSpan={COLS}
-                  className="px-3 py-10 text-center text-sm text-muted-foreground"
+                  className="px-3 py-10 text-center text-sm text-text-secondary"
                 >
                   {filterActive ? t("emptyFiltered") : t("empty")}
                 </td>
@@ -508,12 +510,12 @@ export function EventsTable({
                     <tr
                       data-state={row.getIsSelected() ? "selected" : undefined}
                       className={cn(
-                        "border-b border-border transition-colors hover:bg-muted/40",
+                        "border-b border-border-hairline transition-colors hover:bg-surface-elevated",
                         // Selected rows reuse the open-row neutral tint: a primary-tinted
-                        // background drops muted-foreground below the 4.5:1 AA ratio in the
+                        // background drops the secondary text below the 4.5:1 AA ratio in the
                         // light composition (axe, ADR 0039/0092) — the checkbox +
                         // data-state carry the selection semantics.
-                        (open || row.getIsSelected()) && "bg-muted/40",
+                        (open || row.getIsSelected()) && "bg-surface-elevated",
                       )}
                     >
                       {row.getVisibleCells().map((cell) => (
@@ -560,10 +562,10 @@ export function EventsTable({
           <tfoot>
             {/* The footer splits around the value column; both spans track the
                 hidden-column set (ADR 0098). */}
-            <tr className="border-t border-border bg-muted/50">
+            <tr className="border-t border-border-hairline bg-surface-elevated">
               <td
                 colSpan={valueIdx === -1 ? COLS : valueIdx}
-                className="px-3 py-2.5 text-xs text-muted-foreground"
+                className="px-3 py-2.5 text-xs text-text-secondary"
               >
                 {t("summary", {
                   events: summary?.total_events ?? 0,
@@ -572,8 +574,10 @@ export function EventsTable({
               </td>
               {valueIdx !== -1 ? (
                 <>
-                  <td className="px-3 py-2.5 text-right font-mono text-xs font-semibold text-foreground">
-                    {formatSummaryValue(summary?.value_sum ?? 0, locale)}
+                  <td className="px-3 py-2.5 text-right">
+                    <MonoData className="font-semibold">
+                      {formatSummaryValue(summary?.value_sum ?? 0, locale)}
+                    </MonoData>
                   </td>
                   {COLS - valueIdx - 1 > 0 ? (
                     <td colSpan={COLS - valueIdx - 1} />
@@ -587,7 +591,7 @@ export function EventsTable({
 
       {/* pager */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-text-secondary">
           {t("pageInfo", { from, to, total })}
         </p>
         <div className="flex items-center gap-2">
@@ -603,10 +607,10 @@ export function EventsTable({
                 aria-pressed={pageSize === size}
                 onClick={() => onPageSize(size)}
                 className={cn(
-                  "rounded-md px-2 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "rounded-md px-2 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary",
                   pageSize === size
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "bg-surface-elevated text-text-primary"
+                    : "text-text-secondary hover:text-text-primary",
                 )}
               >
                 {size}
@@ -618,19 +622,19 @@ export function EventsTable({
             onClick={() => onPage(page - 1)}
             disabled={page <= 1}
             aria-label={t("prevPage")}
-            className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex size-8 items-center justify-center rounded-md border border-border-hairline bg-surface-panel text-text-secondary transition-colors hover:text-text-primary disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
           >
             <ChevronLeft aria-hidden className="size-4" />
           </button>
-          <span className="text-xs tabular-nums text-muted-foreground">
+          <MonoData tone="secondary">
             {page} / {pageCount}
-          </span>
+          </MonoData>
           <button
             type="button"
             onClick={() => onPage(page + 1)}
             disabled={page >= pageCount}
             aria-label={t("nextPage")}
-            className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-card text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex size-8 items-center justify-center rounded-md border border-border-hairline bg-surface-panel text-text-secondary transition-colors hover:text-text-primary disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
           >
             <ChevronRight aria-hidden className="size-4" />
           </button>

@@ -24,7 +24,7 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 | 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done       | —                                                  | 2026-07-13 |
 | A     | Skin foundation — console primitives + stories                  | ✅ done       | —                                                  | 2026-07-13 |
 | B     | App shell re-skin (`app-shell`)                                 | ✅ done       | [#35](https://github.com/real-case/capcom/pull/35) | 2026-07-13 |
-| C     | Events explorer re-skin (`events-explorer`)                     | ☐ not started | —                                                  | —          |
+| C     | Events explorer re-skin (`events-explorer`)                     | ✅ done       | _pending_                                          | 2026-07-14 |
 | D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —                                                  | —          |
 | E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —                                                  | —          |
 
@@ -32,33 +32,34 @@ Legend: ☐ not started · 🔧 in progress · ✅ done · ⛔ blocked (note why
 
 ## Resume point
 
-**Next step:** Phase C — Events explorer re-skin (`src/widgets/events-explorer`). Re-skin the shipped
-flagship (`EventsTable`, `EventsToolbar`, `FacetFilter`, `BulkActionsBar`, `ViewTabs`, `SaveViewPopover`,
-`ColumnsMenu`, `GroupRollup`, `EventDetail`, `RelativeTime`) onto the mission-control surfaces + mono-data
-values + status pills — **behavior unchanged** (the 0097/0098 filters / selection / saved-views / density
-/ group-by). Reuse the Phase-B primitives (`Panel` / `NavItem` / `TelemetryStat` / `MonoData`) and the
-now-global Storybook `[data-theme]` toolbar (wired in Phase B — stories use `globals: { theme }`, no local
-`mcTheme` wrapper). Wire dense mode to `[data-density]` (ADR 0082). DoD: `check:contrast` · axe (dark +
-light) · `design-intent` + story refresh · behavior tests green · human-approved **Chromatic re-baseline**.
+**Next step:** Phase D — Overview home (new `src/widgets/overview-dashboard` + KPI RPCs). The curated
+bento console home (first-class, distinct from the user-composed dashboards of ADR 0090): a migration
+adding KPI aggregations as `SECURITY INVOKER` RPCs (active users / new sign-ups / conversion / ARPU / goal
+pacing, ADR 0084) under the membership join (ADR 0083) + `gen:types`; a new widget of KPI cards + visx
+signal charts (ADR 0086/0093) fed reduced rows via TanStack Query; a new "Overview" nav section in the
+shell. **Reuse the Phase-A/B/C primitives** — `Panel`, `MetricHero`, `MonoData`, `TelemetryStat`, and the
+new **`CategoryPill`** (Phase C). DoD: RLS test on the new RPCs · no aggregation in app code (0084) · state
+coverage empty/loading/error (0061/0062) · axe (dark + light) · `check:contrast` · FSD boundaries
+(0066/0060) · human-approved **Chromatic re-baseline** · progress doc updated. Author the spec via the
+marvin task pipeline first (as Phases B/C did).
 
-**Watch in Phase C — the palette trap (confirmed live in Phase B):** `--text-tertiary` is **not**
-AA-guaranteed for small text (axe flagged 3.99:1 on `--surface-background`). Use `--text-secondary` for
-any small chrome text; `--text-tertiary` only for large/decorative. The **bespoke categorical pill**
-deferred from Phase A also lands its decision here (the events plan pills / category chips are the concrete
-use site — `badge`-through-surface vs a new mission-control categorical pill).
+**Carry forward — the palette trap (confirmed live in Phase B, held clean in Phase C):**
+`--text-tertiary` is **not** AA-guaranteed for small text. Use `--text-secondary` for any small text;
+`--text-tertiary` only for large/decorative. `check:tokens`/`check:contrast` do NOT catch a leftover
+shadcn foreground on a `--surface-*` bg — only an **axe story** does, so every re-skinned surface needs a
+dark **and** light story.
 
-**Two 👤 decisions from Phase A — RESOLVED 2026-07-13** (implemented in the
-`chore/ds-data-display-archetype` PR):
+**Phase C 👤 decisions (RESOLVED 2026-07-14, this session):**
 
-1. **StatusPill → reuse, no new component.** Severity uses `status-indicator` (already
-   mission-control); category uses `badge`, themed through the console surface at the call site. A
-   bespoke mission-control categorical pill is **deferred to Phase C**, where the events-explorer plan
-   pills / category chips are the concrete use site that would fix its API. No new usage role added.
-2. **`archetype` → added a `data-display` class** (👤 extension of ADR 0061's ratified vocabulary).
-   `MetricHero` + `MonoData` reclassified `null → data-display` (mandates only contentBounds; data
-   absence/loading stays the widget's job). **`Hairline` stays `null` — CONFIRMED** (a rule renders no
-   value, so it fits no archetype). Landed in `archetypes.ts` / `states.ts` + the two design-intents +
-   the graph.
+1. **Categorical pill → NEW governed `CategoryPill` primitive** (over badge-through-surface). It
+   **composes `Badge`** (`compositionSignature ["badge"]`, `kind composite`, `archetype
+categorical-indicator`, `usageRole null`) — a distinct signature that reuses rather than duplicates the
+   chip, dodging the ADR 0059 collision that dropped StatusPill in Phase A. A viz-categorical hue dot +
+   themed Badge; `hue` takes a `var(--color-viz-*)` token from `eventHue`. Consumed by the plan column
+   (EventsTable) + the group-roll-up label (GroupRollup).
+2. **Axe coverage → per-component stories** for the 7 toolbar-row components (they're only rendered by the
+   fetching `EventsExplorer`, so had no coverage). `StatusIndicator` was **rejected** for the pulsing
+   stream dot (a severity pill is the wrong fit — the dot stays a bare inline dot).
 
 ## Phase log
 
@@ -72,6 +73,49 @@ use site — `badge`-through-surface vs a new mission-control categorical pill).
 > - **PR:** <link> · merged to dev? <yes/no>
 > - **Next:** <the next concrete step>
 > ```
+
+### Phase C — Events explorer re-skin (+ a governed CategoryPill) — 2026-07-14 — ✅ done
+
+- **Landed:** the events-explorer flagship (`EventsTable`, `EventsToolbar`, `FacetFilter`, `BulkActionsBar`,
+  `ViewTabs`, `SaveViewPopover`, `ColumnsMenu`, `GroupByMenu`, `GroupRollup`, `EventDetail`, `EventsExplorer`)
+  re-skinned off the shadcn value layer onto the mission-control surface (ADR 0099) — **behavior unchanged**
+  (the 0097/0098 filters / selection / saved-views / density / group-by all preserved; `data-density` was
+  already wired in 0098 and stays). Numeric cells adopt **`MonoData`** (value / user / country / time /
+  footer / pager / detail rows), container surfaces adopt **`Panel`** (BulkActionsBar / GroupRollup /
+  EventDetail cards). **One new governed kit primitive: `CategoryPill`** — the 👤 decision (see Resume
+  point): a composite that themes `Badge` through the surface (`compositionSignature ["badge"]`) + a
+  viz-categorical hue dot, consumed by the plan column + roll-up label; ships design-intent + dark/light
+  stories + test + graph node. `planVariant` removed (CategoryPill + `eventHue` replace it). Reused shadcn
+  `Button`/`Popover`/`Command`/`DropdownMenu` themed **through** the surface at the call site (never forked,
+  ADR 0099). Per the 2nd 👤 decision, **7 new per-component stories** (EventsToolbar / FacetFilter / ViewTabs
+  / SaveViewPopover / ColumnsMenu / GroupByMenu / GroupRollup, each dark + light) give the toolbar row axe
+  coverage it lacked, plus an `ExpandedDark` EventsTable story for the detail panel.
+- **Gates:** `check:contrast` ✅ both compositions (8/8) · axe a11y ✅ over the CategoryPill + 7 toolbar-row
+  - EventsTable stories in **both** compositions (47 storybook browser tests) · `check:tokens` ✅ (0 errors) ·
+    `check:graph` ✅ (23 nodes) · `check:design-intent` ✅ (23 specs) · `check:boundaries` ✅ · `check:fsd` ✅ ·
+    `check:i18n` ✅ (392 keys) · `check:stories` ✅ (29 modules) · `gen:tokens` swap-only self-test ✅ + **zero
+    token drift** (no new tokens) · `tsc` ✅ · lint ✅ (`src` clean) · unit ✅ (EventsExplorer 10/10 incl. the new
+    behavior-preservation test, CategoryPill 3/3) · build ✅ · coverage ✅ (90.1% stmts / 82.6% br / 87.2% fn /
+    92.2% ln, all ≥ 80%).
+- **CategoryPill earns its existence (ADR 0059):** `Badge` is already a `categorical-indicator` leaf
+  (signature `[]`); a new leaf would be a structural duplicate (the Phase-A StatusPill collision). Composing
+  `Badge` gives `["badge"]` — a distinct signature that reuses the chip. `StatusIndicator` was **rejected**
+  for the pulsing stream dot (a severity pill is the wrong fit; the dot stays a bare inline dot, so no
+  `status-indicator` graph edge).
+- **Palette trap held clean;** one **target-size** (not contrast) axe issue surfaced by the new EventsToolbar
+  story: the search-clear button was 20px (< the WCAG 2.2 24px min) — a **pre-existing** size never caught
+  because the toolbar had no story; fixed `size-5 → size-6` (the only tap-target fix needed; the chip-remove
+  buttons pass on spacing). SPEC GAP recorded.
+- **Process:** produced via the marvin task pipeline — sealed spec
+  [`002-console-phase-c-events-explorer-reskin.md`](../../.marvin/task/002-console-phase-c-events-explorer-reskin.md)
+  (DoR gate PASS, spec-critic BLOCK → PASS: added `ExpandedDark`, dropped StatusIndicator, tightened AC4),
+  then interactive implementation.
+- **Chromatic:** new/changed snapshots — `CategoryPill` + its stories, the 7 toolbar-row stories, the
+  re-skinned `EventsTable` (incl. `ExpandedDark`), and the re-skinned `EventDetail`/`GroupRollup`/
+  `BulkActionsBar` — **pending human approval** (the agent never approves its own baseline, ADR 0043/0095).
+- **PR:** _pending_ — branch `feat/console-phase-c-events-explorer` → `dev`; merged to dev? **no** (awaiting
+  human review + Chromatic re-baseline). This entry's PR link is filled once the PR opens.
+- **Next:** Phase D — overview-dashboard + KPI RPCs (see Resume point).
 
 ### Phase B — App shell re-skin (V2: extract chrome sub-primitives) — 2026-07-13 — ✅ done
 

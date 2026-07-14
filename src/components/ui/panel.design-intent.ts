@@ -16,7 +16,12 @@ export const panelIntent = {
     archetype: "container",
     compositionSignature: [],
     composedOf: [],
-    usedIn: ["src/widgets/app-shell/ui/ProjectHub.tsx"],
+    usedIn: [
+      "src/widgets/app-shell/ui/ProjectHub.tsx",
+      "src/widgets/events-explorer/ui/BulkActionsBar.tsx",
+      "src/widgets/events-explorer/ui/EventDetail.tsx",
+      "src/widgets/events-explorer/ui/GroupRollup.tsx",
+    ],
   },
   usageRole: null,
   variants: {

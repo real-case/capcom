@@ -27,10 +27,10 @@ export function ViewTabs({
   const t = useTranslations("Events");
   const tabClass = (active: boolean) =>
     cn(
-      "rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      "rounded-md px-2.5 py-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary",
       active
-        ? "bg-accent font-medium text-accent-foreground"
-        : "text-muted-foreground hover:text-foreground",
+        ? "bg-surface-elevated font-medium text-text-primary"
+        : "text-text-secondary hover:text-text-primary",
     );
 
   return (

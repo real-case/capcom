@@ -87,7 +87,7 @@ export function EventsToolbar({
         <div className="relative">
           <Search
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 start-2.5 my-auto size-3.5 text-muted-foreground"
+            className="pointer-events-none absolute inset-y-0 start-2.5 my-auto size-3.5 text-text-secondary"
           />
           <input
             type="text"
@@ -95,14 +95,14 @@ export function EventsToolbar({
             onChange={(event) => setText(event.target.value)}
             placeholder={t("searchPlaceholder")}
             aria-label={t("searchLabel")}
-            className="h-8 w-56 rounded-md border border-input bg-transparent ps-8 pe-7 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-8 w-56 rounded-md border border-border-hairline bg-transparent ps-8 pe-7 text-sm text-text-primary placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
           />
           {text !== "" ? (
             <button
               type="button"
               onClick={() => setText("")}
               aria-label={t("searchClear")}
-              className="absolute inset-y-0 end-1.5 my-auto inline-flex size-5 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="absolute inset-y-0 end-1 my-auto inline-flex size-6 items-center justify-center rounded-sm text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
             >
               <X aria-hidden className="size-3.5" />
             </button>
@@ -126,7 +126,7 @@ export function EventsToolbar({
             variant="ghost"
             size="sm"
             onClick={onClearAll}
-            className="text-muted-foreground"
+            className="text-text-secondary"
           >
             {t("clearAll")}
             <X aria-hidden className="size-3.5" />
@@ -149,14 +149,14 @@ export function EventsToolbar({
               <li key={key}>
                 <Badge
                   variant="outline"
-                  className="gap-1 py-0.5 pe-1 font-normal"
+                  className="gap-1 border-border-hairline py-0.5 pe-1 font-normal text-text-primary"
                 >
                   <span className="capitalize">{label}</span>
                   <button
                     type="button"
                     onClick={() => removeChip(chip)}
                     aria-label={t("chipRemove", { label })}
-                    className="inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="inline-flex size-4 items-center justify-center rounded-sm text-text-secondary transition-colors hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
                   >
                     <X aria-hidden className="size-3" />
                   </button>

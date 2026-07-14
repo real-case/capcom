@@ -83,10 +83,10 @@ export function FacetFilter({
           {label}
           {selected.length > 0 ? (
             <>
-              <span aria-hidden className="mx-0.5 h-4 w-px bg-border" />
+              <span aria-hidden className="mx-0.5 h-4 w-px bg-divider" />
               <Badge
                 variant="secondary"
-                className="rounded-sm px-1 font-normal tabular-nums"
+                className="rounded-sm bg-surface-elevated px-1 font-normal tabular-nums text-text-primary"
               >
                 {selected.length}
               </Badge>
@@ -94,7 +94,10 @@ export function FacetFilter({
           ) : null}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-56 p-0">
+      <PopoverContent
+        align="start"
+        className="w-56 border-border-hairline bg-surface-overlay p-0"
+      >
         <Command>
           <CommandInput placeholder={t("facetSearch", { dimension: label })} />
           <CommandList>
@@ -112,7 +115,7 @@ export function FacetFilter({
                   </span>
                   <span
                     className={cn(
-                      "ms-auto tabular-nums text-xs text-muted-foreground",
+                      "ms-auto tabular-nums text-xs text-text-secondary",
                       // ms-auto pushes the count to the inline-end; the built-in
                       // CommandItem check follows it (internal layout, ADR 0058).
                     )}
@@ -129,7 +132,7 @@ export function FacetFilter({
                   <CommandItem
                     value="__clear__"
                     onSelect={() => onClear(dimension)}
-                    className="justify-center text-center text-muted-foreground"
+                    className="justify-center text-center text-text-secondary"
                   >
                     {t("facetClear")}
                   </CommandItem>

@@ -54,7 +54,10 @@ export function SaveViewPopover({
           {t("saveView")}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-64 p-3">
+      <PopoverContent
+        align="end"
+        className="w-64 border-border-hairline bg-surface-overlay p-3"
+      >
         <form
           noValidate
           onSubmit={handleSubmit((values) => {
@@ -66,7 +69,7 @@ export function SaveViewPopover({
         >
           <label
             htmlFor="save-view-name"
-            className="text-xs text-muted-foreground"
+            className="text-xs text-text-secondary"
           >
             {t("saveViewName")}
           </label>
@@ -75,11 +78,11 @@ export function SaveViewPopover({
             autoFocus
             placeholder={t("saveViewPlaceholder")}
             aria-invalid={errors.name ? true : undefined}
-            className="h-8 rounded-md border border-input bg-transparent px-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-8 rounded-md border border-border-hairline bg-transparent px-2 text-sm text-text-primary placeholder:text-text-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
             {...register("name")}
           />
           {errors.name ? (
-            <p role="alert" className="text-xs text-destructive">
+            <p role="alert" className="text-xs text-status-critical-fg">
               {t("saveViewNameRequired")}
             </p>
           ) : null}

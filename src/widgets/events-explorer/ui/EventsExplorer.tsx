@@ -193,7 +193,7 @@ export function EventsExplorer({ projectId }: { projectId: string }) {
         </div>
       </div>
       {saveFailed ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-status-critical-fg">
           {t("saveViewFailed")}
         </p>
       ) : null}

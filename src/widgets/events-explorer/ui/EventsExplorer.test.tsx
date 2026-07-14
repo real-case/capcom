@@ -390,4 +390,28 @@ describe("EventsExplorer", () => {
       expect(JSON.parse(last.searchParams.get("hidden")!)).toEqual(["plan"]);
     });
   });
+
+  it("preserves density and page-reset behaviour after the re-skin", async () => {
+    // The mission-control re-skin (ADR 0099) is presentational only — the 0097/0098
+    // contract is untouched: dense density is still the [data-density] attribute on the
+    // widget root (ADR 0082/0098), and a filter change still resets to page 1.
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+    const { container } = renderExplorer(onUrlUpdate, {
+      density: "dense",
+      page: "3",
+      filter: JSON.stringify({ plans: ["pro"] }),
+    });
+    await waitFor(() => expect(fetchEvents).toHaveBeenCalled());
+
+    // Density is applied as the ADR 0082 dimension attribute, not per-component padding.
+    expect(container.querySelector('[data-density="dense"]')).not.toBeNull();
+
+    // Clearing the active filter resets the pager from page 3 back to its default (page 1,
+    // which nuqs omits from the URL) — while the unrelated density stays dense.
+    await userEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+    const last = onUrlUpdate.mock.calls.at(-1)![0] as UrlUpdateEvent;
+    expect(last.searchParams.get("page")).toBeNull();
+    expect(last.searchParams.get("density")).toBe("dense");
+  });
 });

@@ -17,7 +17,12 @@ export const monoDataIntent = {
     archetype: "data-display",
     compositionSignature: [],
     composedOf: [],
-    usedIn: ["src/components/ui/telemetry-stat.tsx"],
+    usedIn: [
+      "src/components/ui/telemetry-stat.tsx",
+      "src/widgets/events-explorer/ui/EventDetail.tsx",
+      "src/widgets/events-explorer/ui/EventsTable.tsx",
+      "src/widgets/events-explorer/ui/GroupRollup.tsx",
+    ],
   },
   usageRole: null,
   variants: {

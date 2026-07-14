@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Panel } from "@/components/ui/panel";
 import type { AnalyticsEvent } from "@/entities/event";
 import { Link } from "@/i18n/navigation";
 
@@ -57,12 +58,12 @@ export function BulkActionsBar({
   };
 
   return (
-    <div
+    <Panel
       role="group"
       aria-label={t("bulkLabel")}
-      className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2"
+      className="flex flex-wrap items-center gap-2 px-3 py-2"
     >
-      <p className="text-sm font-medium text-foreground">
+      <p className="text-sm font-medium text-text-primary">
         {t("selectedCount", { count: rows.length })}
       </p>
       <div className="ms-auto flex flex-wrap items-center gap-1.5">
@@ -98,7 +99,7 @@ export function BulkActionsBar({
           <X aria-hidden className="size-3.5" />
         </Button>
       </div>
-    </div>
+    </Panel>
   );
 }
 
