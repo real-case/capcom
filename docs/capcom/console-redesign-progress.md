@@ -24,7 +24,7 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 | 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done       | —                                                  | 2026-07-13 |
 | A     | Skin foundation — console primitives + stories                  | ✅ done       | —                                                  | 2026-07-13 |
 | B     | App shell re-skin (`app-shell`)                                 | ✅ done       | [#35](https://github.com/real-case/capcom/pull/35) | 2026-07-13 |
-| C     | Events explorer re-skin (`events-explorer`)                     | ✅ done       | _pending_                                          | 2026-07-14 |
+| C     | Events explorer re-skin (`events-explorer`)                     | ✅ done       | [#36](https://github.com/real-case/capcom/pull/36) | 2026-07-14 |
 | D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ☐ not started | —                                                  | —          |
 | E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —                                                  | —          |
 
@@ -113,8 +113,8 @@ categorical-indicator`, `usageRole null`) — a distinct signature that reuses r
 - **Chromatic:** new/changed snapshots — `CategoryPill` + its stories, the 7 toolbar-row stories, the
   re-skinned `EventsTable` (incl. `ExpandedDark`), and the re-skinned `EventDetail`/`GroupRollup`/
   `BulkActionsBar` — **pending human approval** (the agent never approves its own baseline, ADR 0043/0095).
-- **PR:** _pending_ — branch `feat/console-phase-c-events-explorer` → `dev`; merged to dev? **no** (awaiting
-  human review + Chromatic re-baseline). This entry's PR link is filled once the PR opens.
+- **PR:** [#36](https://github.com/real-case/capcom/pull/36) — branch `feat/console-phase-c-events-explorer`
+  → `dev`; merged to dev? **no** (awaiting human review + Chromatic re-baseline).
 - **Next:** Phase D — overview-dashboard + KPI RPCs (see Resume point).
 
 ### Phase B — App shell re-skin (V2: extract chrome sub-primitives) — 2026-07-13 — ✅ done
