@@ -25,7 +25,7 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 | A     | Skin foundation — console primitives + stories                  | ✅ done       | —                                                  | 2026-07-13 |
 | B     | App shell re-skin (`app-shell`)                                 | ✅ done       | [#35](https://github.com/real-case/capcom/pull/35) | 2026-07-13 |
 | C     | Events explorer re-skin (`events-explorer`)                     | ✅ done       | [#36](https://github.com/real-case/capcom/pull/36) | 2026-07-14 |
-| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ✅ done       | _pending_                                          | 2026-07-14 |
+| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ✅ done       | [#37](https://github.com/real-case/capcom/pull/37) | 2026-07-14 |
 | E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —                                                  | —          |
 
 Legend: ☐ not started · 🔧 in progress · ✅ done · ⛔ blocked (note why).
@@ -131,8 +131,9 @@ categorical-indicator`, `usageRole null`) — a distinct signature that reuses r
 - **Chromatic:** new snapshots — the `KpiCard` / `PacingCard` / `SignalChart` stories (dark + light) and the
   re-skinned Overview route — **pending human approval** (the agent never approves its own baseline, ADR
   0043/0095).
-- **PR:** _pending_ — branch `feat/console-phase-d-overview-dashboard` → `dev`; merged to dev? **no**
-  (awaiting human review + Chromatic re-baseline). The PR number is recorded here in a follow-up docs commit.
+- **PR:** [#37](https://github.com/real-case/capcom/pull/37) — branch `feat/console-phase-d-overview-dashboard`
+  → `dev`; merged to dev? **no** (awaiting human review + Chromatic re-baseline). Reviews before opening:
+  `supabase-rls-reviewer` **CLEAN** (AC1) + `marvin-tm-diff-critic` **PASS WITH WARNINGS** (no blockers).
 - **Next:** Phase E — remaining analytics widgets + seam docs (see Resume point); initiative completion.
 
 ### Phase C — Events explorer re-skin (+ a governed CategoryPill) — 2026-07-14 — ✅ done
