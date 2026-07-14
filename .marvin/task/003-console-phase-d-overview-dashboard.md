@@ -776,3 +776,11 @@ npm run seed:events`.
   the analytics surfaces are natural follow-ups.
 - Promoting a proven KPI-card pattern into a governed `src/components/ui` primitive (with graph +
   design-intent) if a second widget needs it.
+
+## Delivery
+
+- **PR:** [#37](https://github.com/real-case/capcom/pull/37) — `feat/console-phase-d-overview-dashboard` → `dev` (open, not merged).
+- **Commits:** `6cb78f8` (implementation), `05bddaa` (progress-tracker PR record).
+- **Reviews:** `supabase-rls-reviewer` CLEAN (AC1); `marvin-tm-diff-critic` PASS WITH WARNINGS (no blockers).
+- **Verification:** all gates green — contrast (both compositions), axe (both compositions, 719 tests), tokens (0 errors), graph/design-intent (after the coupled `usedIn` reconciliation), i18n (413 keys), zero token drift, coverage 90.4%/82.97%/87.11%/92.5%, build; `e2e/overview.spec.ts` 4/4 (the `_prev` identity + isolation, live against the seeded DB).
+- **Pending human gates:** review, Chromatic re-baseline (ADR 0043/0095), merge into `dev`.
