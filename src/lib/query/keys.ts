@@ -88,6 +88,19 @@ export const queryKeys = {
     distribution: (args: Record<string, unknown>) =>
       [...queryKeys.segment.all, "distribution", args] as const,
   },
+  // Phase D Overview home (ADR 0099/0084). The scalar KPIs and the signal series are
+  // distinct cache entries, each keyed by its exact RPC argument bag (project + window
+  // [+ interval]), so any range change is a fresh entry and a broad `overview.all`
+  // invalidate cascades.
+  overview: {
+    all: ["overview"] as const,
+    /** The scalar KPI row, keyed by its `fn_overview_kpis` argument bag. */
+    kpis: (args: Record<string, unknown>) =>
+      [...queryKeys.overview.all, "kpis", args] as const,
+    /** The signal series, keyed by its `fn_overview_signal` argument bag. */
+    signal: (args: Record<string, unknown>) =>
+      [...queryKeys.overview.all, "signal", args] as const,
+  },
   // PR-8 saved analyses (ADR 0090) — the first WRITABLE entities, so the keys are
   // list/detail-shaped (not RPC-arg-shaped) and an optimistic mutation invalidates the
   // affected list. A broad `report.all` / `dashboard.all` invalidate cascades.

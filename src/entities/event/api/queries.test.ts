@@ -7,6 +7,8 @@ import {
   fetchEventsSummary,
   fetchEventTrends,
   fetchFunnel,
+  fetchOverviewKpis,
+  fetchOverviewSignal,
   fetchRecentEvents,
   fetchRetention,
   fetchTopEvents,
@@ -461,5 +463,111 @@ describe("fetchEventsSummary", () => {
   it("throws when the RPC errors (no swallowing)", async () => {
     const { client } = rpcReturning({ data: null, error: new Error("boom") });
     await expect(fetchEventsSummary(client, args)).rejects.toThrow();
+  });
+});
+
+describe("fetchOverviewKpis", () => {
+  const args = {
+    p_project_id: "proj-42",
+    p_from: "2026-05-01T00:00:00.000Z",
+    p_to: "2026-06-01T00:00:00.000Z",
+  };
+  const zeros = {
+    active_users: 0,
+    active_users_prev: 0,
+    new_signups: 0,
+    new_signups_prev: 0,
+    purchasers: 0,
+    purchasers_prev: 0,
+    value_sum: 0,
+    value_sum_prev: 0,
+  };
+
+  it("calls the fn_overview_kpis RPC with the exact name and argument bag", async () => {
+    const { client, calls } = rpcReturning({ data: [], error: null });
+    await fetchOverviewKpis(client, args);
+    expect(calls.rpc).toEqual([["fn_overview_kpis", args]]);
+  });
+
+  it("unwraps the single KPIs row on success", async () => {
+    const row = {
+      active_users: 108,
+      active_users_prev: 56,
+      new_signups: 45,
+      new_signups_prev: 30,
+      purchasers: 19,
+      purchasers_prev: 11,
+      value_sum: 1812,
+      value_sum_prev: 916,
+    };
+    expect(
+      await fetchOverviewKpis(
+        rpcReturning({ data: [row], error: null }).client,
+        args,
+      ),
+    ).toEqual(row);
+  });
+
+  it("returns zeros when RLS yields no row (empty or null)", async () => {
+    expect(
+      await fetchOverviewKpis(
+        rpcReturning({ data: [], error: null }).client,
+        args,
+      ),
+    ).toEqual(zeros);
+    expect(
+      await fetchOverviewKpis(
+        rpcReturning({ data: null, error: null }).client,
+        args,
+      ),
+    ).toEqual(zeros);
+  });
+
+  it("throws when the RPC errors (no swallowing)", async () => {
+    const { client } = rpcReturning({ data: null, error: new Error("boom") });
+    await expect(fetchOverviewKpis(client, args)).rejects.toThrow();
+  });
+});
+
+describe("fetchOverviewSignal", () => {
+  const args = {
+    p_project_id: "proj-42",
+    p_from: "2026-05-01T00:00:00.000Z",
+    p_to: "2026-06-01T00:00:00.000Z",
+    p_interval: "day",
+  };
+
+  it("calls the fn_overview_signal RPC with the exact name and argument bag", async () => {
+    const { client, calls } = rpcReturning({ data: [], error: null });
+    await fetchOverviewSignal(client, args);
+    expect(calls.rpc).toEqual([["fn_overview_signal", args]]);
+  });
+
+  it("returns the rows on success and [] when data is null", async () => {
+    const rows = [
+      {
+        bucket: "2026-05-01T00:00:00Z",
+        active_users: 12,
+        new_signups: 4,
+        value_sum: 199,
+      },
+    ];
+    expect(
+      await fetchOverviewSignal(
+        rpcReturning({ data: rows, error: null }).client,
+        args,
+      ),
+    ).toEqual(rows);
+    expect(
+      await fetchOverviewSignal(
+        rpcReturning({ data: null, error: null }).client,
+        args,
+      ),
+    ).toEqual([]);
+  });
+
+  it("throws when the RPC errors", async () => {
+    const { client } = rpcReturning({ data: null, error: new Error("boom") });
+    await expect(fetchOverviewSignal(client, args)).rejects.toThrow();
   });
 });
