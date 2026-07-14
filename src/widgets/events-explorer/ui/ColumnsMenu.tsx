@@ -35,7 +35,7 @@ export function ColumnsMenu({
           type="button"
           variant="outline"
           size="sm"
-          className="text-muted-foreground"
+          className="text-text-secondary"
         >
           <Columns3 aria-hidden className="size-3.5" />
           {t("columns")}
@@ -46,8 +46,11 @@ export function ColumnsMenu({
           ) : null}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">
+      <DropdownMenuContent
+        align="end"
+        className="border-border-hairline bg-surface-overlay"
+      >
+        <DropdownMenuLabel className="text-xs text-text-secondary">
           {t("columnsLabel")}
         </DropdownMenuLabel>
         {HIDEABLE_COLUMNS.map((column) => (

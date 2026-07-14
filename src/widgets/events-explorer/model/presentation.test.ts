@@ -6,7 +6,6 @@ import {
   eventHue,
   formatValue,
   jsonRecord,
-  planVariant,
   propertyChips,
   relativeParts,
   shortId,
@@ -44,15 +43,6 @@ describe("jsonRecord", () => {
     expect(jsonRecord(null)).toEqual({});
     expect(jsonRecord([1, 2])).toEqual({});
     expect(jsonRecord("x")).toEqual({});
-  });
-});
-
-describe("planVariant", () => {
-  it("maps paid tiers to emphasized variants and everything else to outline", () => {
-    expect(planVariant("pro")).toBe("default");
-    expect(planVariant("enterprise")).toBe("secondary");
-    expect(planVariant("free")).toBe("outline");
-    expect(planVariant(undefined)).toBe("outline");
   });
 });
 

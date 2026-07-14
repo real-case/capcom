@@ -33,19 +33,6 @@ export function eventHue(eventName: string): string {
 }
 
 /**
- * The Badge variant for a plan trait. `pro`/`enterprise` are paid tiers (emphasized),
- * `free` is muted (outline). An unknown value falls back to outline. Variant names are
- * the Badge component's closed axis (ADR 0062), not raw color.
- */
-export function planVariant(
-  plan: string | undefined,
-): "default" | "secondary" | "outline" {
-  if (plan === "pro") return "default";
-  if (plan === "enterprise") return "secondary";
-  return "outline";
-}
-
-/**
  * Narrow a jsonb bag (the generated `Json` type) to a string-keyed record for property /
  * trait reads. The runtime `typeof` / array checks justify the single cast (ADR 0003: no
  * unchecked `as`) — a null / array / scalar bag reads as an empty record, so every caller

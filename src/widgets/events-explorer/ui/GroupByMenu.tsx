@@ -36,7 +36,7 @@ export function GroupByMenu({
           type="button"
           variant="outline"
           size="sm"
-          className={active ? "text-foreground" : "text-muted-foreground"}
+          className={active ? "text-text-primary" : "text-text-secondary"}
         >
           <Rows3 aria-hidden className="size-3.5" />
           {active
@@ -44,7 +44,10 @@ export function GroupByMenu({
             : t("groupBy")}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent
+        align="end"
+        className="border-border-hairline bg-surface-overlay"
+      >
         <DropdownMenuRadioGroup
           value={value}
           onValueChange={(next) => {

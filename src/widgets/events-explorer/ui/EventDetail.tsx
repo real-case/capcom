@@ -4,6 +4,8 @@ import { useTranslations } from "next-intl";
 
 import type { AnalyticsEvent } from "@/entities/event";
 import type { Profile } from "@/entities/profile";
+import { MonoData } from "@/components/ui/mono-data";
+import { Panel } from "@/components/ui/panel";
 import { cn } from "@/lib/utils";
 
 import { formatValue, jsonRecord, shortId } from "../model/presentation";
@@ -11,12 +13,12 @@ import { formatValue, jsonRecord, shortId } from "../model/presentation";
 import { RelativeTime } from "./RelativeTime";
 
 /**
- * The expanded-row detail (ADR 0097): three token-styled cards — the event's raw
+ * The expanded-row detail (ADR 0097): three token-styled panels — the event's raw
  * `properties`, the tracked user's profile, and the request context — plus the user's
  * recent-activity timeline. Purely presentational: it receives the already-fetched
  * profile/activity as props (the root owns the fetching, ADR 0025/0084) and renders only
  * real data, so absent fields (e.g. browser/os/ip, not in the seed) are simply omitted
- * rather than invented. Semantic tokens only (ADR 0058).
+ * rather than invented. Mission-control surface + tokens only (ADR 0058/0099).
  */
 export type EventDetailProps = {
   event: AnalyticsEvent;
@@ -35,20 +37,24 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-3">
-      <div className="mb-2 text-[0.625rem] font-medium uppercase tracking-wider text-muted-foreground">
+    <Panel className="p-3">
+      <div className="mb-2 text-[0.625rem] font-medium uppercase tracking-wider text-text-secondary">
         {title}
       </div>
       <dl className="flex flex-col gap-1">{children}</dl>
-    </div>
+    </Panel>
   );
 }
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3 text-xs">
-      <dt className="font-mono text-muted-foreground">{k}</dt>
-      <dd className="truncate text-right font-mono text-foreground">{v}</dd>
+      <dt>
+        <MonoData tone="secondary">{k}</MonoData>
+      </dt>
+      <dd className="min-w-0 truncate text-right">
+        <MonoData tone="primary">{v}</MonoData>
+      </dd>
     </div>
   );
 }
@@ -66,14 +72,12 @@ export function EventDetail({
   const traitKeys = ["plan", "country", "device", "referrer"] as const;
 
   return (
-    <div className="border-l-2 border-primary bg-muted/40 px-4 py-4">
+    <div className="border-l-2 border-status-nominal-border bg-surface-elevated px-4 py-4">
       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
-        <span className="font-medium text-foreground">
+        <span className="font-medium text-text-primary">
           {t("detailTitle", { event: event.event_name })}
         </span>
-        <span className="font-mono text-muted-foreground">
-          {new Date(event.ts).toISOString()}
-        </span>
+        <MonoData tone="secondary">{new Date(event.ts).toISOString()}</MonoData>
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
@@ -89,9 +93,7 @@ export function EventDetail({
 
         <Card title={t("card_user", { id: shortId(event.distinct_id) })}>
           {isLoading ? (
-            <span className="text-xs text-muted-foreground">
-              {t("loading")}
-            </span>
+            <span className="text-xs text-text-secondary">{t("loading")}</span>
           ) : profile ? (
             <>
               {traitKeys.map((key) => {
@@ -110,7 +112,7 @@ export function EventDetail({
               />
             </>
           ) : (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-text-secondary">
               {t("noProfile")}
             </span>
           )}
@@ -126,8 +128,8 @@ export function EventDetail({
         </Card>
       </div>
 
-      <div className="mt-3 rounded-lg border border-border bg-card p-3">
-        <div className="mb-2 text-[0.625rem] font-medium uppercase tracking-wider text-muted-foreground">
+      <Panel className="mt-3 p-3">
+        <div className="mb-2 text-[0.625rem] font-medium uppercase tracking-wider text-text-secondary">
           {t("card_recent")}
         </div>
         <ol className="flex flex-col">
@@ -138,7 +140,7 @@ export function EventDetail({
                 key={item.id}
                 className={cn(
                   "flex items-center gap-2 py-1 text-xs",
-                  index === 0 ? "text-foreground" : "text-muted-foreground",
+                  index === 0 ? "text-text-primary" : "text-text-secondary",
                 )}
               >
                 <span
@@ -147,20 +149,20 @@ export function EventDetail({
                   style={{
                     background:
                       index === 0
-                        ? "var(--color-primary)"
-                        : "var(--color-muted-foreground)",
+                        ? "var(--color-status-nominal-fg)"
+                        : "var(--color-text-tertiary)",
                   }}
                 />
                 <span className="font-medium">{item.event_name}</span>
                 {value ? <span className="font-mono">· {value}</span> : null}
-                <span className="ml-auto font-mono text-muted-foreground">
+                <MonoData tone="secondary" className="ml-auto">
                   <RelativeTime tsIso={item.ts} nowMs={nowMs} />
-                </span>
+                </MonoData>
               </li>
             );
           })}
         </ol>
-      </div>
+      </Panel>
     </div>
   );
 }

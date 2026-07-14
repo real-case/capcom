@@ -2,6 +2,10 @@
 // the boundary (ADR 0002) — the same posture as EventsTable.
 import { useLocale, useTranslations } from "next-intl";
 
+import { CategoryPill } from "@/components/ui/category-pill";
+import { MonoData } from "@/components/ui/mono-data";
+import { Panel } from "@/components/ui/panel";
+
 import { useEventsFacets } from "../api/use-events";
 import { type EventsFilter, type FacetDimension } from "../model/filter";
 import { eventHue } from "../model/presentation";
@@ -35,23 +39,23 @@ export function GroupRollup({
   const format = new Intl.NumberFormat(locale);
 
   return (
-    <div className="rounded-lg border border-border bg-card">
-      <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
-        <p className="text-xs font-medium text-muted-foreground">
+    <Panel className="overflow-hidden p-0">
+      <div className="flex items-center justify-between border-b border-border-hairline px-3 py-2.5">
+        <p className="text-xs font-medium text-text-secondary">
           {t("rollupTitle", { dimension: t(`facet_${dimension}`) })}
         </p>
-        <p className="text-xs text-muted-foreground">{t("rollupHint")}</p>
+        <p className="text-xs text-text-secondary">{t("rollupHint")}</p>
       </div>
       {facets.isError ? (
-        <p className="px-3 py-10 text-center text-sm text-muted-foreground">
+        <p className="px-3 py-10 text-center text-sm text-text-secondary">
           {t("error")}
         </p>
       ) : facets.isLoading ? (
-        <p className="px-3 py-10 text-center text-sm text-muted-foreground">
+        <p className="px-3 py-10 text-center text-sm text-text-secondary">
           {t("loading")}
         </p>
       ) : rows.length === 0 ? (
-        <p className="px-3 py-10 text-center text-sm text-muted-foreground">
+        <p className="px-3 py-10 text-center text-sm text-text-secondary">
           {t("rollupEmpty")}
         </p>
       ) : (
@@ -59,22 +63,17 @@ export function GroupRollup({
           {rows.map((row) => (
             <li
               key={row.value}
-              className="border-b border-border last:border-b-0"
+              className="border-b border-border-hairline last:border-b-0"
             >
               <button
                 type="button"
                 onClick={() => onPick(dimension, row.value)}
                 aria-label={t("rollupPick", { value: row.value })}
-                className="grid w-full grid-cols-[minmax(6rem,12rem)_1fr_max-content] items-center gap-3 px-3 py-(--space-2) text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="grid w-full grid-cols-[minmax(6rem,12rem)_1fr_max-content] items-center gap-3 px-3 py-(--space-2) text-left transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-primary"
               >
-                <span className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <span
-                    aria-hidden
-                    className="size-2 shrink-0 rounded-[3px]"
-                    style={{ background: eventHue(row.value) }}
-                  />
-                  <span className="truncate capitalize">{row.value}</span>
-                </span>
+                <CategoryPill hue={eventHue(row.value)} className="capitalize">
+                  {row.value}
+                </CategoryPill>
                 <svg
                   aria-hidden
                   className="h-1.5 w-full"
@@ -88,14 +87,12 @@ export function GroupRollup({
                     fill={eventHue(row.value)}
                   />
                 </svg>
-                <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                  {format.format(row.count)}
-                </span>
+                <MonoData tone="secondary">{format.format(row.count)}</MonoData>
               </button>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </Panel>
   );
 }
