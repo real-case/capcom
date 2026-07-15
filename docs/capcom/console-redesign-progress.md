@@ -141,12 +141,16 @@ border-border-hairline text-text-primary`; legend/crosshair/brush → text/surfa
 - **Residuals / SPEC GAPs (recorded, non-blocking):** (1) the F28 brush story needed its "Whole window"
   fixture caption swapped (`text-muted-foreground → text-text-secondary`), not just the decorator added — an
   in-file clean-swap the new surface decorator surfaced via axe (within F28's allowlisted file). (2) The two
-  remaining `src/components/charts` stories `gradient.stories.tsx` / `motion.stories.tsx` still demo on the
-  shadcn `bg-card` — **not** re-skinned: they are outside the sealed F-allowlist and their `AreaGradient` /
-  `MotionIn` primitives carry **no** mission-control text token, so the shadcn pairing is AA-safe (not a
-  half-mix; axe stays green). Left as a documented scope boundary; a trivial catalog-fidelity follow-up if
-  wanted. (3) F31 (`.cspell/project-words.txt`) was a no-op — fixing British→American spelling in the seam
-  doc needed no dictionary additions. Diff-critic (`marvin-tm-diff-critic`) **PASS WITH WARNINGS** on the full
+  remaining `src/components/charts` stories `gradient.stories.tsx` / `motion.stories.tsx` demoed on the shadcn
+  `bg-card`. The diff-critic flagged this as a split Chromatic catalog; it was **outside the sealed
+  F-allowlist**, so it was first recorded as a scope boundary and then re-skinned **at the 👤's explicit
+  direction** — a deliberate, user-authorized addition beyond the sealed contract, not silent scope creep.
+  `gradient`'s demo `<svg>` → `border-border-hairline bg-surface-panel`; `motion`'s decorator →
+  `bg-surface-panel` with its demo card as `bg-surface-elevated` / `text-text-primary` /
+  `border-border-hairline` (the production analogue — `MotionIn` wraps content **inside** a Panel), so the
+  whole `src/components/charts` catalog now renders on one surface. (3) F31
+  (`.cspell/project-words.txt`) was a no-op — fixing British→American spelling in the seam doc needed no
+  dictionary additions. Diff-critic (`marvin-tm-diff-critic`) **PASS WITH WARNINGS** on the full
   diff (no blockers; all 5 ACs independently verified).
 - **Process:** produced via the marvin task pipeline — sealed spec
   [`004-console-phase-e-analytics-reskin.md`](../../.marvin/task/004-console-phase-e-analytics-reskin.md)

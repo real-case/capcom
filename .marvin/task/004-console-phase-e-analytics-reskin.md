@@ -888,7 +888,10 @@ none
 - **SPEC GAPs (recorded):** (1) F28's `brush.stories.tsx` also needed its "Whole window" fixture caption
   swapped off `text-muted-foreground` — a real half-mix (4.49:1 on the light panel) that the new surface
   decorator surfaced via axe, fixed in the same allowlisted file. (2) `gradient.stories.tsx` /
-  `motion.stories.tsx` were left on shadcn `bg-card` — outside the sealed allowlist and not a half-mix (no
-  mission-control text token; AA-safe, axe green); a documented scope boundary. (3) F31
+  `motion.stories.tsx` were initially left on shadcn `bg-card` — outside the sealed allowlist and not a
+  half-mix (no mission-control text token; AA-safe, axe green) — then re-skinned onto `bg-surface-panel`
+  **at the 👤's explicit direction** after the diff-critic flagged the split Chromatic catalog. A
+  **user-authorized addition beyond this sealed contract's `files` allowlist** (scope gate re-run with
+  `allow`), recorded here rather than silently absorbed; the contract itself is unchanged. (3) F31
   (`.cspell/project-words.txt`) was a no-op — no new words needed.
 - **Pending human gates:** review, Chromatic re-baseline (ADR 0043/0095), merge into `dev`.

@@ -8,7 +8,7 @@ import { MotionIn } from "./motion";
 // static state; timing/easing come from `--motion-*` tokens (ADR 0081).
 
 const Card = ({ label }: { label: string }) => (
-  <div className="rounded-lg border border-border bg-card p-4 text-sm text-foreground">
+  <div className="rounded-lg border border-border-hairline bg-surface-elevated p-4 text-sm text-text-primary">
     {label}
   </div>
 );
@@ -18,7 +18,7 @@ const meta = {
   parameters: { layout: "padded" },
   decorators: [
     (Story) => (
-      <div className="w-[360px] max-w-full">
+      <div className="w-[360px] max-w-full rounded-lg bg-surface-panel p-4">
         <Story />
       </div>
     ),
