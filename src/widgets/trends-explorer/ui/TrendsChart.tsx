@@ -45,8 +45,9 @@ const LINE_W = 2;
 const LINE_W_FOCUS = 3; // non-color affordance for the hover-highlighted series
 const DIM_OPACITY = 0.25; // other series while one is highlighted
 
-// Categorical data-viz tokens (ADR 0081), cycled per series; 'Other' takes a neutral
-// token so the rollup reads as distinct from the named series.
+// Categorical data-viz tokens (ADR 0081), cycled per series; 'Other' takes the neutral
+// mission-control de-emphasized token so the rollup reads as distinct from the named series
+// (a chart line, so --text-tertiary is fine — the small-text AA caveat does not apply).
 const SERIES_COLORS = [
   "var(--color-viz-categorical-1)",
   "var(--color-viz-categorical-2)",
@@ -61,7 +62,7 @@ const SERIES_COLORS = [
   "var(--color-viz-categorical-11)",
   "var(--color-viz-categorical-12)",
 ] as const;
-const OTHER_COLOR = "var(--color-muted-foreground)";
+const OTHER_COLOR = "var(--color-text-tertiary)";
 
 export type TrendsChartProps = {
   /** Reduced rows from fn_event_trends (bucket, series, count). */
@@ -125,8 +126,8 @@ function Message({ tone, text }: { tone: "muted" | "error"; text: string }) {
       role={tone === "error" ? "alert" : "status"}
       data-state={tone === "error" ? "error" : "empty"}
       style={{ aspectRatio: `${VIEW_W} / ${VIEW_H}` }}
-      className={`flex w-full items-center justify-center rounded-md border border-dashed border-border text-sm ${
-        tone === "error" ? "text-destructive" : "text-muted-foreground"
+      className={`flex w-full items-center justify-center rounded-md border border-dashed border-border-hairline text-sm ${
+        tone === "error" ? "text-status-critical-fg" : "text-text-secondary"
       }`}
     >
       {text}
@@ -183,8 +184,8 @@ export function TrendsChart({
     nice: true,
   });
 
-  const axisColor = "var(--color-border)";
-  const tickColor = "var(--color-muted-foreground)";
+  const axisColor = "var(--color-border-hairline)";
+  const tickColor = "var(--color-text-secondary)";
 
   // Per-datum x positions in root-svg space, for pointer→nearest-bucket mapping.
   const bucketXs = bucketTimes.map(
@@ -247,7 +248,7 @@ export function TrendsChart({
             aria-label={`${label}. ${inspectHint}`}
             onKeyDown={(e) => focus.onKeyDown(e, bucketTimes.length)}
             onBlur={focus.clear}
-            className="h-full w-full rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="h-full w-full rounded-sm focus-visible:ring-2 focus-visible:ring-text-primary focus-visible:outline-none"
           >
             <svg
               viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}

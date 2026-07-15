@@ -24,7 +24,7 @@ const meta = {
   // A relative, sized stage so the absolutely-positioned tooltip has room to sit.
   decorators: [
     (Story) => (
-      <div className="relative h-40 w-[360px] rounded-md border border-border">
+      <div className="relative h-40 w-[360px] rounded-md border border-border-hairline bg-surface-panel">
         <Story />
       </div>
     ),

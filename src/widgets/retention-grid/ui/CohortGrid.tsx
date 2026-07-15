@@ -42,7 +42,7 @@ const HEADER_FONT_SIZE = 10;
 const LABEL_FONT_SIZE = 11;
 const CAPTION_FONT_SIZE = 9;
 const CELL_FONT_SIZE = 11;
-const FOCUS_RING = "var(--color-foreground)";
+const FOCUS_RING = "var(--color-text-primary)";
 const FOCUS_RING_W = 2;
 
 // Sequential data-viz scale (ADR 0081), darkest→brightest = lower→higher retention on
@@ -58,11 +58,11 @@ const SCALE = [
 // Text color per scale bin: the two brightest fills take dark text, the darker fills
 // light text — so the in-cell percentage stays legible across the scale.
 const SCALE_TEXT = [
-  "var(--color-foreground)",
-  "var(--color-foreground)",
-  "var(--color-foreground)",
-  "var(--color-background)",
-  "var(--color-background)",
+  "var(--color-text-primary)",
+  "var(--color-text-primary)",
+  "var(--color-text-primary)",
+  "var(--color-surface-background)",
+  "var(--color-surface-background)",
 ] as const;
 
 export type CohortGridProps = {
@@ -154,8 +154,8 @@ function Message({ tone, text }: { tone: "muted" | "error"; text: string }) {
     <div
       role={tone === "error" ? "alert" : "status"}
       data-state={tone === "error" ? "error" : "empty"}
-      className={`flex h-24 w-full items-center justify-center rounded-md border border-dashed border-border text-sm ${
-        tone === "error" ? "text-destructive" : "text-muted-foreground"
+      className={`flex h-24 w-full items-center justify-center rounded-md border border-dashed border-border-hairline text-sm ${
+        tone === "error" ? "text-status-critical-fg" : "text-text-secondary"
       }`}
     >
       {text}
@@ -273,7 +273,7 @@ export function CohortGrid({
             aria-label={`${label}. ${inspectHint}`}
             onKeyDown={onKeyDown}
             onBlur={() => setActive(null)}
-            className="h-full w-full rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="h-full w-full rounded-sm focus-visible:ring-2 focus-visible:ring-text-primary focus-visible:outline-none"
           >
             <svg
               viewBox={`0 0 ${viewW} ${viewH}`}
@@ -290,7 +290,7 @@ export function CohortGrid({
                 x={PAD}
                 y={HEADER_H - 7}
                 fontSize={HEADER_FONT_SIZE}
-                fill="var(--color-muted-foreground)"
+                fill="var(--color-text-secondary)"
               >
                 {period === "month" ? "Month" : "Week"}
               </text>
@@ -303,7 +303,7 @@ export function CohortGrid({
                   y={HEADER_H - 7}
                   textAnchor="middle"
                   fontSize={HEADER_FONT_SIZE}
-                  fill="var(--color-muted-foreground)"
+                  fill="var(--color-text-secondary)"
                 >
                   {`${unit}${c}`}
                 </text>
@@ -318,7 +318,7 @@ export function CohortGrid({
                       x={PAD}
                       y={rowTop + CELL_H / 2 - 1}
                       fontSize={LABEL_FONT_SIZE}
-                      fill="var(--color-foreground)"
+                      fill="var(--color-text-primary)"
                     >
                       {formatCohort(cohort.period, period, locale)}
                     </text>
@@ -326,7 +326,7 @@ export function CohortGrid({
                       x={PAD}
                       y={rowTop + CELL_H / 2 + 11}
                       fontSize={CAPTION_FONT_SIZE}
-                      fill="var(--color-muted-foreground)"
+                      fill="var(--color-text-secondary)"
                     >
                       {`n=${nf.format(cohort.size)}`}
                     </text>
@@ -350,7 +350,9 @@ export function CohortGrid({
                             rx={CELL_RADIUS}
                             fill={SCALE[b]}
                             stroke={
-                              focused ? FOCUS_RING : "var(--color-border)"
+                              focused
+                                ? FOCUS_RING
+                                : "var(--color-border-hairline)"
                             }
                             strokeWidth={focused ? FOCUS_RING_W : 1}
                             onPointerEnter={() => setActive(i ?? null)}
@@ -399,7 +401,7 @@ export function CohortGrid({
       </div>
 
       {/* Sequential legend so the color encoding is interpretable. */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 text-xs text-text-secondary">
         <span>{lowLabel}</span>
         <span className="flex" aria-hidden>
           {SCALE.map((color, i) => (

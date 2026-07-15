@@ -19,27 +19,29 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 
 ## Status
 
-| Phase | Theme                                                           | State         | PR                                                 | Updated    |
-| ----- | --------------------------------------------------------------- | ------------- | -------------------------------------------------- | ---------- |
-| 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done       | —                                                  | 2026-07-13 |
-| A     | Skin foundation — console primitives + stories                  | ✅ done       | —                                                  | 2026-07-13 |
-| B     | App shell re-skin (`app-shell`)                                 | ✅ done       | [#35](https://github.com/real-case/capcom/pull/35) | 2026-07-13 |
-| C     | Events explorer re-skin (`events-explorer`)                     | ✅ done       | [#36](https://github.com/real-case/capcom/pull/36) | 2026-07-14 |
-| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ✅ done       | [#37](https://github.com/real-case/capcom/pull/37) | 2026-07-14 |
-| E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ☐ not started | —                                                  | —          |
+| Phase | Theme                                                           | State   | PR                                                 | Updated    |
+| ----- | --------------------------------------------------------------- | ------- | -------------------------------------------------- | ---------- |
+| 0     | Accept ADR 0099 (human-only) + CLAUDE.md sync                   | ✅ done | —                                                  | 2026-07-13 |
+| A     | Skin foundation — console primitives + stories                  | ✅ done | —                                                  | 2026-07-13 |
+| B     | App shell re-skin (`app-shell`)                                 | ✅ done | [#35](https://github.com/real-case/capcom/pull/35) | 2026-07-13 |
+| C     | Events explorer re-skin (`events-explorer`)                     | ✅ done | [#36](https://github.com/real-case/capcom/pull/36) | 2026-07-14 |
+| D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ✅ done | [#37](https://github.com/real-case/capcom/pull/37) | 2026-07-14 |
+| E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ✅ done | [#38](https://github.com/real-case/capcom/pull/38) | 2026-07-15 |
 
 Legend: ☐ not started · 🔧 in progress · ✅ done · ⛔ blocked (note why).
 
 ## Resume point
 
-**Next step:** Phase E — the final phase: re-skin the remaining analytics widgets (`funnel-builder`,
-`retention-grid`, `segment-builder`, `trends-explorer`) off the shadcn value layer onto the mission-control
-surface (may split per-widget if the diffs are large), and **document the marketing↔console palette seam** so
-contributors never cross-pair the two palettes (the token-palette trap). Reuse the Phase-A/B/C/D primitives
-(`Panel`, `MetricHero`, `MonoData`, `TelemetryStat`, `CategoryPill`, `Hairline`, `StatusIndicator`). DoD:
-final `check:contrast` / axe (dark + light per widget) / `check:tokens` sweep · each re-skinned widget keeps a
-dark **and** light story · human-approved **Chromatic re-baseline** · seam documented · progress doc updated ·
-initiative marked complete. Author the spec via the marvin task pipeline first (as Phases B/C/D did).
+**The console-redesign initiative is COMPLETE** (all phases 0 / A / B / C / D / E done). Phase E re-skinned
+the last four analytics widgets (`trends-explorer`, `funnel-builder`, `retention-grid`, `segment-builder`)
+**and** the shared ADR-0093 chart-interaction layer they render (`src/components/charts/{tooltip,legend,
+crosshair,brush}`) off the shadcn value layer onto the mission-control surface, and documented the
+marketing↔console palette seam ([`palette-seam.md`](./palette-seam.md), linked from
+[`src/design-system/README.md`](../../src/design-system/README.md)).
+
+**Remaining human-only gates before this ships:** review + **Chromatic re-baseline** (ADR 0043/0095) + merge
+the Phase-E PR into `dev`; then the `dev → main` promotion (v0.2.x) is the human-only production step that
+carries the whole console re-skin (Phases B–E) live. No further agent phase remains.
 
 **Phase-D reusable facts (for E):**
 
@@ -88,6 +90,82 @@ categorical-indicator`, `usageRole null`) — a distinct signature that reuses r
 > - **PR:** <link> · merged to dev? <yes/no>
 > - **Next:** <the next concrete step>
 > ```
+
+### Phase E — Remaining analytics widgets + chart-interaction layer + seam doc (final) — 2026-07-14 — ✅ done
+
+- **Landed:** the last four analytics widgets re-skinned off the shadcn value layer onto the mission-control
+  surface (ADR 0099), **behavior unchanged** (all 0097/0084/0086/0093 filters / URL-state / interactions
+  preserved), completing the initiative. One PR (👤 decision), zero new tokens / dependencies / SQL /
+  i18n-strings.
+  - **Containers → `Panel`** (`TrendsExplorer` / `FunnelBuilder` / `RetentionGrid` / `SegmentBuilder`): each
+    `<section bg-card>` became `<Panel role="region" aria-label>` (landmark + queried `h2` preserved);
+    headings → `text-text-primary`, captions/legends → `text-text-secondary`, the raw button/input recipes →
+    the Phase-C mission-control recipe (`border-border-hairline bg-surface-elevated text-text-secondary
+hover:text-text-primary focus-visible:ring-text-primary`).
+  - **Widget charts** (`TrendsChart` / `TopEventsBar` / `FunnelChart` / `CohortGrid` / `SegmentDistribution`):
+    `Message` boxes → `border-border-hairline` / `text-status-critical-fg` / `text-text-secondary`; SVG
+    `<text fill>` `--color-foreground`/`--color-muted-foreground` → `--color-text-primary`/`-secondary`; bar
+    tracks `--color-muted` → `--color-surface-elevated`; cell strokes `--color-border` →
+    `--color-border-hairline`; focus rings → `text-primary`; CohortGrid in-cell `SCALE_TEXT` swapped 1:1. The
+    `--viz-*` series/scale palette is untouched; the one exception is `TrendsChart`'s neutral **'Other'
+    rollup line** (`OTHER_COLOR`), moved off `--color-muted-foreground` to `--color-text-tertiary` (a chart
+    line, so the small-text AA caveat doesn't apply).
+  - **The shared chart-interaction layer** `src/components/charts/{tooltip,legend,crosshair,brush}` — the
+    **spec-critic Round-1 catch**: they render _inside_ the re-skinned Panels, so leaving them shadcn was the
+    half-mix ADR 0099 forbids. Re-skinned onto mission-control (tooltip box → `bg-surface-overlay
+border-border-hairline text-text-primary`; legend/crosshair/brush → text/surface tokens). They are
+    console-only and **not** in the composition graph, so this was a pure token swap (no graph/design-intent
+    churn).
+  - **Story surface decorators** on all 9 chart + interaction-primitive stories (`bg-surface-panel`) so axe +
+    Chromatic exercise the re-skinned chrome on the real surface in both light default and the existing Dark
+    story — REQUIRED (else the mission-control text is measured against the shadcn `--background`, a reverse
+    half-mix that fails axe).
+  - **Route-page headers** (the four `p/[projectId]/{trends,funnels,retention,segments}/page.tsx` `<h1>`) →
+    `text-text-primary` (the Phase-D Overview-header fix; `src/app` isn't scanned by `check:tokens`, so the
+    AC1 grep covers it).
+  - **The palette-seam doc** [`docs/capcom/palette-seam.md`](./palette-seam.md) (the two palettes, which
+    surface each world uses, the half-mix failure mode + traps, the never-cross-pair rule, and the one
+    documented intra-console shadcn-kit-label residual), linked from a new
+    [`src/design-system/README.md`](../../src/design-system/README.md).
+  - **Coupled graph reconciliation:** `panel.usedIn` (composition-graph.json + `panel.design-intent.ts`
+    `meta.usedIn`) gained the four container files, in lockstep (the Phase-D gotcha, budgeted).
+- **Gates:** AC1 clean-swap grep ✅ **0 matches** over the four widget slices + `src/components/charts` + the
+  four route pages · `check:tokens` ✅ · `check:contrast` ✅ both compositions · **axe ✅ both compositions —
+  `npm run test` 719/719 (136 files)**; the `bg-surface-panel` surface decorator did its job — it caught a
+  real fixture half-mix (`brush.stories.tsx` "Whole window" `text-muted-foreground` at 4.49:1 on the light
+  panel), fixed to `text-text-secondary` · `check:graph` / `check:design-intent` ✅ (panel `usedIn` +4, no new
+  node) · `check:fsd` / `check:boundaries` ✅ · `check:i18n` ✅ (no string change) · `check:spelling` /
+  `check:citations` ✅ · `gen:tokens` swap-only self-test ✅ + **zero token drift** · `tsc` ✅ · lint ✅ (`src`
+  clean) · build ✅ · coverage ✅ (90.38% stmts / 82.88% br / 87.14% fn / 92.69% ln, all ≥ 80%) · behavior tests
+  ✅ (containers + `brush.test.ts` unchanged).
+- **Residuals / SPEC GAPs (recorded, non-blocking):** (1) the F28 brush story needed its "Whole window"
+  fixture caption swapped (`text-muted-foreground → text-text-secondary`), not just the decorator added — an
+  in-file clean-swap the new surface decorator surfaced via axe (within F28's allowlisted file). (2) The two
+  remaining `src/components/charts` stories `gradient.stories.tsx` / `motion.stories.tsx` demoed on the shadcn
+  `bg-card`. The diff-critic flagged this as a split Chromatic catalog; it was **outside the sealed
+  F-allowlist**, so it was first recorded as a scope boundary and then re-skinned **at the 👤's explicit
+  direction** — a deliberate, user-authorized addition beyond the sealed contract, not silent scope creep.
+  `gradient`'s demo `<svg>` → `border-border-hairline bg-surface-panel`; `motion`'s decorator →
+  `bg-surface-panel` with its demo card as `bg-surface-elevated` / `text-text-primary` /
+  `border-border-hairline` (the production analogue — `MotionIn` wraps content **inside** a Panel), so the
+  whole `src/components/charts` catalog now renders on one surface. (3) F31
+  (`.cspell/project-words.txt`) was a no-op — fixing British→American spelling in the seam doc needed no
+  dictionary additions. Diff-critic (`marvin-tm-diff-critic`) **PASS WITH WARNINGS** on the full
+  diff (no blockers; all 5 ACs independently verified).
+- **Process:** produced via the marvin task pipeline — sealed spec
+  [`004-console-phase-e-analytics-reskin.md`](../../.marvin/task/004-console-phase-e-analytics-reskin.md)
+  (contract_sha `353dee15094bd1ea`; DoR PASS-with-warnings over the 32-file one-PR scope note; spec-critic
+  **BLOCK → PASS WITH WARNINGS** over 2 rounds — the critic caught the chart-interaction-layer half-mix that
+  grew the scope 24→32 files, plus the `OTHER_COLOR` data-series and a `FOCUS_RING` wording fix), then
+  interactive implementation.
+- **Chromatic:** new/changed snapshots — the re-skinned charts + interaction primitives on their new
+  surface decorators (dark + light), plus the re-skinned containers — **pending human approval** (the agent
+  never approves its own baseline, ADR 0043/0095).
+- **PR:** [#38](https://github.com/real-case/capcom/pull/38) — branch `feat/console-phase-e-analytics-reskin`
+  → `dev`; merged to dev? **no** (awaiting human review + Chromatic re-baseline). Review before opening:
+  `marvin-tm-diff-critic` **PASS WITH WARNINGS** (no blockers).
+- **Next:** initiative complete — human review + Chromatic re-baseline + merge, then the `dev → main` v0.2.x
+  promotion (human-only) carries Phases B–E live.
 
 ### Phase D — Overview home (`overview-dashboard` + KPI RPCs) — 2026-07-14 — ✅ done
 

@@ -18,6 +18,15 @@ const SERIES = [
 const meta = {
   component: ChartLegend,
   parameters: { layout: "centered" },
+  // Render on the mission-control surface so the axe run measures the legend's
+  // text-text-secondary against --surface-panel, its real production surface (ADR 0099).
+  decorators: [
+    (Story) => (
+      <div className="max-w-full rounded-lg bg-surface-panel p-4">
+        <Story />
+      </div>
+    ),
+  ],
   args: { series: SERIES },
 } satisfies Meta<typeof ChartLegend>;
 

@@ -129,12 +129,16 @@
         "src/widgets/events-explorer/ui/BulkActionsBar.tsx",
         "src/widgets/events-explorer/ui/EventDetail.tsx",
         "src/widgets/events-explorer/ui/GroupRollup.tsx",
+        "src/widgets/funnel-builder/ui/FunnelBuilder.tsx",
         "src/widgets/overview-dashboard/ui/KpiCard.tsx",
         "src/widgets/overview-dashboard/ui/OverviewDashboard.tsx",
-        "src/widgets/overview-dashboard/ui/PacingCard.tsx"
+        "src/widgets/overview-dashboard/ui/PacingCard.tsx",
+        "src/widgets/retention-grid/ui/RetentionGrid.tsx",
+        "src/widgets/segment-builder/ui/SegmentBuilder.tsx",
+        "src/widgets/trends-explorer/ui/TrendsExplorer.tsx"
       ],
       "compositionSignature": [],
-      "notes": "Mission-control surface container (ADR 0099/0081) — the instrument-panel sibling of `card` on the `--surface-*` tokens. Same `container` archetype, a distinct surface (never cross-paired with the shadcn value layer). Consumed by ProjectHub in the Phase-B app-shell re-skin; the overview/events-explorer surfaces reuse it in Phases C–D."
+      "notes": "Mission-control surface container (ADR 0099/0081) — the instrument-panel sibling of `card` on the `--surface-*` tokens. Same `container` archetype, a distinct surface (never cross-paired with the shadcn value layer). Consumed by ProjectHub in the Phase-B app-shell re-skin; the overview/events-explorer surfaces reuse it in Phases C–D; the four analytics-widget containers (trends/funnel/retention/segment) adopt it in the Phase-E re-skin."
     },
     {
       "id": "scroll-area",

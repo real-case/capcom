@@ -21,9 +21,13 @@ export const panelIntent = {
       "src/widgets/events-explorer/ui/BulkActionsBar.tsx",
       "src/widgets/events-explorer/ui/EventDetail.tsx",
       "src/widgets/events-explorer/ui/GroupRollup.tsx",
+      "src/widgets/funnel-builder/ui/FunnelBuilder.tsx",
       "src/widgets/overview-dashboard/ui/KpiCard.tsx",
       "src/widgets/overview-dashboard/ui/OverviewDashboard.tsx",
       "src/widgets/overview-dashboard/ui/PacingCard.tsx",
+      "src/widgets/retention-grid/ui/RetentionGrid.tsx",
+      "src/widgets/segment-builder/ui/SegmentBuilder.tsx",
+      "src/widgets/trends-explorer/ui/TrendsExplorer.tsx",
     ],
   },
   usageRole: null,
@@ -31,7 +35,7 @@ export const panelIntent = {
     items: [],
     traversalComplete: false,
     notes:
-      "Claude Design references not wired (👤, ADR 0094/0095). The closed elevation axis lives in api.variants; per-variant references + ApprovalSeals are added at the 👤 API-approval step. Consumed by the app-shell/overview re-skin in Phases B–D (usedIn empty until then).",
+      "Claude Design references not wired (👤, ADR 0094/0095). The closed elevation axis lives in api.variants; per-variant references + ApprovalSeals are added at the 👤 API-approval step. Consumed by the app-shell/overview/events-explorer re-skin in Phases B–D and the four analytics-widget containers in Phase E.",
   },
   states: [
     {

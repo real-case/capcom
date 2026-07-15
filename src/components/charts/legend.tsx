@@ -90,7 +90,7 @@ export function ChartLegend({
                 aria-pressed={!off}
                 onClick={() => onToggle(s.name)}
                 {...hoverProps(s.name)}
-                className="flex items-center gap-1.5 rounded-sm text-caption text-muted-foreground transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="flex items-center gap-1.5 rounded-sm text-caption text-text-secondary transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-text-primary focus-visible:outline-none"
               >
                 {swatch}
                 {text}
@@ -98,7 +98,7 @@ export function ChartLegend({
             ) : (
               <span
                 {...hoverProps(s.name)}
-                className="flex items-center gap-1.5 text-caption text-muted-foreground"
+                className="flex items-center gap-1.5 text-caption text-text-secondary"
               >
                 {swatch}
                 {text}

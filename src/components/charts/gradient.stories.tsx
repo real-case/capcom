@@ -22,7 +22,7 @@ const meta = {
         height={H}
         role="img"
         aria-label="Area gradient demo"
-        className="rounded-md border border-border"
+        className="rounded-md border border-border-hairline bg-surface-panel"
       >
         <Story />
         <rect x={0} y={0} width={W} height={H} fill="url(#demo-gradient)" />

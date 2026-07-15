@@ -34,8 +34,8 @@ const CAPTION_FONT_SIZE = 11;
 const DIM_OPACITY = 0.4;
 
 const BAR_COLOR = "var(--color-viz-categorical-1)";
-const TRACK_COLOR = "var(--color-muted)";
-const FOCUS_RING = "var(--color-foreground)";
+const TRACK_COLOR = "var(--color-surface-elevated)";
+const FOCUS_RING = "var(--color-text-primary)";
 
 export type FunnelChartProps = {
   /** Reduced rows from fn_funnel (step_index, step_event, users), ordered by step. */
@@ -91,8 +91,8 @@ function Message({ tone, text }: { tone: "muted" | "error"; text: string }) {
     <div
       role={tone === "error" ? "alert" : "status"}
       data-state={tone === "error" ? "error" : "empty"}
-      className={`flex h-24 w-full items-center justify-center rounded-md border border-dashed border-border text-sm ${
-        tone === "error" ? "text-destructive" : "text-muted-foreground"
+      className={`flex h-24 w-full items-center justify-center rounded-md border border-dashed border-border-hairline text-sm ${
+        tone === "error" ? "text-status-critical-fg" : "text-text-secondary"
       }`}
     >
       {text}
@@ -188,7 +188,7 @@ export function FunnelChart({
                     x={MARGIN.left}
                     y={top + 11}
                     fontSize={LABEL_FONT_SIZE}
-                    fill="var(--color-foreground)"
+                    fill="var(--color-text-primary)"
                   >
                     {`${row.index}. ${row.event}`}
                   </text>
@@ -197,7 +197,7 @@ export function FunnelChart({
                     y={top + 11}
                     textAnchor="end"
                     fontSize={LABEL_FONT_SIZE}
-                    fill="var(--color-muted-foreground)"
+                    fill="var(--color-text-secondary)"
                   >
                     {`${nf.format(row.users)} · ${pct(row.overall)}`}
                   </text>
@@ -226,7 +226,7 @@ export function FunnelChart({
                       x={MARGIN.left}
                       y={barTop + BAR_H + 12}
                       fontSize={CAPTION_FONT_SIZE}
-                      fill="var(--color-muted-foreground)"
+                      fill="var(--color-text-secondary)"
                     >
                       {`${pct(row.fromPrev)} from previous step`}
                     </text>
@@ -247,18 +247,18 @@ export function FunnelChart({
           </ChartTooltipTitle>
           {activeRow ? (
             <dl className="grid grid-cols-[auto_auto] gap-x-3 text-caption">
-              <dt className="text-muted-foreground">{usersLabel}</dt>
-              <dd className="text-right font-mono tabular-nums text-foreground">
+              <dt className="text-text-secondary">{usersLabel}</dt>
+              <dd className="text-right font-mono tabular-nums text-text-primary">
                 {nf.format(activeRow.users)}
               </dd>
-              <dt className="text-muted-foreground">{overallLabel}</dt>
-              <dd className="text-right font-mono tabular-nums text-foreground">
+              <dt className="text-text-secondary">{overallLabel}</dt>
+              <dd className="text-right font-mono tabular-nums text-text-primary">
                 {pct(activeRow.overall)}
               </dd>
               {activeRow.fromPrev === undefined ? null : (
                 <>
-                  <dt className="text-muted-foreground">{fromPrevLabel}</dt>
-                  <dd className="text-right font-mono tabular-nums text-foreground">
+                  <dt className="text-text-secondary">{fromPrevLabel}</dt>
+                  <dd className="text-right font-mono tabular-nums text-text-primary">
                     {pct(activeRow.fromPrev)}
                   </dd>
                 </>

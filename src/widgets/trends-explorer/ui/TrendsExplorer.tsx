@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
 
 import { ChartBrush } from "@/components/charts";
+import { Panel } from "@/components/ui/panel";
 import { ComboField } from "@/shared/ui";
 
 import { useEventTrends, useTopEvents } from "../api/use-trends";
@@ -123,11 +124,11 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
         />
       </fieldset>
 
-      <section
+      <Panel
+        role="region"
         aria-label={t("trendSectionLabel", { event: query.event })}
-        className="rounded-lg border border-border bg-card p-4"
       >
-        <h2 className="mb-3 text-sm font-medium text-foreground">
+        <h2 className="mb-3 text-sm font-medium text-text-primary">
           {t("trendSectionLabel", { event: query.event })}
         </h2>
         <TrendsChart
@@ -143,14 +144,14 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
 
         <div className="mt-4 flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <span className="text-caption text-muted-foreground">
+            <span className="text-caption text-text-secondary">
               {t("brushHeading")}
             </span>
             {brushValue ? (
               <button
                 type="button"
                 onClick={() => void setQuery({ from: null, to: null })}
-                className="rounded-sm text-caption text-muted-foreground underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="rounded-sm text-caption text-text-secondary underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-text-primary focus-visible:outline-none"
               >
                 {t("brushReset")}
               </button>
@@ -170,13 +171,10 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
             }
           />
         </div>
-      </section>
+      </Panel>
 
-      <section
-        aria-label={t("topEventsLabel")}
-        className="rounded-lg border border-border bg-card p-4"
-      >
-        <h2 className="mb-3 text-sm font-medium text-foreground">
+      <Panel role="region" aria-label={t("topEventsLabel")}>
+        <h2 className="mb-3 text-sm font-medium text-text-primary">
           {t("topEventsLabel")}
         </h2>
         <TopEventsBar
@@ -188,7 +186,7 @@ export function TrendsExplorer({ projectId }: { projectId: string }) {
           errorLabel={t("topError")}
           emptyLabel={t("noEvents")}
         />
-      </section>
+      </Panel>
     </div>
   );
 }

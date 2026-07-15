@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
 
+import { Panel } from "@/components/ui/panel";
 import { ComboField } from "@/shared/ui";
 
 import { useRetention } from "../api/use-retention";
@@ -79,11 +80,12 @@ export function RetentionGrid({ projectId }: { projectId: string }) {
         />
       </fieldset>
 
-      <section
+      <Panel
+        role="region"
         aria-label={t("gridSectionLabel")}
-        className="overflow-x-auto rounded-lg border border-border bg-card p-4"
+        className="overflow-x-auto"
       >
-        <h2 className="mb-3 text-sm font-medium text-foreground">
+        <h2 className="mb-3 text-sm font-medium text-text-primary">
           {t("gridSectionLabel")}
         </h2>
         <CohortGrid
@@ -99,7 +101,7 @@ export function RetentionGrid({ projectId }: { projectId: string }) {
           lowLabel={t("legendLow")}
           highLabel={t("legendHigh")}
         />
-      </section>
+      </Panel>
     </div>
   );
 }
