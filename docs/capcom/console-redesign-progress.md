@@ -26,7 +26,7 @@ PR"). If you finished a phase and this file still says `☐`/`🔧` for it, the 
 | B     | App shell re-skin (`app-shell`)                                 | ✅ done | [#35](https://github.com/real-case/capcom/pull/35) | 2026-07-13 |
 | C     | Events explorer re-skin (`events-explorer`)                     | ✅ done | [#36](https://github.com/real-case/capcom/pull/36) | 2026-07-14 |
 | D     | Overview home (`overview-dashboard` + KPI RPCs)                 | ✅ done | [#37](https://github.com/real-case/capcom/pull/37) | 2026-07-14 |
-| E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ✅ done | _(PR pending)_                                     | 2026-07-14 |
+| E     | Remaining widgets (funnel/retention/segment/trends) + seam docs | ✅ done | [#38](https://github.com/real-case/capcom/pull/38) | 2026-07-15 |
 
 Legend: ☐ not started · 🔧 in progress · ✅ done · ⛔ blocked (note why).
 
@@ -157,8 +157,9 @@ border-border-hairline text-text-primary`; legend/crosshair/brush → text/surfa
 - **Chromatic:** new/changed snapshots — the re-skinned charts + interaction primitives on their new
   surface decorators (dark + light), plus the re-skinned containers — **pending human approval** (the agent
   never approves its own baseline, ADR 0043/0095).
-- **PR:** _(pending — recorded after open; branch `feat/console-phase-e-analytics-reskin` → `dev`)_; merged
-  to dev? **no** (awaiting human review + Chromatic re-baseline).
+- **PR:** [#38](https://github.com/real-case/capcom/pull/38) — branch `feat/console-phase-e-analytics-reskin`
+  → `dev`; merged to dev? **no** (awaiting human review + Chromatic re-baseline). Review before opening:
+  `marvin-tm-diff-critic` **PASS WITH WARNINGS** (no blockers).
 - **Next:** initiative complete — human review + Chromatic re-baseline + merge, then the `dev → main` v0.2.x
   promotion (human-only) carries Phases B–E live.
 

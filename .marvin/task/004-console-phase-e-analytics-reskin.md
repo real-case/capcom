@@ -870,3 +870,25 @@ none
   primitive (the deferred MonoData/MetricHero adoption).
 - An interactive-legend / tooltip a11y polish pass across the analytics charts (ADR 0093) remains a natural
   follow-up, independent of the surface re-skin.
+
+## Delivery
+
+- **PR:** [#38](https://github.com/real-case/capcom/pull/38) — `feat/console-phase-e-analytics-reskin` →
+  `dev` (open, not merged).
+- **Commits:** `64df078` (implementation, 32 files), plus the progress-tracker PR record.
+- **Reviews:** `marvin-tm-diff-critic` **PASS WITH WARNINGS** (no blockers; all 5 ACs independently
+  verified — clean-swap grep 0 matches, the coupled `panel.usedIn` +4 confirmed in lockstep, the re-skin
+  confirmed collateral-free to the merged Phase-C/D surfaces).
+- **Verification:** all gates green — clean-swap grep **0 matches** (AC1), `npm run test` **719/719** across
+  136 files with axe in both compositions (AC2/AC3), `check:contrast` both compositions, `check:tokens`,
+  `check:graph`/`check:design-intent` (AC4), `check:fsd`/`check:boundaries`, `check:i18n`,
+  `check:spelling`/`check:citations` (AC5), `gen:tokens` swap-only self-test with **zero token drift**,
+  `tsc`, lint (`src`), build, coverage 90.38%/82.88%/87.14%/92.69%. Scope gate PASS (31 in-scope files
+  within the allowlist).
+- **SPEC GAPs (recorded):** (1) F28's `brush.stories.tsx` also needed its "Whole window" fixture caption
+  swapped off `text-muted-foreground` — a real half-mix (4.49:1 on the light panel) that the new surface
+  decorator surfaced via axe, fixed in the same allowlisted file. (2) `gradient.stories.tsx` /
+  `motion.stories.tsx` were left on shadcn `bg-card` — outside the sealed allowlist and not a half-mix (no
+  mission-control text token; AA-safe, axe green); a documented scope boundary. (3) F31
+  (`.cspell/project-words.txt`) was a no-op — no new words needed.
+- **Pending human gates:** review, Chromatic re-baseline (ADR 0043/0095), merge into `dev`.
