@@ -133,7 +133,8 @@ categorical-indicator`, `usageRole null`) — a distinct signature that reuses r
 - **Process:** sealed spec
   [`005-overview-bento-fidelity.md`](../../.marvin/task/005-overview-bento-fidelity.md) (contract_sha
   `1410ac3ff78d1e5c`; DoR PASS, spec-critic **BLOCK → BLOCK → BLOCK → resolved** over 3 rounds).
-- **Next:** merge PR #39 first, then this; then the console-redesign line is fully at reference fidelity.
+- **PR:** [#40](https://github.com/real-case/capcom/pull/40) — branch `feat/overview-bento-fidelity` → `dev`, **stacked on #39** (merge #39 first); merged? **no**.
+- **Next:** merge PR #39 first, then #40; then the console-redesign line is fully at reference fidelity.
 
 ### Bento-fidelity precursor — the SQL + entity layer (`fn_segment_scatter` + a `purchasers` column) — 2026-07-16 — ✅ done
 

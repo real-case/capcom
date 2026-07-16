@@ -786,3 +786,10 @@ none
   Booked/target · Forecast · Remaining rows.
 - Reconcile the two sources of `plan` (event properties vs profile traits) so breakdowns survive real ingest.
 - Chart interactivity (tooltip/crosshair) on the bento cells via the ADR 0093 layer.
+
+## Delivery
+
+- **PR:** [#40](https://github.com/real-case/capcom/pull/40) — `feat/overview-bento-fidelity` → `dev`, **stacked on #39** (`feat/overview-signal-and-scatter-rpcs`); must not merge before #39.
+- **Commit:** `0169929` (the 31-file bento UI + graph reconciliation + i18n + progress).
+- **Verification:** `npm run test` **753/753** incl. the browser-mode BentoGrid geometry play (AC3 — real-CSS getComputedStyle proof the hole is gone) + axe both compositions; check:tokens/contrast/graph/design-intent/fsd/boundaries/i18n/spelling green; gen:tokens no drift; tsc/lint/build; coverage 91.08%/83.53%/88.32%/93.16%. Scope gate PASS. Verified visually in Storybook (light + dark).
+- **Pending human gates:** merge #39 first, review, merge into dev (Chromatic N/A — token not provisioned).
