@@ -18,7 +18,14 @@
 --     fn_events_summary / fn_overview_kpis idiom). A user with no purchase is 0.
 --   • p_limit caps the point set IN SQL, ordered by ltv desc — a scatter is only
 --     readable at a bounded cardinality, and capping here (not in the client) keeps
---     the reduction in the database and the payload small.
+--     the reduction in the database and the payload small. The cap is clamped to
+--     [0, MAX] and NULL-coalesced to the default, so the bound is enforced by this
+--     function rather than trusted from the caller: `greatest()` IGNORES nulls (so a
+--     bare `greatest(p_limit, 0)` would turn an explicit `p_limit => null` into 0 rows
+--     instead of the default), and an unbounded client-supplied limit would make the
+--     "payload small" claim above merely advisory. Neither is an isolation concern —
+--     a member may already read their own tenant's events — but the stated intent
+--     should be the enforced one.
 --
 -- SECURITY INVOKER: runs under the caller's RLS, so the ADR 0083 membership join
 -- decides visibility — a non-member simply reduces zero rows (a set-returning
@@ -76,7 +83,10 @@ as $$
     on p.project_id = p_project_id
    and p.distinct_id = u.distinct_id
   order by u.ltv desc, u.distinct_id
-  limit greatest(p_limit, 0);
+  -- coalesce: an explicit `p_limit => null` falls back to the default (greatest() would
+  -- otherwise ignore the null and yield 0). greatest: never a negative LIMIT. least: the
+  -- upper bound is this function's to enforce, not the caller's to choose.
+  limit least(greatest(coalesce(p_limit, 300), 0), 1000);
 $$;
 
 comment on function public.fn_segment_scatter(uuid, timestamptz, timestamptz, integer) is

@@ -141,9 +141,19 @@ postgres=X/postgres | authenticated=X/postgres` — no `anon`, no PUBLIC** · bo
 - **Chromatic:** **N/A** — no render change (verified: `SignalChart` reads only `row[measure]` over the
   hand-written `SignalMeasure` union). Note the Chromatic job is inert repo-wide until a 👤 provisions
   `CHROMATIC_PROJECT_TOKEN`.
+- **`supabase-rls-reviewer`: CLEAN** — static + live impersonation in rolled-back transactions.
+  Independently confirmed `anon` did **not** gain EXECUTE (`has_function_privilege('anon', …) = f`;
+  `set local role anon` → permission denied), the recreated body is verbatim-plus-three-additive-hunks
+  against the original, and forged `p_project_id` never widens tenancy (bob → own 160 rows / foreign 0;
+  carol → own 90 / foreign 0). It flagged **two non-security nits in the scatter `LIMIT`, both fixed**: a
+  bare `greatest(p_limit, 0)` turned an explicit `p_limit => null` into **0 rows** (GREATEST ignores nulls)
+  instead of the default, and the client-supplied cap had no upper bound despite the comment promising a
+  "small payload" → clamped to `least(greatest(coalesce(p_limit, 300), 0), 1000)` (verified: null→default,
+  999999→≤1000, −1→0, 10→10; signature unchanged so `gen:types` is a no-op).
 - **Process:** sealed spec
   [`006-overview-signal-and-scatter-rpcs.md`](../../.marvin/task/006-overview-signal-and-scatter-rpcs.md)
-  (contract_sha `ff5444615a753231`; DoR PASS, spec-critic **BLOCK → BLOCK → PASS WITH WARNINGS**).
+  (contract_sha `ff5444615a753231`; DoR PASS, spec-critic **BLOCK → BLOCK → PASS WITH WARNINGS**,
+  supabase-rls-reviewer **CLEAN**).
 - **Next:** the bento rebuild — spec
   [`005-overview-bento-fidelity.md`](../../.marvin/task/005-overview-bento-fidelity.md) (`draft`,
   `depends_on: [overview-signal-and-scatter-rpcs]`), which must lose its own F1–F6 (they shipped here) and be
