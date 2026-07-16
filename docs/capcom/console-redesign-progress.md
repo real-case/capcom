@@ -150,6 +150,7 @@ postgres=X/postgres | authenticated=X/postgres` — no `anon`, no PUBLIC** · bo
   instead of the default, and the client-supplied cap had no upper bound despite the comment promising a
   "small payload" → clamped to `least(greatest(coalesce(p_limit, 300), 0), 1000)` (verified: null→default,
   999999→≤1000, −1→0, 10→10; signature unchanged so `gen:types` is a no-op).
+- **PR:** [#39](https://github.com/real-case/capcom/pull/39) — branch `feat/overview-signal-and-scatter-rpcs` → `dev`; merged? **no** (awaiting human review).
 - **Process:** sealed spec
   [`006-overview-signal-and-scatter-rpcs.md`](../../.marvin/task/006-overview-signal-and-scatter-rpcs.md)
   (contract_sha `ff5444615a753231`; DoR PASS, spec-critic **BLOCK → BLOCK → PASS WITH WARNINGS**,

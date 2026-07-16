@@ -515,3 +515,11 @@ none
 - Reconciling the two sources of `plan` so breakdowns survive real ingest (ADR 0085) rather than relying on
   the seed stamping both.
 - A goals/targets table (its own ADR) would let the Overview's goal cell state a real target.
+
+## Delivery
+
+- **PR:** [#39](https://github.com/real-case/capcom/pull/39) — `feat/overview-signal-and-scatter-rpcs` → `dev` (open, not merged).
+- **Commits:** `ce6eddf` (implementation, 14 files) + `ec056f8` (the LIMIT clamp from the RLS-review nits).
+- **Reviews:** `supabase-rls-reviewer` **CLEAN** (static + live impersonation; anon EXECUTE denied, no tenant bypass) — two non-security LIMIT nits fixed.
+- **Verification:** `db:reset` (both migrations apply — drop-first proven), ACL `postgres/authenticated` only, `gen:types` (no drift), **e2e 7/7**, `npm run test` **723/723**, coverage 90.4%, tsc/lint/build + all `check:*` green. Scope gate PASS.
+- **Pending human gates:** review, merge into `dev` (Chromatic N/A — no render change).
