@@ -454,6 +454,7 @@ export type Database = {
           active_users: number;
           bucket: string;
           new_signups: number;
+          purchasers: number;
           value_sum: number;
         }[];
       };
@@ -482,6 +483,20 @@ export type Database = {
         Returns: {
           bucket: string;
           users: number;
+        }[];
+      };
+      fn_segment_scatter: {
+        Args: {
+          p_from: string;
+          p_limit?: number;
+          p_project_id: string;
+          p_to: string;
+        };
+        Returns: {
+          distinct_id: string;
+          frequency: number;
+          ltv: number;
+          plan: string;
         }[];
       };
       fn_segment_size: {

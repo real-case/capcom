@@ -234,7 +234,8 @@ export async function fetchOverviewKpis(
 
 /**
  * The Overview signal series (ADR 0099, under the 0084 strategy): per-bucket distinct
- * active users, distinct new sign-ups, and purchase value, from the `SECURITY INVOKER`
+ * active users, distinct new sign-ups, purchase value, and distinct purchasers, from the
+ * `SECURITY INVOKER`
  * `fn_overview_signal` RPC — reduced (and zero-filled) in the database under the caller's
  * RLS, never a client-side tally. Returns an empty list when RLS yields no rows (a
  * non-member, ADR 0083); this fetcher forwards the typed argument bag verbatim.

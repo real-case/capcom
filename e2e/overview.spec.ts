@@ -54,6 +54,14 @@ type SignalRow = {
   active_users: number;
   new_signups: number;
   value_sum: number;
+  purchasers: number;
+};
+
+type ScatterPoint = {
+  distinct_id: string;
+  frequency: number;
+  ltv: number;
+  plan: string | null;
 };
 
 function anonClient(): SupabaseClient {
@@ -182,5 +190,136 @@ test.describe("cross-tenant isolation (ADR 0083, inherited via SECURITY INVOKER)
     // Sanity: carol DOES see her own tenant's KPIs.
     const own = await kpis(carol, GLOBEX_PROJECT, FROM, TO);
     expect(Number(own.active_users)).toBeGreaterThan(0);
+  });
+});
+
+test.describe("fn_segment_scatter (ADR 0099/0084)", () => {
+  // The seeded plan vocabulary (scripts/seed-events.mjs). `plan` is null-safe: a tracked
+  // user with no profile row plots with plan = null.
+  const SEEDED_PLANS = ["free", "pro", "enterprise"];
+
+  test("caps and orders the point set IN SQL, with a bounded plan vocabulary", async () => {
+    const bob = await signIn("bob@capcom.dev"); // viewer @ Aurora
+
+    // Call with an EXPLICIT small cap. The p_limit default (300) is unfalsifiable against
+    // this seed (~160 Aurora users), so asserting against it would pass even if the SQL had
+    // no LIMIT clause at all — this is the only way the cap is actually under test.
+    const { data, error } = await bob.rpc("fn_segment_scatter", {
+      p_project_id: AURORA_WEB_PROJECT,
+      p_from: FROM,
+      p_to: TO,
+      p_limit: 10,
+    });
+    expect(error).toBeNull();
+    const points = (data ?? []) as ScatterPoint[];
+
+    expect(points).toHaveLength(10);
+
+    // NON-INCREASING, not strictly descending: seeded amounts come from a four-value set,
+    // so ties in the top slice are expected and a strict `>` assertion would flake.
+    for (let i = 1; i < points.length; i++) {
+      expect(Number(points[i]!.ltv)).toBeLessThanOrEqual(
+        Number(points[i - 1]!.ltv),
+      );
+    }
+
+    // Events-driven grouping ⇒ a point exists only for a user with activity in the window.
+    expect(points.every((p) => Number(p.frequency) >= 1)).toBe(true);
+    expect(points.every((p) => Number(p.ltv) >= 0)).toBe(true);
+    expect(
+      points.every((p) => p.plan === null || SEEDED_PLANS.includes(p.plan)),
+    ).toBe(true);
+  });
+});
+
+test.describe("fn_overview_signal purchasers column (ADR 0099/0084)", () => {
+  test("matches fn_overview_kpis over the same single-day window, spine intact", async () => {
+    const bob = await signIn("bob@capcom.dev");
+
+    // Find a day inside the pinned window that actually has buyers. Without this the
+    // identity below is vacuously 0 === 0 and would pass even under a broken reduction.
+    const scan = await bob.rpc("fn_overview_signal", {
+      p_project_id: AURORA_WEB_PROJECT,
+      p_from: FROM,
+      p_to: TO,
+      p_interval: "day",
+    });
+    expect(scan.error).toBeNull();
+    const days = (scan.data ?? []) as SignalRow[];
+
+    // The zero-fill spine is intact and every pre-existing column still resolves.
+    expect(days.length).toBeGreaterThan(0);
+    expect(
+      days.every(
+        (r) =>
+          r.bucket !== undefined &&
+          Number(r.active_users) >= 0 &&
+          Number(r.new_signups) >= 0 &&
+          Number(r.value_sum) >= 0 &&
+          Number(r.purchasers) >= 0,
+      ),
+    ).toBe(true);
+
+    const busiest = days
+      .slice()
+      .sort((a, b) => Number(b.purchasers) - Number(a.purchasers))[0]!;
+    expect(
+      Number(busiest.purchasers),
+      "no buyers in the window — the identity below would be vacuous; re-seed",
+    ).toBeGreaterThan(0);
+
+    // THE IDENTITY: over one day, the signal's per-bucket purchasers must equal the KPI
+    // scalar for that same day. This deterministically pins window/filter/spine PARITY
+    // against a reduction already proven distinct-user above.
+    //
+    // It does NOT prove distinct-vs-row-count: the seed yields ~1.6 purchases per eligible
+    // user across 90 days, so a same-day repeat purchase — the only case where count(*) and
+    // count(distinct) diverge — is under one expected user-day in the whole seed. No
+    // deterministic proof of that property exists against this seed; the distinct-user
+    // reduction is asserted by construction (it mirrors fn_overview_kpis' own filter).
+    const dayFrom = busiest.bucket;
+    const dayTo = new Date(
+      new Date(dayFrom).getTime() + 24 * 60 * 60 * 1000,
+    ).toISOString();
+
+    const oneDay = await bob.rpc("fn_overview_signal", {
+      p_project_id: AURORA_WEB_PROJECT,
+      p_from: dayFrom,
+      p_to: dayTo,
+      p_interval: "day",
+    });
+    expect(oneDay.error).toBeNull();
+    const oneDayRows = (oneDay.data ?? []) as SignalRow[];
+    expect(oneDayRows).toHaveLength(1);
+
+    const k = await kpis(bob, AURORA_WEB_PROJECT, dayFrom, dayTo);
+    expect(Number(oneDayRows[0]!.purchasers)).toBe(Number(k.purchasers));
+  });
+});
+
+test.describe("fn_segment_scatter isolation (ADR 0083, inherited via SECURITY INVOKER)", () => {
+  test("a non-member gets ZERO ROWS — not zeros — and still sees their own tenant", async () => {
+    const carol = await signIn("carol@capcom.dev"); // owner @ Globex only
+
+    const foreign = await carol.rpc("fn_segment_scatter", {
+      p_project_id: AURORA_WEB_PROJECT,
+      p_from: FROM,
+      p_to: TO,
+      p_limit: 300,
+    });
+    // A set-returning function has NO zero-fill spine (unlike fn_overview_signal), so RLS
+    // hiding every row yields an empty set — with no error, never another tenant's users.
+    expect(foreign.error).toBeNull();
+    expect((foreign.data ?? []) as ScatterPoint[]).toHaveLength(0);
+
+    // Sanity: carol DOES see her own tenant's users.
+    const own = await carol.rpc("fn_segment_scatter", {
+      p_project_id: GLOBEX_PROJECT,
+      p_from: FROM,
+      p_to: TO,
+      p_limit: 300,
+    });
+    expect(own.error).toBeNull();
+    expect(((own.data ?? []) as ScatterPoint[]).length).toBeGreaterThan(0);
   });
 });

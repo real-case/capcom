@@ -91,6 +91,75 @@ categorical-indicator`, `usageRole null`) — a distinct signature that reuses r
 > - **Next:** <the next concrete step>
 > ```
 
+### Bento-fidelity precursor — the SQL + entity layer (`fn_segment_scatter` + a `purchasers` column) — 2026-07-16 — ✅ done
+
+- **Why this exists.** Reviewing the running demo, the 👤 found that Phase D shipped a **flat uniform grid**
+  (`OverviewDashboard.tsx:96` — `grid … lg:grid-cols-3`, no spans → 3 cards + 2 cards **and a hole**), not the
+  "curated bento" ADR 0099 mandates against the frozen build reference. The rebuild (sibling spec
+  `overview-bento-fidelity`, ~31 UI files) cannot be split internally — its component edits are atomically
+  coupled to their `usedIn` deltas by exact-set gates — so this is the **one clean seam**: SQL + entity, no
+  component, no render, no graph node. 👤 decision.
+- **Landed:**
+  - **`fn_segment_scatter`** (`supabase/migrations/20260716120000_create_segment_scatter.sql`) — the only
+    bento cell with no existing RPC (`fn_segment_distribution` is 1-dimension, not a 2-D per-user scatter).
+    `SECURITY INVOKER`, `search_path=''`, **events-driven** (groups `public.events` by `distinct_id`, LEFT
+    JOINs `profiles` for plan → `frequency >= 1` by construction), `ltv` via the `jsonb_typeof` numeric gate,
+    **capped in SQL** by `p_limit` ordered `ltv desc`.
+  - **A `purchasers` column on `fn_overview_signal`**
+    (`supabase/migrations/20260716120100_overview_signal_purchasers.sql`) — the reference's three `b-stack`
+    minis each carry a **sparkline**, and `conversion = purchasers / active_users` had **no per-bucket
+    source**. Same reduction as `fn_overview_kpis`' scalar, so sparkline and KPI cannot drift.
+  - Entity layer on `segment` (generated types, `fetchSegmentScatter`, mock-rpc tests, barrel), the
+    `SignalChart` story fixture, and the stale doc comments.
+  - **Five of the bento's six cells need no new SQL** — `fn_event_trends` already takes `p_breakdown_key`
+    (hero + stacked bars), `fn_overview_kpis` covers the hero value / mini stack / goal pacing, `fn_funnel`
+    covers the funnel.
+- **Gates:** `db:reset` ✅ (both migrations apply) · **ACL verified live: `fn_overview_signal →
+postgres=X/postgres | authenticated=X/postgres` — no `anon`, no PUBLIC** · both confirmed SECURITY INVOKER
+  (never DEFINER) with a pinned empty search path · `gen:types` ✅ · **e2e ✅ 7/7** (`npm run test:e2e`,
+  pinned anchor) · `npm run test` ✅
+  **723/723** · `tsc` / lint (`src`) / build ✅ · `check:tokens` / `graph` / `design-intent` / `fsd` /
+  `boundaries` / `i18n` / `spelling` / `citations` ✅.
+- **What the spec-critic caught (3 rounds — none of these were cosmetic):**
+  1. **The migration would not have applied.** The draft said `CREATE OR REPLACE`; Postgres rejects a changed
+     `RETURNS TABLE` row type. The repo has **zero** such migrations — the shipped idiom is drop-first
+     (`20260709120000_events_filtered_summary_and_facets.sql:27-32`). Proven: `db:reset` now passes.
+  2. **A privilege escalation.** The DROP that fix forces silently discards the GRANTs, and `CREATE FUNCTION`
+     grants EXECUTE to **PUBLIC** by default → `anon` would have gained EXECUTE, in the PR carved out _for_
+     the security review. The migration now re-issues `revoke`/`grant`/`comment`; the ACL above is the proof.
+  3. **A `tsc` break behind a "nothing breaks" claim** — `gen:types` marks columns required, so the typed
+     `SignalChart.stories.tsx` fixture failed TS2739. The additive claim is now scoped to **runtime**, and the
+     AC moved off prose-review to a command oracle (it was prose-review that let this through).
+  4. **Three oracles that could not fail** — `rows <= p_limit` (300 cap vs ~160 seeded users passes with no
+     LIMIT at all), `frequency >= 1` / `ltv >= 0` (true by construction), and `purchasers <= active_users`
+     (seeded purchases are far too rare to catch a `count(*)` bug). Replaced by an explicit `p_limit=10` and a
+     **non-empty-bucket identity** against `fn_overview_kpis`.
+- **Disclosed, not papered over:** the identity proves window/filter/spine **parity**; it does **not** prove
+  distinct-vs-row-count — a same-day repeat purchase is under one expected user-day across the whole seed, so
+  **no deterministic proof of that property exists against this seed**. The distinct-user reduction is asserted
+  by construction (it mirrors `fn_overview_kpis`' own filter).
+- **Chromatic:** **N/A** — no render change (verified: `SignalChart` reads only `row[measure]` over the
+  hand-written `SignalMeasure` union). Note the Chromatic job is inert repo-wide until a 👤 provisions
+  `CHROMATIC_PROJECT_TOKEN`.
+- **`supabase-rls-reviewer`: CLEAN** — static + live impersonation in rolled-back transactions.
+  Independently confirmed `anon` did **not** gain EXECUTE (`has_function_privilege('anon', …) = f`;
+  `set local role anon` → permission denied), the recreated body is verbatim-plus-three-additive-hunks
+  against the original, and forged `p_project_id` never widens tenancy (bob → own 160 rows / foreign 0;
+  carol → own 90 / foreign 0). It flagged **two non-security nits in the scatter `LIMIT`, both fixed**: a
+  bare `greatest(p_limit, 0)` turned an explicit `p_limit => null` into **0 rows** (GREATEST ignores nulls)
+  instead of the default, and the client-supplied cap had no upper bound despite the comment promising a
+  "small payload" → clamped to `least(greatest(coalesce(p_limit, 300), 0), 1000)` (verified: null→default,
+  999999→≤1000, −1→0, 10→10; signature unchanged so `gen:types` is a no-op).
+- **PR:** [#39](https://github.com/real-case/capcom/pull/39) — branch `feat/overview-signal-and-scatter-rpcs` → `dev`; merged? **no** (awaiting human review).
+- **Process:** sealed spec
+  [`006-overview-signal-and-scatter-rpcs.md`](../../.marvin/task/006-overview-signal-and-scatter-rpcs.md)
+  (contract_sha `ff5444615a753231`; DoR PASS, spec-critic **BLOCK → BLOCK → PASS WITH WARNINGS**,
+  supabase-rls-reviewer **CLEAN**).
+- **Next:** the bento rebuild — spec
+  [`005-overview-bento-fidelity.md`](../../.marvin/task/005-overview-bento-fidelity.md) (`draft`,
+  `depends_on: [overview-signal-and-scatter-rpcs]`), which must lose its own F1–F6 (they shipped here) and be
+  re-crystallized once this merges.
+
 ### Phase E — Remaining analytics widgets + chart-interaction layer + seam doc (final) — 2026-07-14 — ✅ done
 
 - **Landed:** the last four analytics widgets re-skinned off the shadcn value layer onto the mission-control

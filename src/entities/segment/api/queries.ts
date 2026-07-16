@@ -5,6 +5,8 @@ import type { Database } from "@/lib/supabase/database.types";
 import type {
   SegmentDistributionArgs,
   SegmentDistributionRow,
+  SegmentScatterArgs,
+  SegmentScatterPoint,
   SegmentSizeArgs,
 } from "../model/types";
 
@@ -41,6 +43,21 @@ export async function fetchSegmentDistribution(
   args: SegmentDistributionArgs,
 ): Promise<SegmentDistributionRow[]> {
   const { data, error } = await supabase.rpc("fn_segment_distribution", args);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * Segment scatter (ADR 0099, under the 0084 strategy): one already-reduced point per
+ * tracked user — `frequency` against `ltv`, coloured by `plan` — via the
+ * `fn_segment_scatter` RPC. The reduction, the `ltv desc` ordering and the `p_limit` cap
+ * all live in SQL; this fetcher forwards the typed arg bag verbatim and reduces nothing.
+ */
+export async function fetchSegmentScatter(
+  supabase: SupabaseClient<Database>,
+  args: SegmentScatterArgs,
+): Promise<SegmentScatterPoint[]> {
+  const { data, error } = await supabase.rpc("fn_segment_scatter", args);
   if (error) throw error;
   return data ?? [];
 }

@@ -21,3 +21,19 @@ export type SegmentDistributionArgs =
  */
 export type SegmentDistributionRow =
   Database["public"]["Functions"]["fn_segment_distribution"]["Returns"][number];
+
+/** The argument bag for the `fn_segment_scatter` RPC (generated, ADR 0015). `p_limit` is optional — it defaults to 300 in SQL. */
+export type SegmentScatterArgs =
+  Database["public"]["Functions"]["fn_segment_scatter"]["Args"];
+
+/**
+ * One reduced point from the `fn_segment_scatter` aggregation (ADR 0084/0099): a tracked
+ * user's `frequency` (their event count in the window) against their `ltv` (the summed
+ * numeric `properties.amount` over their purchases, 0 when none), plus the `plan` trait
+ * used to colour the point (`null` when the user has no profile row). The set is
+ * events-driven — a point exists only for a user with at least one event in the window, so
+ * `frequency >= 1` always — and is capped in SQL by `p_limit`, ordered by `ltv` descending.
+ * Generated RPC return type (ADR 0015).
+ */
+export type SegmentScatterPoint =
+  Database["public"]["Functions"]["fn_segment_scatter"]["Returns"][number];
