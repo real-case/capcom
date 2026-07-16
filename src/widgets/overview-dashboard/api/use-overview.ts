@@ -4,11 +4,19 @@
 import { useQuery } from "@tanstack/react-query";
 
 import {
+  fetchEventTrends,
+  fetchFunnel,
   fetchOverviewKpis,
   fetchOverviewSignal,
+  type EventTrendsArgs,
+  type FunnelArgs,
   type OverviewKpisArgs,
   type OverviewSignalArgs,
 } from "@/entities/event";
+import {
+  fetchSegmentScatter,
+  type SegmentScatterArgs,
+} from "@/entities/segment";
 import { queryKeys } from "@/lib/query/keys";
 import { createClient } from "@/lib/supabase/client";
 
@@ -32,5 +40,37 @@ export function useOverviewSignal(args: OverviewSignalArgs) {
   return useQuery({
     queryKey: queryKeys.overview.signal(args),
     queryFn: () => fetchOverviewSignal(createClient(), args),
+  });
+}
+
+/** The b-hero multi-series trend (daily activity by plan), via the existing fn_event_trends. */
+export function useOverviewHero(args: EventTrendsArgs) {
+  return useQuery({
+    queryKey: queryKeys.overview.hero(args),
+    queryFn: () => fetchEventTrends(createClient(), args),
+  });
+}
+
+/** The b-bars stacked series (sign-ups by plan), via the existing fn_event_trends. */
+export function useOverviewBars(args: EventTrendsArgs) {
+  return useQuery({
+    queryKey: queryKeys.overview.bars(args),
+    queryFn: () => fetchEventTrends(createClient(), args),
+  });
+}
+
+/** The b-funnel activation funnel, via the existing fn_funnel. */
+export function useActivationFunnel(args: FunnelArgs) {
+  return useQuery({
+    queryKey: queryKeys.overview.funnel(args),
+    queryFn: () => fetchFunnel(createClient(), args),
+  });
+}
+
+/** The b-seg frequency × LTV scatter, via the precursor's fn_segment_scatter. */
+export function useSegmentScatter(args: SegmentScatterArgs) {
+  return useQuery({
+    queryKey: queryKeys.overview.scatter(args),
+    queryFn: () => fetchSegmentScatter(createClient(), args),
   });
 }

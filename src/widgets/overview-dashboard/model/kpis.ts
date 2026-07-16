@@ -13,11 +13,33 @@ import type { OverviewKpis } from "@/entities/event";
 export type KpiFormat = "count" | "percent" | "currency";
 export type KpiId = "activeUsers" | "newSignups" | "conversion" | "arpu";
 
+/**
+ * A `fn_overview_signal` per-bucket measure that a mini's sparkline plots. The three columns
+ * plot directly; `conversion` (purchasers / active_users) and `arpu` (value_sum /
+ * active_users) are DERIVED per bucket — a ratio of two already-reduced scalars of the SAME
+ * row, i.e. presentation (ADR 0087/0088), not a cross-row reduction. Lives in the model (not
+ * SignalChart) so the descriptor mapping below can be typed without the ui→model→ui cycle;
+ * `SignalChart` imports it from here.
+ */
+export type SignalMeasure =
+  | "active_users"
+  | "new_signups"
+  | "value_sum"
+  | "purchasers"
+  | "conversion"
+  | "arpu";
+
 export type KpiDescriptor = {
   id: KpiId;
   /** i18n key under the `Overview.kpi` namespace. */
   labelKey: KpiId;
   format: KpiFormat;
+};
+
+/** A `.panel.mini` descriptor: a KPI plus the signal measure its sparkline plots + a viz hue. */
+export type MiniDescriptor = KpiDescriptor & {
+  signalMeasure: SignalMeasure;
+  color: string;
 };
 
 /** The four scalar KPI cards, in display order. Goal pacing is the separate PacingCard. */
@@ -27,6 +49,71 @@ export const KPI_DESCRIPTORS: readonly KpiDescriptor[] = [
   { id: "conversion", labelKey: "conversion", format: "percent" },
   { id: "arpu", labelKey: "arpu", format: "currency" },
 ] as const;
+
+/** The b-hero headline KPI (distinct active users). */
+export const HERO_KPI: KpiDescriptor = {
+  id: "activeUsers",
+  labelKey: "activeUsers",
+  format: "count",
+};
+
+/**
+ * The reference's three `.panel.mini` cells, each with its sparkline measure. New sign-ups
+ * plots the `new_signups` column directly; conversion and ARPU plot the two DERIVED measures
+ * the precursor's `purchasers` column makes computable. The union with HERO_KPI covers the
+ * KpiId set with no overlap or omission (asserted in kpis.test).
+ */
+export const STACK_KPIS: readonly MiniDescriptor[] = [
+  {
+    id: "newSignups",
+    labelKey: "newSignups",
+    format: "count",
+    signalMeasure: "new_signups",
+    color: "var(--color-viz-categorical-1)",
+  },
+  {
+    id: "conversion",
+    labelKey: "conversion",
+    format: "percent",
+    signalMeasure: "conversion",
+    color: "var(--color-viz-categorical-2)",
+  },
+  {
+    id: "arpu",
+    labelKey: "arpu",
+    format: "currency",
+    signalMeasure: "arpu",
+    color: "var(--color-viz-categorical-3)",
+  },
+] as const;
+
+export type GoalRowId = "revenue" | "pace" | "purchasers" | "arpu";
+export type GoalRowDescriptor = { id: GoalRowId; format: KpiFormat };
+
+/**
+ * The goal cell's four TARGET-FREE kv rows (👤 decision — no goals table, so the reference's
+ * Booked/target · Forecast · Remaining, which need a target, are replaced by rows the data
+ * already backs): current revenue, the pace vs the previous equal span, distinct purchasers,
+ * and ARPU. All are presentation over already-reduced scalars.
+ */
+export const GOAL_ROWS: readonly GoalRowDescriptor[] = [
+  { id: "revenue", format: "currency" },
+  { id: "pace", format: "percent" },
+  { id: "purchasers", format: "count" },
+  { id: "arpu", format: "currency" },
+] as const;
+
+/** Derive the goal cell's four target-free row values from one already-reduced kpis row. */
+export function deriveGoalRows(
+  data: OverviewKpis,
+): Record<GoalRowId, number | null> {
+  return {
+    revenue: data.value_sum,
+    pace: safeDiv(data.value_sum, data.value_sum_prev),
+    purchasers: data.purchasers,
+    arpu: safeDiv(data.value_sum, data.active_users),
+  };
+}
 
 export type DerivedKpi = { value: number | null; deltaRatio: number | null };
 export type DerivedKpis = Record<KpiId, DerivedKpi> & {

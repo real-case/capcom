@@ -2,7 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import type { OverviewKpis } from "@/entities/event";
 
-import { deriveKpis, formatDelta, formatKpiValue, formatPacing } from "./kpis";
+import {
+  deriveGoalRows,
+  deriveKpis,
+  formatDelta,
+  formatKpiValue,
+  formatPacing,
+  GOAL_ROWS,
+  HERO_KPI,
+  KPI_DESCRIPTORS,
+  STACK_KPIS,
+} from "./kpis";
 
 // A realistic reduced row (matches the seeded Aurora window used in the e2e smoke test):
 // growth across the board so every delta is positive.
@@ -92,5 +102,46 @@ describe("formatters", () => {
     expect(formatDelta(null, "en-US")).toBe("—");
     expect(formatPacing(1.06, "en-US")).toBe("106%");
     expect(formatPacing(null, "en-US")).toBe("—");
+  });
+});
+
+describe("HERO_KPI / STACK_KPIS partition", () => {
+  it("partitions the KpiId set with no overlap or omission", () => {
+    const partition = [HERO_KPI.id, ...STACK_KPIS.map((d) => d.id)].sort();
+    const all = KPI_DESCRIPTORS.map((d) => d.id).sort();
+    expect(partition).toEqual(all);
+    // No id appears in both HERO_KPI and STACK_KPIS.
+    expect(STACK_KPIS.some((d) => d.id === HERO_KPI.id)).toBe(false);
+  });
+
+  it("maps each mini to a signal measure (new_signups column; conversion/arpu derived)", () => {
+    expect(STACK_KPIS.map((d) => [d.id, d.signalMeasure])).toEqual([
+      ["newSignups", "new_signups"],
+      ["conversion", "conversion"],
+      ["arpu", "arpu"],
+    ]);
+  });
+});
+
+describe("deriveGoalRows", () => {
+  it("derives the four target-free rows from already-reduced scalars", () => {
+    const g = deriveGoalRows(GROWTH);
+    expect(g.revenue).toBe(1812);
+    expect(g.pace).toBeCloseTo(1812 / 916);
+    expect(g.purchasers).toBe(19);
+    expect(g.arpu).toBeCloseTo(1812 / 108);
+    expect(GOAL_ROWS.map((r) => r.id)).toEqual([
+      "revenue",
+      "pace",
+      "purchasers",
+      "arpu",
+    ]);
+  });
+
+  it("guards a zero denominator to null (no NaN/Infinity)", () => {
+    const zero = { ...GROWTH, active_users: 0, value_sum_prev: 0 };
+    const g = deriveGoalRows(zero);
+    expect(g.pace).toBeNull();
+    expect(g.arpu).toBeNull();
   });
 });

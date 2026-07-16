@@ -1,7 +1,13 @@
 import { parseAsStringEnum } from "nuqs";
 import { z } from "zod";
 
-import type { OverviewKpisArgs, OverviewSignalArgs } from "@/entities/event";
+import type {
+  EventTrendsArgs,
+  FunnelArgs,
+  OverviewKpisArgs,
+  OverviewSignalArgs,
+} from "@/entities/event";
+import type { SegmentScatterArgs } from "@/entities/segment";
 
 /**
  * URL-state for the curated Overview home (ADR 0099/0027): a single `range` preset in the
@@ -89,4 +95,90 @@ export function toSignalArgs(
     p_to: to,
     p_interval: signalInterval(range),
   };
+}
+
+/**
+ * The b-hero cell: daily `page_view` activity broken down by plan. `p_breakdown_limit=3`
+ * over exactly 3 seeded plans yields no `Other` series, matching the reference's 3-entry
+ * legend. Reads the event's `properties.plan` (a seed guarantee — see the spec Assumption).
+ */
+export function toHeroArgs(
+  range: OverviewRange,
+  projectId: string,
+  now: Date,
+): EventTrendsArgs {
+  const { from, to } = resolveWindow(range, now);
+  return {
+    p_project_id: projectId,
+    p_event_name: "page_view",
+    p_from: from,
+    p_to: to,
+    p_interval: "day",
+    p_breakdown_key: "plan",
+    p_breakdown_limit: 3,
+  };
+}
+
+/**
+ * The b-bars cell's bucket granularity, deliberately RANGE-AWARE: daily at 7d, weekly at
+ * 30d/90d, so a 7-day range does not render only 1-2 stacked bars (a weekly bucket over a
+ * week would). Mirrors the `signalInterval` posture.
+ */
+export function barsInterval(range: OverviewRange): "day" | "week" {
+  return range === "7d" ? "day" : "week";
+}
+
+/** The b-bars cell: sign-ups broken down by plan, at the range-aware interval. */
+export function toBarsArgs(
+  range: OverviewRange,
+  projectId: string,
+  now: Date,
+): EventTrendsArgs {
+  const { from, to } = resolveWindow(range, now);
+  return {
+    p_project_id: projectId,
+    p_event_name: "sign_up",
+    p_from: from,
+    p_to: to,
+    p_interval: barsInterval(range),
+    p_breakdown_key: "plan",
+    p_breakdown_limit: 3,
+  };
+}
+
+/** The ordered activation-funnel steps (the seed's canonical vocabulary): Visited → Signed up → Activated. */
+export const ACTIVATION_STEPS = [
+  "page_view",
+  "sign_up",
+  "feature_used",
+] as const;
+
+/**
+ * The b-funnel cell: the activation funnel over the range, with the conversion window
+ * (`p_window`, a Postgres interval) equal to the whole range span so a user's whole path is
+ * counted inside one window (ADR 0087).
+ */
+export function toFunnelArgs(
+  range: OverviewRange,
+  projectId: string,
+  now: Date,
+): FunnelArgs {
+  const { from, to } = resolveWindow(range, now);
+  return {
+    p_project_id: projectId,
+    p_steps: [...ACTIVATION_STEPS],
+    p_from: from,
+    p_to: to,
+    p_window: `${DAYS[range]} days`,
+  };
+}
+
+/** The b-seg cell: per-user frequency × LTV points over the range (capped in SQL). */
+export function toScatterArgs(
+  range: OverviewRange,
+  projectId: string,
+  now: Date,
+): SegmentScatterArgs {
+  const { from, to } = resolveWindow(range, now);
+  return { p_project_id: projectId, p_from: from, p_to: to };
 }

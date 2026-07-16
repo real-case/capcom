@@ -215,17 +215,47 @@
       "pacing": "Goal pacing"
     },
     "deltaCaption": "vs the previous period",
-    "pacingCaption": "revenue vs the previous period",
-    "signalHeading": "Signals",
     "signal": {
-      "active_users": "Active users",
       "new_signups": "New sign-ups",
-      "value_sum": "Revenue"
+      "conversion": "Conversion",
+      "arpu": "ARPU"
     },
     "state": {
       "loading": "Loading…",
       "error": "Couldn’t load this metric.",
       "empty": "No data in this range."
+    },
+    "hero": {
+      "chartLabel": "Active users by plan over time"
+    },
+    "bars": {
+      "label": "Sign-ups by plan",
+      "chartLabel": "Sign-ups by plan, stacked over time"
+    },
+    "funnel": {
+      "label": "Activation funnel",
+      "overall": "overall",
+      "fromPrev": "from previous step",
+      "steps": {
+        "visited": "Visited",
+        "signedUp": "Signed up",
+        "activated": "Activated"
+      }
+    },
+    "seg": {
+      "label": "Segments · freq × LTV",
+      "chartLabel": "Segment scatter of frequency against lifetime value",
+      "x": "Frequency",
+      "y": "LTV"
+    },
+    "goal": {
+      "caption": "vs the previous period",
+      "rows": {
+        "revenue": "Revenue",
+        "pace": "Pace",
+        "purchasers": "Purchasers",
+        "arpu": "ARPU"
+      }
     }
   },
   "Events": {

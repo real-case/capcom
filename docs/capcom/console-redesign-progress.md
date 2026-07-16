@@ -91,6 +91,50 @@ categorical-indicator`, `usageRole null`) — a distinct signature that reuses r
 > - **Next:** <the next concrete step>
 > ```
 
+### Bento-fidelity — the six-cell UI rebuild — 2026-07-16 — ✅ done
+
+- **What it fixes.** Phase D shipped a flat `grid-cols-3` with a visible hole, not the frozen reference's
+  curated bento (ADR 0099). This rebuilds the Overview to the reference's asymmetric six-cell layout. **UI
+  only** — the SQL/entity shipped in the precursor (PR #39), and **this branch is stacked on that one**, so it
+  **must not merge to `dev` before #39**.
+- **Landed (31 files, `src/widgets/overview-dashboard`):**
+  - **`BentoGrid`** — the reference's `1.55fr 0.95fr 1.1fr` grid; hero/stack/goal span rows 1-2, bars/funnel/
+    scatter on row 3. The collapse is a **container query** (not the reference's viewport `@media`) so the
+    geometry is deterministically provable at a fixed-width story wrapper.
+  - **Reuse:** `KpiCard` → the `.panel.mini` (drops `MetricHero`, adds a `SignalChart` sparkline);
+    `PacingCard` → the goal cell (radial gauge + 4 **target-free** kv rows, keeps `MetricHero`, gains
+    `MonoData`); **`SignalChart` retained** and **extended** with two **derived** measures
+    (`conversion`/`arpu`) that the precursor's `purchasers` column makes computable (a same-row ratio =
+    presentation, ADR 0087/0088). New only where the reference is genuinely new: `HeroChart` (multi-series
+    area, **mirrors** TrendsChart's structure — never imports it, an FSD line), `StackedBars` (`BarStack`),
+    `FunnelPreview`, `SegmentScatter`.
+  - **One range drives all six cells** (`fn_event_trends` with `p_breakdown_key='plan'` for hero+bars, the
+    retained `fn_overview_signal`, `fn_funnel`, `fn_segment_scatter`); the bars interval is range-aware so a
+    7d range isn't 1-2 bars. The standalone Signals row is gone (its sparklines moved into the minis).
+  - **Coupled graph reconciliation (exact-set, both directions):** `panel` −OverviewDashboard +4 (=14);
+    `metric-hero` −KpiCard +HeroChart (=2); `mono-data` +PacingCard +HeroChart (=7); `status-indicator`
+    +HeroChart (=3) — node + design-intent in lockstep.
+- **Gates:** `npm run test` **753/753** — incl. the **browser-mode `BentoGrid` geometry play** (real CSS
+  `getComputedStyle`: three tracks in the 1.55:0.95:1.1 ratio, all six slots placed, **no empty cell**, the
+  container-query mobile collapse) + axe over every new cell story in both compositions · `check:tokens` ✅ ·
+  `check:contrast` ✅ both · `check:graph` / `check:design-intent` ✅ (incl. the two removals) · `check:fsd` /
+  `check:boundaries` ✅ (no widget→widget import) · `check:i18n` ✅ · `gen:tokens` self-test + zero drift ·
+  `tsc` / lint / build ✅ · coverage 91.08% / 83.53% / 88.32% / 93.16%. **Verified visually in Storybook**
+  (BentoGrid Desktop + Dark) — the bento renders in both compositions with no hole.
+- **What the spec-critic caught across 3 rounds** (all resolved): the reference minis carry sparklines →
+  `SignalChart` retained (not deleted); the conversion/arpu minis need **derived** ratio measures → the
+  precursor added `purchasers`, this extends `SignalMeasure`; the goal cell has a 4-row kv block → target-free
+  rows; the exact-set graph **removals** (`panel −OverviewDashboard`, `metric-hero −KpiCard`); the geometry
+  oracle was non-deterministic (viewport `@media` vs an unpinned headless width) → a **container query** so a
+  fixed-width story deterministically proves both states; and `min-w-0` on the slots so the fr ratio holds.
+- **Chromatic:** **cannot run** — `CHROMATIC_PROJECT_TOKEN` is not provisioned repo-wide (👤), so the job
+  skips. The accepted visual proof is the browser-mode geometry play + the axe stories + the Storybook
+  screenshots + human review. (Not written as "pending Chromatic re-baseline", per the spec.)
+- **Process:** sealed spec
+  [`005-overview-bento-fidelity.md`](../../.marvin/task/005-overview-bento-fidelity.md) (contract_sha
+  `1410ac3ff78d1e5c`; DoR PASS, spec-critic **BLOCK → BLOCK → BLOCK → resolved** over 3 rounds).
+- **Next:** merge PR #39 first, then this; then the console-redesign line is fully at reference fidelity.
+
 ### Bento-fidelity precursor — the SQL + entity layer (`fn_segment_scatter` + a `purchasers` column) — 2026-07-16 — ✅ done
 
 - **Why this exists.** Reviewing the running demo, the 👤 found that Phase D shipped a **flat uniform grid**

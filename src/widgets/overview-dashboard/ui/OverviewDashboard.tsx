@@ -3,37 +3,61 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useQueryStates } from "nuqs";
 
-import { Panel } from "@/components/ui/panel";
 import type { OverviewKpis } from "@/entities/event";
 import { ComboField } from "@/shared/ui";
 
-import { useOverviewKpis, useOverviewSignal } from "../api/use-overview";
-import { deriveKpis, formatKpiValue, KPI_DESCRIPTORS } from "../model/kpis";
 import {
+  useActivationFunnel,
+  useOverviewBars,
+  useOverviewHero,
+  useOverviewKpis,
+  useOverviewSignal,
+  useSegmentScatter,
+} from "../api/use-overview";
+import {
+  deriveGoalRows,
+  deriveKpis,
+  formatDelta,
+  formatKpiValue,
+  GOAL_ROWS,
+  HERO_KPI,
+  STACK_KPIS,
+} from "../model/kpis";
+import {
+  ACTIVATION_STEPS,
   overviewParsers,
   overviewRangeSchema,
   RANGES,
+  toBarsArgs,
+  toFunnelArgs,
+  toHeroArgs,
   toKpisArgs,
+  toScatterArgs,
   toSignalArgs,
   type OverviewRange,
 } from "../model/window";
 
+import { BentoGrid } from "./BentoGrid";
+import { FunnelPreview } from "./FunnelPreview";
+import { HeroChart } from "./HeroChart";
 import { KpiCard } from "./KpiCard";
 import { PacingCard } from "./PacingCard";
-import { SignalChart, type SignalMeasure } from "./SignalChart";
+import { SegmentScatter } from "./SegmentScatter";
+import { StackedBars } from "./StackedBars";
 
 /**
  * The curated Overview home (ADR 0099) — the console's first-class instrument-panel home,
- * distinct from the user-composed dashboards of ADR 0090. A `"use client"` fetching
- * container: it reads the nuqs `range` (Zod-validated, ADR 0017/0027), builds the two RPC
- * argument bags, calls the `SECURITY INVOKER` aggregations through TanStack Query
- * (ADR 0084/0025), and derives the KPI ratios/deltas/pacing as PRESENTATION over the
- * already-reduced scalars (ADR 0087/0088). It lays out a bento of PRESENTATIONAL children
- * (KpiCard ×4 + PacingCard + SignalCharts) that receive reduced rows as props and never
- * fetch (ADR 0086). Mission-control tokens only; all copy via next-intl (ADR 0030).
+ * distinct from the user-composed dashboards of ADR 0090. A `"use client"` fetching container:
+ * it reads the nuqs `range` (Zod-validated, ADR 0017/0027), builds every RPC argument bag from
+ * that ONE range, calls the `SECURITY INVOKER` aggregations through TanStack Query
+ * (ADR 0084/0025), and lays out the frozen reference's six-cell BENTO of PRESENTATIONAL
+ * children (hero + three mini KpiCards + goal + stacked bars + funnel + scatter) that receive
+ * already-reduced rows as props and never fetch (ADR 0086). KPI ratios/deltas/pacing are
+ * PRESENTATION over already-reduced scalars (ADR 0087/0088). Mission-control tokens only; all
+ * copy via next-intl (ADR 0030).
  */
 
-const ZEROS: OverviewKpis = {
+const KPI_ZEROS: OverviewKpis = {
   active_users: 0,
   active_users_prev: 0,
   new_signups: 0,
@@ -44,20 +68,12 @@ const ZEROS: OverviewKpis = {
   value_sum_prev: 0,
 };
 
-const SIGNALS: { measure: SignalMeasure; color: string }[] = [
-  { measure: "active_users", color: "var(--color-viz-categorical-1)" },
-  { measure: "new_signups", color: "var(--color-viz-categorical-2)" },
-  { measure: "value_sum", color: "var(--color-viz-categorical-3)" },
-];
-
 export function OverviewDashboard({ projectId }: { projectId: string }) {
   const t = useTranslations("Overview");
   const tc = useTranslations("Controls");
   const locale = useLocale();
   const [{ range }, setQuery] = useQueryStates(overviewParsers);
 
-  // The Zod schema is the validation authority (ADR 0017): a malformed URL value falls back
-  // to the default range rather than breaking the view.
   const activeRange = overviewRangeSchema.parse(range);
 
   // resolveWindow floors `to` to the UTC day, so the args (and the TanStack keys) are stable
@@ -65,9 +81,15 @@ export function OverviewDashboard({ projectId }: { projectId: string }) {
   const now = new Date();
   const kpis = useOverviewKpis(toKpisArgs(activeRange, projectId, now));
   const signal = useOverviewSignal(toSignalArgs(activeRange, projectId, now));
+  const hero = useOverviewHero(toHeroArgs(activeRange, projectId, now));
+  const bars = useOverviewBars(toBarsArgs(activeRange, projectId, now));
+  const funnel = useActivationFunnel(toFunnelArgs(activeRange, projectId, now));
+  const scatter = useSegmentScatter(toScatterArgs(activeRange, projectId, now));
 
-  const derived = deriveKpis(kpis.data ?? ZEROS);
+  const derived = deriveKpis(kpis.data ?? KPI_ZEROS);
+  const goalRows = deriveGoalRows(kpis.data ?? KPI_ZEROS);
   const deltaCaption = t("deltaCaption");
+  const signalRows = signal.data ?? [];
 
   return (
     <section aria-label={t("title")} className="flex flex-col gap-6">
@@ -93,62 +115,113 @@ export function OverviewDashboard({ projectId }: { projectId: string }) {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {KPI_DESCRIPTORS.map((d) => (
-          <KpiCard
-            key={d.id}
-            label={t(`kpi.${d.labelKey}`)}
-            value={formatKpiValue(derived[d.id].value, d.format, locale)}
-            deltaRatio={derived[d.id].deltaRatio}
-            deltaCaption={deltaCaption}
+      <BentoGrid
+        hero={
+          <HeroChart
+            data={hero.data ?? []}
+            label={t(`kpi.${HERO_KPI.labelKey}`)}
+            value={formatKpiValue(
+              derived[HERO_KPI.id].value,
+              HERO_KPI.format,
+              locale,
+            )}
+            delta={
+              derived[HERO_KPI.id].deltaRatio === null
+                ? null
+                : formatDelta(derived[HERO_KPI.id].deltaRatio, locale)
+            }
+            deltaUp={(derived[HERO_KPI.id].deltaRatio ?? 0) >= 0}
+            chartLabel={t("hero.chartLabel")}
+            isLoading={hero.isPending}
+            isError={hero.isError}
+            loadingLabel={t("state.loading")}
+            errorLabel={t("state.error")}
+            emptyLabel={t("state.empty")}
+          />
+        }
+        stack={
+          <div className="flex h-full flex-col gap-4">
+            {STACK_KPIS.map((d) => (
+              <KpiCard
+                key={d.id}
+                label={t(`kpi.${d.labelKey}`)}
+                value={formatKpiValue(derived[d.id].value, d.format, locale)}
+                deltaRatio={derived[d.id].deltaRatio}
+                deltaCaption={deltaCaption}
+                locale={locale}
+                signalData={signalRows}
+                signalMeasure={d.signalMeasure}
+                signalColor={d.color}
+                isLoading={kpis.isPending || signal.isPending}
+                isError={kpis.isError}
+                loadingLabel={t("state.loading")}
+                errorLabel={t("state.error")}
+              />
+            ))}
+          </div>
+        }
+        goal={
+          <PacingCard
+            label={t("kpi.pacing")}
+            caption={t("goal.caption")}
+            pacingRatio={derived.pacing.ratio}
+            rows={GOAL_ROWS.map((r) => ({
+              label: t(`goal.rows.${r.id}`),
+              value: formatKpiValue(goalRows[r.id], r.format, locale),
+            }))}
             locale={locale}
             isLoading={kpis.isPending}
             isError={kpis.isError}
             loadingLabel={t("state.loading")}
             errorLabel={t("state.error")}
           />
-        ))}
-        <PacingCard
-          label={t("kpi.pacing")}
-          pacingRatio={derived.pacing.ratio}
-          caption={t("pacingCaption")}
-          locale={locale}
-          isLoading={kpis.isPending}
-          isError={kpis.isError}
-          loadingLabel={t("state.loading")}
-          errorLabel={t("state.error")}
-        />
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <h3 className="text-text-secondary text-sm font-medium">
-          {t("signalHeading")}
-        </h3>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {SIGNALS.map((s) => (
-            <Panel
-              key={s.measure}
-              surface="panel"
-              className="flex flex-col gap-2"
-            >
-              <span className="text-label text-text-secondary">
-                {t(`signal.${s.measure}`)}
-              </span>
-              <SignalChart
-                data={signal.data ?? []}
-                measure={s.measure}
-                color={s.color}
-                label={t(`signal.${s.measure}`)}
-                isLoading={signal.isPending}
-                isError={signal.isError}
-                loadingLabel={t("state.loading")}
-                errorLabel={t("state.error")}
-                emptyLabel={t("state.empty")}
-              />
-            </Panel>
-          ))}
-        </div>
-      </div>
+        }
+        bars={
+          <StackedBars
+            data={bars.data ?? []}
+            label={t("bars.label")}
+            chartLabel={t("bars.chartLabel")}
+            isLoading={bars.isPending}
+            isError={bars.isError}
+            loadingLabel={t("state.loading")}
+            errorLabel={t("state.error")}
+            emptyLabel={t("state.empty")}
+          />
+        }
+        funnel={
+          <FunnelPreview
+            data={funnel.data ?? []}
+            label={t("funnel.label")}
+            stepLabels={{
+              [ACTIVATION_STEPS[0]]: t("funnel.steps.visited"),
+              [ACTIVATION_STEPS[1]]: t("funnel.steps.signedUp"),
+              [ACTIVATION_STEPS[2]]: t("funnel.steps.activated"),
+            }}
+            overallLabel={t("funnel.overall")}
+            fromPrevLabel={t("funnel.fromPrev")}
+            locale={locale}
+            isLoading={funnel.isPending}
+            isError={funnel.isError}
+            loadingLabel={t("state.loading")}
+            errorLabel={t("state.error")}
+            emptyLabel={t("state.empty")}
+          />
+        }
+        seg={
+          <SegmentScatter
+            data={scatter.data ?? []}
+            label={t("seg.label")}
+            chartLabel={t("seg.chartLabel")}
+            xLabel={t("seg.x")}
+            yLabel={t("seg.y")}
+            isLoading={scatter.isPending}
+            isError={scatter.isError}
+            loadingLabel={t("state.loading")}
+            errorLabel={t("state.error")}
+            emptyLabel={t("state.empty")}
+          />
+        }
+      />
     </section>
   );
 }

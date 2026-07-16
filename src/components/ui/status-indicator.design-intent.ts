@@ -16,6 +16,7 @@ export const statusIndicatorIntent = {
     composedOf: [],
     usedIn: [
       "src/components/ui/telemetry-stat.tsx",
+      "src/widgets/overview-dashboard/ui/HeroChart.tsx",
       "src/widgets/overview-dashboard/ui/KpiCard.tsx",
     ],
   },

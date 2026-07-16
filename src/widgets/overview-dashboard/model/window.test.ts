@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ACTIVATION_STEPS,
+  barsInterval,
   DEFAULT_RANGE,
   overviewRangeSchema,
   resolveWindow,
   signalInterval,
+  toBarsArgs,
+  toFunnelArgs,
+  toHeroArgs,
   toKpisArgs,
+  toScatterArgs,
   toSignalArgs,
 } from "./window";
 
@@ -56,6 +62,66 @@ describe("toKpisArgs / toSignalArgs", () => {
       p_to: "2026-07-15T00:00:00.000Z",
       p_interval: "week",
     });
+  });
+});
+
+describe("bento arg builders (every cell from the one shared range)", () => {
+  it("toHeroArgs breaks page_view down by plan, daily, top-3", () => {
+    expect(toHeroArgs("30d", "proj-42", NOW)).toEqual({
+      p_project_id: "proj-42",
+      p_event_name: "page_view",
+      p_from: "2026-06-15T00:00:00.000Z",
+      p_to: "2026-07-15T00:00:00.000Z",
+      p_interval: "day",
+      p_breakdown_key: "plan",
+      p_breakdown_limit: 3,
+    });
+  });
+
+  it("barsInterval is range-aware — daily at 7d, weekly at 30d/90d (no 1-2-bar 7d range)", () => {
+    expect(barsInterval("7d")).toBe("day");
+    expect(barsInterval("30d")).toBe("week");
+    expect(barsInterval("90d")).toBe("week");
+  });
+
+  it("toBarsArgs breaks sign_up down by plan at the range-aware interval", () => {
+    expect(toBarsArgs("7d", "proj-42", NOW)).toMatchObject({
+      p_event_name: "sign_up",
+      p_breakdown_key: "plan",
+      p_interval: "day",
+    });
+    expect(toBarsArgs("90d", "proj-42", NOW).p_interval).toBe("week");
+  });
+
+  it("toFunnelArgs carries the activation steps and a window equal to the range span", () => {
+    expect(toFunnelArgs("30d", "proj-42", NOW)).toEqual({
+      p_project_id: "proj-42",
+      p_steps: [...ACTIVATION_STEPS],
+      p_from: "2026-06-15T00:00:00.000Z",
+      p_to: "2026-07-15T00:00:00.000Z",
+      p_window: "30 days",
+    });
+  });
+
+  it("toScatterArgs emits the project + window bag", () => {
+    expect(toScatterArgs("30d", "proj-42", NOW)).toEqual({
+      p_project_id: "proj-42",
+      p_from: "2026-06-15T00:00:00.000Z",
+      p_to: "2026-07-15T00:00:00.000Z",
+    });
+  });
+
+  it("every builder derives from the SAME window as toKpisArgs", () => {
+    const k = toKpisArgs("30d", "proj-42", NOW);
+    for (const args of [
+      toHeroArgs("30d", "proj-42", NOW),
+      toBarsArgs("30d", "proj-42", NOW),
+      toFunnelArgs("30d", "proj-42", NOW),
+      toScatterArgs("30d", "proj-42", NOW),
+    ]) {
+      expect(args.p_from).toBe(k.p_from);
+      expect(args.p_to).toBe(k.p_to);
+    }
   });
 });
 
