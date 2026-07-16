@@ -17,6 +17,9 @@ const DATA: OverviewSignalBucket[] = Array.from({ length: 10 }, (_, i) => ({
   active_users: 40 + i * 6 + (i % 3) * 4,
   new_signups: 8 + i * 2,
   value_sum: 120 + i * 45,
+  // Deterministic, and always <= active_users so the fixture stays a plausible
+  // buyers-per-bucket count (the conversion mini divides the two).
+  purchasers: 3 + (i % 4),
 }));
 
 const meta = {

@@ -138,9 +138,12 @@ export type OverviewKpisArgs =
 
 /**
  * One per-bucket row from the `fn_overview_signal` aggregation (ADR 0099, under the 0084
- * strategy): a time `bucket` and its distinct `active_users`, distinct `new_signups`, and
- * purchase `value_sum`. Zero-filled over the window so the Overview sparklines are
- * contiguous. Generated RPC return type (ADR 0015).
+ * strategy): a time `bucket` and its distinct `active_users`, distinct `new_signups`,
+ * purchase `value_sum`, and distinct `purchasers`. Zero-filled over the window so the
+ * Overview sparklines are contiguous. `purchasers` uses the same reduction as
+ * `fn_overview_kpis`' scalar, so the conversion sparkline (`purchasers / active_users`, a
+ * per-bucket ratio of two already-reduced scalars — presentation, ADR 0087/0088) cannot
+ * drift from the conversion KPI. Generated RPC return type (ADR 0015).
  */
 export type OverviewSignalBucket =
   Database["public"]["Functions"]["fn_overview_signal"]["Returns"][number];

@@ -30,6 +30,12 @@ export type {
 export type {
   SegmentDistributionArgs,
   SegmentDistributionRow,
+  SegmentScatterArgs,
+  SegmentScatterPoint,
   SegmentSizeArgs,
 } from "./model/types";
-export { fetchSegmentDistribution, fetchSegmentSize } from "./api/queries";
+export {
+  fetchSegmentDistribution,
+  fetchSegmentScatter,
+  fetchSegmentSize,
+} from "./api/queries";
