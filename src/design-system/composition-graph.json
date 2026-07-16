@@ -77,9 +77,7 @@
       "archetype": "container",
       "module": "src/components/ui/dialog.tsx",
       "composedOf": [],
-      "usedIn": [
-        "src/components/ui/command.tsx"
-      ],
+      "usedIn": ["src/components/ui/command.tsx"],
       "compositionSignature": []
     },
     {
@@ -161,9 +159,7 @@
       "archetype": null,
       "module": "src/components/ui/skeleton.tsx",
       "composedOf": [],
-      "usedIn": [
-        "src/app/[locale]/(app)/p/[projectId]/loading.tsx"
-      ],
+      "usedIn": ["src/app/[locale]/(app)/p/[projectId]/loading.tsx"],
       "compositionSignature": [],
       "notes": "Purely presentational leaf (like `label`) — a shimmer placeholder with no interaction, variants, or data; archetype:null per the new-component skill's presentational-leaf exception (ADR 0061). Flagged for 👤 confirmation."
     },
@@ -223,70 +219,44 @@
       "kind": "composite",
       "archetype": "collection",
       "module": "src/components/ui/command.tsx",
-      "composedOf": [
-        "dialog"
-      ],
+      "composedOf": ["dialog"],
       "usedIn": [
         "src/components/ui/combobox.tsx",
         "src/widgets/app-shell/ui/CommandPalette.tsx",
         "src/widgets/events-explorer/ui/FacetFilter.tsx"
       ],
-      "compositionSignature": [
-        "dialog"
-      ]
+      "compositionSignature": ["dialog"]
     },
     {
       "id": "calendar",
       "kind": "composite",
       "archetype": "selection-control",
       "module": "src/components/ui/calendar.tsx",
-      "composedOf": [
-        "button"
-      ],
-      "usedIn": [
-        "src/components/ui/date-range-picker.tsx"
-      ],
-      "compositionSignature": [
-        "button"
-      ]
+      "composedOf": ["button"],
+      "usedIn": ["src/components/ui/date-range-picker.tsx"],
+      "compositionSignature": ["button"]
     },
     {
       "id": "combobox",
       "kind": "composite",
       "archetype": "selection-control",
       "module": "src/components/ui/combobox.tsx",
-      "composedOf": [
-        "button",
-        "command",
-        "popover"
-      ],
+      "composedOf": ["button", "command", "popover"],
       "usedIn": [
         "src/shared/ui/ComboField.tsx",
         "src/widgets/funnel-builder/ui/FunnelBuilder.tsx",
         "src/widgets/segment-builder/ui/SegmentBuilder.tsx"
       ],
-      "compositionSignature": [
-        "button",
-        "command",
-        "popover"
-      ]
+      "compositionSignature": ["button", "command", "popover"]
     },
     {
       "id": "date-range-picker",
       "kind": "composite",
       "archetype": "selection-control",
       "module": "src/components/ui/date-range-picker.tsx",
-      "composedOf": [
-        "button",
-        "calendar",
-        "popover"
-      ],
+      "composedOf": ["button", "calendar", "popover"],
       "usedIn": [],
-      "compositionSignature": [
-        "button",
-        "calendar",
-        "popover"
-      ]
+      "compositionSignature": ["button", "calendar", "popover"]
     },
     {
       "id": "nav-item",
@@ -294,9 +264,7 @@
       "archetype": "action-trigger",
       "module": "src/components/ui/nav-item.tsx",
       "composedOf": [],
-      "usedIn": [
-        "src/widgets/app-shell/ui/SidebarNav.tsx"
-      ],
+      "usedIn": ["src/widgets/app-shell/ui/SidebarNav.tsx"],
       "compositionSignature": [],
       "notes": "Mission-control nav item (ADR 0099/0081) — the first INTERACTIVE mission-control primitive: a navigation link row on the surface hierarchy. Routing is delegated via `asChild` (radix umbrella Slot) so the consumer passes its own i18n Link. Consumed by SidebarNav in the Phase-B app-shell re-skin."
     },
@@ -305,17 +273,9 @@
       "kind": "composite",
       "archetype": "data-display",
       "module": "src/components/ui/telemetry-stat.tsx",
-      "composedOf": [
-        "mono-data",
-        "status-indicator"
-      ],
-      "usedIn": [
-        "src/widgets/app-shell/ui/TelemetryFooter.tsx"
-      ],
-      "compositionSignature": [
-        "mono-data",
-        "status-indicator"
-      ],
+      "composedOf": ["mono-data", "status-indicator"],
+      "usedIn": ["src/widgets/app-shell/ui/TelemetryFooter.tsx"],
+      "compositionSignature": ["mono-data", "status-indicator"],
       "notes": "Mission-control telemetry stat (ADR 0099/0081/0100) — a compact labeled data-display cell composing a StatusIndicator pill (level+label) with a MonoData value. Consumed by the app-shell TelemetryFooter (Phase B); overview signals reuse it in Phase D."
     },
     {
@@ -323,16 +283,12 @@
       "kind": "composite",
       "archetype": "categorical-indicator",
       "module": "src/components/ui/category-pill.tsx",
-      "composedOf": [
-        "badge"
-      ],
+      "composedOf": ["badge"],
       "usedIn": [
         "src/widgets/events-explorer/ui/EventsTable.tsx",
         "src/widgets/events-explorer/ui/GroupRollup.tsx"
       ],
-      "compositionSignature": [
-        "badge"
-      ],
+      "compositionSignature": ["badge"],
       "notes": "Mission-control category pill (ADR 0099/0081) — a categorical value chip with a leading data-viz hue dot. A composite that themes Badge through the surface (compositionSignature ['badge']), reusing rather than duplicating the categorical-indicator leaf (the clean resolution of the ADR 0059 collision that dropped StatusPill in Phase A). Consumed by the events-explorer plan column (EventsTable) and group roll-up label (GroupRollup); the Overview bento reuses it in Phase D."
     }
   ]
