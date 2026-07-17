@@ -4,27 +4,46 @@ import { NextIntlClientProvider } from "next-intl";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { OverviewKpis } from "@/entities/event";
+import type {
+  EventTrendBucket,
+  FunnelStep,
+  OverviewKpis,
+  OverviewSignalBucket,
+} from "@/entities/event";
+import type { SegmentScatterPoint } from "@/entities/segment";
 
 import messages from "../../../../messages/en.json";
 
-// Mock the data layer only — the REAL hooks + deriveKpis run, so the test exercises the
-// query wiring (derived args + keys) and the presentation math, not a stub of it
-// (importOriginal keeps the entity types the widget depends on, ADR 0017).
-const { fetchOverviewKpis, fetchOverviewSignal } = vi.hoisted(() => ({
+// Mock the data layer only — the REAL hooks + deriveKpis run, so the test exercises the query
+// wiring (derived args + keys) and the presentation math, not a stub of it.
+const {
+  fetchOverviewKpis,
+  fetchOverviewSignal,
+  fetchEventTrends,
+  fetchFunnel,
+  fetchSegmentScatter,
+} = vi.hoisted(() => ({
   fetchOverviewKpis: vi.fn(),
   fetchOverviewSignal: vi.fn(),
+  fetchEventTrends: vi.fn(),
+  fetchFunnel: vi.fn(),
+  fetchSegmentScatter: vi.fn(),
 }));
 vi.mock("@/lib/supabase/client", () => ({ createClient: () => ({}) }));
 vi.mock("@/entities/event", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/event")>()),
   fetchOverviewKpis,
   fetchOverviewSignal,
+  fetchEventTrends,
+  fetchFunnel,
+}));
+vi.mock("@/entities/segment", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/segment")>()),
+  fetchSegmentScatter,
 }));
 
 import { OverviewDashboard } from "./OverviewDashboard";
 
-// A reduced KPIs row with across-the-board growth (matches the seeded Aurora window).
 const KPIS: OverviewKpis = {
   active_users: 108,
   active_users_prev: 56,
@@ -35,7 +54,29 @@ const KPIS: OverviewKpis = {
   value_sum: 1812,
   value_sum_prev: 916,
 };
-
+const DAY = Date.UTC(2026, 5, 1);
+const TREND: EventTrendBucket[] = ["free", "pro"].flatMap((series) =>
+  Array.from({ length: 6 }, (_, i) => ({
+    bucket: new Date(DAY + i * 86_400_000).toISOString(),
+    series,
+    count: 20 + i,
+  })),
+);
+const SIGNAL: OverviewSignalBucket[] = Array.from({ length: 6 }, (_, i) => ({
+  bucket: new Date(DAY + i * 86_400_000).toISOString(),
+  active_users: 40 + i,
+  new_signups: 8 + i,
+  value_sum: 120 + i,
+  purchasers: 3 + i,
+}));
+const FUNNEL: FunnelStep[] = [
+  { step_index: 0, step_event: "page_view", users: 1000 },
+  { step_index: 1, step_event: "sign_up", users: 400 },
+  { step_index: 2, step_event: "feature_used", users: 180 },
+];
+const SCATTER: SegmentScatterPoint[] = [
+  { distinct_id: "u1", frequency: 12, ltv: 199, plan: "pro" },
+];
 const DAY_MS = 86_400_000;
 
 function renderDashboard() {
@@ -53,72 +94,88 @@ function renderDashboard() {
   );
 }
 
-describe("OverviewDashboard", () => {
+describe("OverviewDashboard (bento)", () => {
   beforeEach(() => {
     fetchOverviewKpis.mockReset().mockResolvedValue(KPIS);
-    fetchOverviewSignal.mockReset().mockResolvedValue([]);
+    fetchOverviewSignal.mockReset().mockResolvedValue(SIGNAL);
+    fetchEventTrends.mockReset().mockResolvedValue(TREND);
+    fetchFunnel.mockReset().mockResolvedValue(FUNNEL);
+    fetchSegmentScatter.mockReset().mockResolvedValue(SCATTER);
   });
 
-  it("queries the KPI and signal RPCs with the derived window args", async () => {
+  it("drives every bento cell from the shared range with the derived arg bags", async () => {
     renderDashboard();
+    await waitFor(() => expect(fetchEventTrends).toHaveBeenCalledTimes(2));
 
-    await waitFor(() => expect(fetchOverviewKpis).toHaveBeenCalled());
-    // The default range is 30d: the current window spans exactly 30 days, scoped to the
-    // project — the window is derived, not hardcoded, so assert the span, not the dates.
+    // All bags share the one 30-day window, scoped to the project.
     const [, kpiArgs] = fetchOverviewKpis.mock.calls[0]!;
     expect(kpiArgs.p_project_id).toBe("p1");
     expect(
       new Date(kpiArgs.p_to).getTime() - new Date(kpiArgs.p_from).getTime(),
     ).toBe(30 * DAY_MS);
-    const [, signalArgs] = fetchOverviewSignal.mock.calls[0]!;
-    expect(signalArgs.p_project_id).toBe("p1");
-    expect(signalArgs.p_interval).toBe("day");
+
+    // fn_event_trends drives BOTH the hero (page_view, daily) and the bars (sign_up, weekly),
+    // each broken down by plan — no new SQL.
+    const trendCalls = fetchEventTrends.mock.calls.map(([, a]) => a);
+    const hero = trendCalls.find((a) => a.p_event_name === "page_view")!;
+    const bars = trendCalls.find((a) => a.p_event_name === "sign_up")!;
+    expect(hero.p_breakdown_key).toBe("plan");
+    expect(hero.p_interval).toBe("day");
+    expect(bars.p_breakdown_key).toBe("plan");
+    expect(bars.p_interval).toBe("week");
+
+    // The funnel carries the activation steps; the scatter shares the window.
+    const [, funnelArgs] = fetchFunnel.mock.calls[0]!;
+    expect(funnelArgs.p_steps).toEqual([
+      "page_view",
+      "sign_up",
+      "feature_used",
+    ]);
+    const [, scatterArgs] = fetchSegmentScatter.mock.calls[0]!;
+    expect(scatterArgs.p_from).toBe(kpiArgs.p_from);
   });
 
-  it("renders KPI values derived from the reduced row (no client re-aggregation)", async () => {
+  it("renders the six reference bento cells and no standalone signal row", async () => {
     renderDashboard();
+    // Hero headline (108) + the three mini labels + the goal / bars / funnel / scatter cells.
+    expect(await screen.findByText("108")).toBeInTheDocument(); // hero value
+    expect(await screen.findByText("New sign-ups")).toBeInTheDocument();
+    expect(await screen.findByText("Conversion")).toBeInTheDocument();
+    // "ARPU" appears twice — the mini label and the goal kv row.
+    expect((await screen.findAllByText("ARPU")).length).toBeGreaterThanOrEqual(
+      1,
+    );
+    expect(await screen.findByText("Goal pacing")).toBeInTheDocument();
+    expect(await screen.findByText("Sign-ups by plan")).toBeInTheDocument();
+    expect(await screen.findByText("Activation funnel")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Segments · freq × LTV"),
+    ).toBeInTheDocument();
 
-    // Counts pass through; conversion = 19/108 = 17.6%; ARPU = 1812/108 ≈ $17;
-    // pacing = 1812/916 ≈ 198% — all computed by deriveKpis from the RPC scalars.
-    expect(await screen.findByText("108")).toBeInTheDocument();
-    expect(await screen.findByText("45")).toBeInTheDocument();
-    expect(await screen.findByText("17.6%")).toBeInTheDocument();
-    expect(await screen.findByText("$17")).toBeInTheDocument();
-    expect(await screen.findByText("198%")).toBeInTheDocument();
-    // The favorable deltas render as signed percents (e.g. active users +93%).
-    expect(await screen.findByText("+93%")).toBeInTheDocument();
+    // The Phase-D standalone Signals section is gone (the sparklines moved into the minis).
+    expect(screen.queryByText("Signals")).not.toBeInTheDocument();
   });
 
-  it("threads the loading state to the cards before data resolves", () => {
+  it("renders the goal cell's target-free rows and never claims a target", async () => {
     renderDashboard();
-    // On first render the queries are pending → every card shows the loading copy.
+    // The four target-free kv rows, from already-reduced scalars.
+    expect(await screen.findByText("Revenue")).toBeInTheDocument();
+    expect(await screen.findByText("Pace")).toBeInTheDocument();
+    expect(await screen.findByText("Purchasers")).toBeInTheDocument();
+    // No goals table exists, so nothing claims a "target".
+    expect(screen.queryByText(/target/i)).not.toBeInTheDocument();
+  });
+
+  it("threads loading and error states through", async () => {
+    renderDashboard();
     expect(screen.getAllByText("Loading…").length).toBeGreaterThan(0);
-  });
 
-  it("threads the error state to the cards when the KPI RPC fails", async () => {
     fetchOverviewKpis.mockReset().mockRejectedValue(new Error("boom"));
     renderDashboard();
-    // The error copy surfaces as an alert in the cards (no crash, no swallow).
-    expect(
-      (await screen.findAllByText("Couldn’t load this metric.")).length,
-    ).toBeGreaterThan(0);
-  });
-
-  it("threads the empty state (em dash) when the reductions are all zero", async () => {
-    fetchOverviewKpis.mockReset().mockResolvedValue({
-      active_users: 0,
-      active_users_prev: 0,
-      new_signups: 0,
-      new_signups_prev: 0,
-      purchasers: 0,
-      purchasers_prev: 0,
-      value_sum: 0,
-      value_sum_prev: 0,
-    } satisfies OverviewKpis);
-    renderDashboard();
-    // Zero denominators → conversion / ARPU / pacing render as em dashes.
     await waitFor(() =>
-      expect(screen.getAllByText("—").length).toBeGreaterThan(0),
+      expect(
+        screen.getAllByText("Couldn’t load this metric.").length,
+      ).toBeGreaterThan(0),
     );
   });
 });

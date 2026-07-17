@@ -17,7 +17,7 @@ export const metricHeroIntent = {
     compositionSignature: [],
     composedOf: [],
     usedIn: [
-      "src/widgets/overview-dashboard/ui/KpiCard.tsx",
+      "src/widgets/overview-dashboard/ui/HeroChart.tsx",
       "src/widgets/overview-dashboard/ui/PacingCard.tsx",
     ],
   },

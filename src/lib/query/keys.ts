@@ -97,9 +97,21 @@ export const queryKeys = {
     /** The scalar KPI row, keyed by its `fn_overview_kpis` argument bag. */
     kpis: (args: Record<string, unknown>) =>
       [...queryKeys.overview.all, "kpis", args] as const,
-    /** The signal series, keyed by its `fn_overview_signal` argument bag. */
+    /** The signal series (per-bucket, incl. purchasers), keyed by its `fn_overview_signal` argument bag. */
     signal: (args: Record<string, unknown>) =>
       [...queryKeys.overview.all, "signal", args] as const,
+    /** The hero multi-series trend, keyed by its `fn_event_trends` argument bag. */
+    hero: (args: Record<string, unknown>) =>
+      [...queryKeys.overview.all, "hero", args] as const,
+    /** The stacked-bars trend, keyed by its `fn_event_trends` argument bag. */
+    bars: (args: Record<string, unknown>) =>
+      [...queryKeys.overview.all, "bars", args] as const,
+    /** The activation funnel, keyed by its `fn_funnel` argument bag. */
+    funnel: (args: Record<string, unknown>) =>
+      [...queryKeys.overview.all, "funnel", args] as const,
+    /** The segment scatter, keyed by its `fn_segment_scatter` argument bag. */
+    scatter: (args: Record<string, unknown>) =>
+      [...queryKeys.overview.all, "scatter", args] as const,
   },
   // PR-8 saved analyses (ADR 0090) — the first WRITABLE entities, so the keys are
   // list/detail-shaped (not RPC-arg-shaped) and an optimistic mutation invalidates the
