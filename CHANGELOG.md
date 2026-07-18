@@ -40,6 +40,70 @@ drafted from the merge history and human-edited before release (ADR 0050).
 
 ### Security
 
+## [0.3.0] - 2026-07-18
+
+The mission-control console. The authenticated product surface — app shell, every
+analytics widget, and a new curated Overview home — is re-skinned onto the
+instrument-panel surface vocabulary so chrome and data-viz read as one instrument,
+**without adding a single design token or loosening a governance invariant**. It
+consumes the existing semantic layer, flips light/dark as one unit under
+`check:contrast`, and rides the tenant/density swaps. The one genuinely new decision —
+a governed archetype for value leaves — lands as a human-accepted ADR before its code;
+the console re-skin and the reference bento are additive under the existing records.
+
+### Added
+
+- **Mission-control product console** (ADR 0099, extends 0081/0092). The authenticated
+  console — `widgets/app-shell` plus the events-explorer, funnel-builder, retention-grid,
+  segment-builder, and trends widgets — wears the mission-control surface as its chrome,
+  so chrome and charts stop reading as two different products. It consumes **only** the
+  existing semantic tokens (surface / text / status / `border-hairline` / `viz` and the
+  `mono-data` type role, ADR 0081) — **no new tokens**, no `bg-card` / `bg-background` in
+  the console, no per-theme semantic overrides — and is **dark-first but theme-aware**, so
+  `check:contrast` gates both compositions. Where a shadcn primitive is reused it is themed
+  **through** the console surface at the call site, never forked. Delivered as a clean
+  surface swap in phases A–E (surface primitives → app-shell → events-explorer →
+  Overview → the remaining analytics widgets + the chart-interaction layer that renders
+  inside their Panels). The statically-generated marketing/landing (ADR 0031/0096) and
+  auth screens deliberately stay on the shadcn value layer — a **documented palette seam**
+  (`docs/capcom/palette-seam.md`): the two vocabularies pair only with themselves for AA,
+  so they are never cross-paired.
+- **Curated Overview home — the reference six-cell bento** (ADR 0099, Phase D + fidelity
+  pass). A **first-class, curated** Overview — distinct from the **user-composed**
+  dashboards of ADR 0090 — rebuilt to the frozen design reference as an asymmetric
+  six-cell bento: a hero multi-series area (active users by plan), a stack of KPI minis
+  carrying sparklines (new sign-ups · conversion · ARPU), a goal-pacing radial with
+  target-free rows (honest "vs the previous period", never a fabricated target), weekly
+  sign-ups stacked bars, an activation-funnel preview, and a frequency × LTV segment
+  scatter. The asymmetric CSS-grid geometry is proven by a **browser-mode `getComputedStyle`
+  test** (real Tailwind CSS, not jsdom) and collapses via a **container query**. New KPI
+  aggregations ship as `SECURITY INVOKER` RPCs (`fn_overview_kpis` / `fn_overview_signal`
+  with a per-bucket `purchasers` column / `fn_segment_scatter`, ADR 0084) and the charts
+  are token-governed **visx** presentational primitives (ADR 0086/0093); every derived
+  ratio (conversion, ARPU) is a same-row presentation calculation, never an app-code
+  reduction (ADR 0084/0087).
+- **`data-display` component archetype** (ADR 0100, extends 0061). A new archetype for the
+  console's value leaves — `MetricHero` (a large KPI value) and `MonoData` (an inline
+  tabular value) — that fit none of the ten ratified classes. It mandates **only** the
+  `contentBounds` axis (how a _present_ value renders across min/max width and script) and
+  deliberately mandates no data/process axis, because a metric's empty/loading/error is the
+  composing widget's job (FSD + ADR 0084). This brings the value leaves under governed
+  coverage-by-subtraction (ADR 0062), closing the silent-gap risk of the interim
+  `archetype: null`; `Hairline` stays `null` (a structural rule renders no value). Added via
+  ADR 0061's sanctioned "adding an entry is trivial" path — additive, no 0064 migration, no
+  supersession.
+
+### Changed
+
+- **Chart-interaction primitives re-skinned to the console surface** (ADR 0099 Phase E).
+  The shared visx interaction layer (tooltip, legend, crosshair, brush, gradient) is themed
+  onto the mission-control surface where it renders inside the re-skinned Panels, so
+  interaction chrome matches its host — token values only, no baked palette (ADR 0086/0058).
+- **Overview signal RPC gains a `purchasers` column** (ADR 0084). `fn_overview_signal` adds
+  a per-bucket distinct-purchaser count so the conversion mini's sparkline is a real
+  DB-reduced series; the function is re-created (drop-then-create) with its `revoke`/`grant`
+  re-issued so no `EXECUTE` leaks to `anon`.
+
 ## [0.2.0] - 2026-07-11
 
 The premium product surface. PR-0…PR-10 delivered a functionally complete analytics
@@ -193,6 +257,7 @@ ADR 0080 anticipates.
   Storybook smoke — the template's bootstrap deviations DEV-001 / DEV-002 — re-enabled in
   `ci.yml` ahead of this first production promotion.
 
-[Unreleased]: https://github.com/real-case/capcom/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/real-case/capcom/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/real-case/capcom/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/real-case/capcom/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/real-case/capcom/releases/tag/v0.1.0
