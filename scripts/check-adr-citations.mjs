@@ -114,9 +114,12 @@ function selfTest() {
       expect: (r) => r.warns.some((w) => /"0998"/.test(w)),
     },
     {
+      // Endpoints sit far above any plausible corpus so the case can never resolve to a
+      // real record (0101 would have become one within a release). `0996` is asserted
+      // because it appears ONLY via range expansion — it is absent from the text itself.
       name: "range spanning past 0099 expands",
-      text: "Design-system governance (decided 0098–0101).",
-      expect: (r) => r.warns.some((w) => /"0101"/.test(w)),
+      text: "Design-system governance (decided 0995–0997).",
+      expect: (r) => r.warns.some((w) => /"0996"/.test(w)),
     },
   ];
   let ok = 0;

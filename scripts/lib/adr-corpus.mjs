@@ -55,8 +55,9 @@ export function extractAdrRefs(text) {
   };
   // All four patterns span 0000–0999 so the corpus keeps working past 0099. A year can
   // never collide: `(2026-…)` and friends start with 1/2, and `0NNN` requires a leading 0.
-  // `ADR 0058`, `ADR-0058`.
-  for (const m of text.matchAll(/ADR[\s-]?(0\d{3})/gi)) add(+m[1], true);
+  // `ADR 0058`, `ADR-0058`. The trailing \b keeps a longer run (`ADR 01234`) from
+  // yielding a partial `0123` match, matching the boundedness of the patterns below.
+  for (const m of text.matchAll(/ADR[\s-]?(0\d{3})\b/gi)) add(+m[1], true);
   // Parenthesised `(0058` followed by a delimiter.
   for (const m of text.matchAll(/\((0\d{3})(?=[\s,;)])/g)) add(+m[1], true);
   // Ranges `0058–0064` / `0048-0057` → fill the span (bare severity).
