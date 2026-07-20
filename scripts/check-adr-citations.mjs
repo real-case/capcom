@@ -100,6 +100,24 @@ function selfTest() {
       text: "      - name: Coverage gate (ADR 0008); secrets per ADR 0044.",
       expect: (r) => r.errors.length === 0,
     },
+    // The corpus crossed 0100, so every pattern must span 0000–0999. Each case below is
+    // dangling *past* 0099: before the widening they matched nothing at all and the gate
+    // stayed silent — a false negative that hid real typos.
+    {
+      name: "dangling parenthesised ADR past 0099",
+      text: "Value leaves are governed by (0999).",
+      expect: (r) => r.errors.some((e) => /ADR 0999/.test(e)),
+    },
+    {
+      name: "dangling bare reference past 0099",
+      text: "The archetype rule is stated in 0998 for context.",
+      expect: (r) => r.warns.some((w) => /"0998"/.test(w)),
+    },
+    {
+      name: "range spanning past 0099 expands",
+      text: "Design-system governance (decided 0098–0101).",
+      expect: (r) => r.warns.some((w) => /"0101"/.test(w)),
+    },
   ];
   let ok = 0;
   const broken = [];
