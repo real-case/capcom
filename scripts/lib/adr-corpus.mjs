@@ -44,7 +44,7 @@ export function loadConstraints(file = "docs/decisions/constraints.md") {
  * Extract ADR references from arbitrary text.
  * @returns {{ explicit: Set<number>, all: Set<number> }}
  *   `explicit` — `ADR NNNN` / `(NNNN)` forms (dangling → error-worthy).
- *   `all` — explicit + bare `00NN` + expanded `00NN–00MM` ranges (dangling → warn-worthy).
+ *   `all` — explicit + bare `0NNN` + expanded `0NNN–0MMM` ranges (dangling → warn-worthy).
  */
 export function extractAdrRefs(text) {
   const explicit = new Set();
@@ -53,18 +53,21 @@ export function extractAdrRefs(text) {
     all.add(n);
     if (isExplicit) explicit.add(n);
   };
-  // `ADR 0058`, `ADR-0058` (0000–0999, so future three-digit corpora keep working).
-  for (const m of text.matchAll(/ADR[\s-]?(0\d{3})/gi)) add(+m[1], true);
-  // Parenthesised `(0058` followed by a delimiter — constrained to 00NN so `(2026-…)` dates don't match.
-  for (const m of text.matchAll(/\((00\d{2})(?=[\s,;)])/g)) add(+m[1], true);
+  // All four patterns span 0000–0999 so the corpus keeps working past 0099. A year can
+  // never collide: `(2026-…)` and friends start with 1/2, and `0NNN` requires a leading 0.
+  // `ADR 0058`, `ADR-0058`. The trailing \b keeps a longer run (`ADR 01234`) from
+  // yielding a partial `0123` match, matching the boundedness of the patterns below.
+  for (const m of text.matchAll(/ADR[\s-]?(0\d{3})\b/gi)) add(+m[1], true);
+  // Parenthesised `(0058` followed by a delimiter.
+  for (const m of text.matchAll(/\((0\d{3})(?=[\s,;)])/g)) add(+m[1], true);
   // Ranges `0058–0064` / `0048-0057` → fill the span (bare severity).
-  for (const m of text.matchAll(/\b(00\d{2})\s*[–—-]\s*(00\d{2})\b/g)) {
+  for (const m of text.matchAll(/\b(0\d{3})\s*[–—-]\s*(0\d{3})\b/g)) {
     const a = +m[1];
     const b = +m[2];
     if (b >= a && b - a < 200) for (let i = a; i <= b; i++) add(i, false);
   }
-  // Any remaining bare `00NN` token.
-  for (const m of text.matchAll(/\b(00\d{2})\b/g)) add(+m[1], false);
+  // Any remaining bare `0NNN` token.
+  for (const m of text.matchAll(/\b(0\d{3})\b/g)) add(+m[1], false);
   return { explicit, all };
 }
 
