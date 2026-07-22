@@ -104,3 +104,4 @@ Architecture Decision Records for this project, in [MADR](https://adr.github.io/
 | [0098](0098-events-explorer-saved-views-and-completion.md) | Events explorer completion — saved views as an `events` report kind, in-database group-by roll-up, column visibility, density axis, live rate | accepted | 2026-07-10 |
 | [0099](0099-mission-control-product-console-surface.md) | Mission-control product console: the authenticated app adopts the instrument-panel surface | accepted | 2026-07-13 |
 | [0100](0100-data-display-archetype-for-value-leaves.md) | Add a `data-display` component archetype for value/metric leaves | proposed | 2026-07-13 |
+| [0101](0101-premium-unified-front-door.md) | Premium unified front door: the landing, auth, and workspace launcher join the mission-control surface | accepted | 2026-07-22 |
