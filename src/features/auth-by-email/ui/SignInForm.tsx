@@ -11,15 +11,18 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { signIn, type AuthFailure } from "../api/actions";
 import { signInSchema, type SignInValues } from "../model/schemas";
 
+// Mission-control surface tokens (ADR 0081/0101): the field sits recessed on the
+// auth Panel; semantic tokens only (ADR 0058), never the shadcn value layer.
 const inputClass =
-  "h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50";
+  "h-9 w-full rounded-md border border-border-hairline bg-surface-background px-3 py-1 text-sm text-text-primary shadow-sm transition-colors placeholder:text-text-tertiary focus-visible:ring-2 focus-visible:ring-text-primary focus-visible:outline-none disabled:opacity-50";
 
 /**
  * Email/password sign-in (ADR 0016, 0020). Client-validates with the canonical
  * `signInSchema` via `zodResolver`, then calls the `signIn` Server Action, which
  * re-validates the same schema server-side. On success the client navigates
  * (locale-aware) to the workspace home; on failure RHF shows a translated,
- * generic message — never the raw provider error (ADR 0019).
+ * generic message — never the raw provider error (ADR 0019). The secondary path
+ * to the one-click `DemoSignIn`; skinned on the mission-control surface (ADR 0101).
  */
 export function SignInForm() {
   const t = useTranslations("Auth");
@@ -59,7 +62,10 @@ export function SignInForm() {
       className="flex flex-col gap-4"
     >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-sm font-medium text-foreground">
+        <label
+          htmlFor="email"
+          className="text-sm font-medium text-text-primary"
+        >
           {t("email")}
         </label>
         <input
@@ -71,7 +77,7 @@ export function SignInForm() {
           {...register("email")}
         />
         {errors.email ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-status-critical-fg">
             {t("errors.emailInvalid")}
           </p>
         ) : null}
@@ -80,7 +86,7 @@ export function SignInForm() {
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor="password"
-          className="text-sm font-medium text-foreground"
+          className="text-sm font-medium text-text-primary"
         >
           {t("password")}
         </label>
@@ -93,27 +99,27 @@ export function SignInForm() {
           {...register("password")}
         />
         {errors.password ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-status-critical-fg">
             {t("errors.passwordRequired")}
           </p>
         ) : null}
       </div>
 
       {errors.root ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-status-critical-fg">
           {errors.root.message}
         </p>
       ) : null}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" className="w-full" disabled={pending}>
         {t("signIn.submit")}
       </Button>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-text-secondary">
         {t("signIn.noAccount")}{" "}
         <Link
           href="/sign-up"
-          className="font-medium text-foreground underline-offset-4 hover:underline"
+          className="font-medium text-text-primary underline-offset-4 hover:underline"
         >
           {t("signIn.createOne")}
         </Link>

@@ -133,3 +133,6 @@ reskin
 stmts
 sparkline
 sparklines
+# premium unified front door (ADR 0101)
+passwordless
+precedented

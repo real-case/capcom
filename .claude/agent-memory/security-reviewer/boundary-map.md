@@ -33,3 +33,23 @@ This is the open-redirect answer for any feature that reuses these helpers.
 rejects unknown keys, never coerces). Only `kind`/`config` are read. No model text reaches SQL,
 RPC names, routes, or hrefs — the validated spec drives a fixed route map. Good reference shape
 for "untrusted LLM output → closed Zod spec → deep-link" features.
+
+**Demo one-click sign-in — `"use server"` as the containment fence (ADR 0101, feat/front-door-1-demo-signin, 2026-07).**
+`src/features/auth-by-email/api/actions.ts` is a `"use server"` module holding the demo creds as
+**module-private, non-exported** consts (`DEMO_PASSWORD`, `DEMO_EMAIL` record). The `"use server"`
+directive is the hard bundler boundary here (NOT `import "server-only"` — that would be wrong for an
+actions module whose exports are meant to be client-imported): only the exported async actions become
+opaque client-callable references; the module body never enters the bundle. Same containment the
+ingest key (0085) relies on. `signInAsDemo(key)` re-validates with `demoAccountKeySchema.safeParse`
+(closed enum `alice|dave|bob`) and only indexes a closed 3-key `DEMO_EMAIL` — cannot become an
+arbitrary-login oracle; no client-supplied credential path. The `model/demo.ts` file (imported by the
+`"use client"` `DemoSignIn`) holds ONLY key/name/roleKey — zero credentials. Container/presentational
+split: `DemoSignInManager` (client) owns the action; `DemoSignIn` is pure props (`onPick(key)`).
+
+**FALSE POSITIVE — do NOT re-flag: `src/widgets/landing/model/content.ts` exports `DEMO_PASSWORD =
+"password123"` + seeded emails, rendered PUBLICLY on the landing.** This is intentional per ADR 0101
+(content.ts docstring: "exposing these is a feature, not a leak"); the accounts are tenant-isolated by
+RLS (0083) and the password is a public demo fixture, not a secret. It is a *separate* copy from the
+auth action's contained one — both hold the same public value. Only genuinely-minor note: the literal
+is duplicated across content.ts + actions.ts (+ supabase/seed.sql), a drift risk (code-quality, not
+security).

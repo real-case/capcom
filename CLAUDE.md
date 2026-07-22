@@ -185,7 +185,16 @@ still-proposed._
   (0092), and rides the density/tenant swaps (0082). It **extends 0081** (the surface vocabulary now
   clothes product chrome, not only charts) and **completes 0092's** chrome/chart unification; the
   statically-generated marketing/landing (0031/0096) and auth screens deliberately stay on the shadcn
-  value layer (0033).
+  value layer (0033) — a seam **0101 later narrows** (below).
+- **Premium unified front door** (0101): the demo's front door — the marketing landing (`src/widgets/landing`),
+  the auth screens (`src/features/auth-by-email`), and the workspace launcher (`src/app/[locale]/(app)/p`) —
+  **joins the mission-control surface** (0081), **narrowing 0099's marketing↔console seam** so the demo reads as
+  one instrument front-to-back (light/dark as one unit, `check:contrast` both compositions, 0092; **zero new
+  tokens**, 0058). A **one-click demo sign-in extends 0016**: a `signInAsDemo(key)` Server Action takes only a
+  value from a **closed enum** of seeded demo-account keys (the injection boundary, cf. 0089/0091) — never a
+  client-supplied credential; the shared seed password stays server-side (0018/0085). The workspace launcher
+  shows a per-project headline metric + sparkline from existing `SECURITY INVOKER` aggregations (0084) under RLS
+  — no new SQL. (Auth shipped first; the landing + launcher re-skins follow.)
 
 ## Commands
 
@@ -449,7 +458,9 @@ still-proposed._
   composition applies, `check:contrast` gates both). Its **Overview** home is a **first-class, curated** bento
   of KPI cards + signal charts — distinct from the **user-composed** dashboards of 0090 — with KPI
   aggregations as new `SECURITY INVOKER` RPCs (0084) and visx presentational charts (0086/0093).
-  Marketing/landing and auth stay on the shadcn value layer (a documented seam).
+  Marketing/landing and auth stayed on the shadcn value layer (a documented seam) until **0101 narrows it** —
+  the auth screens now join the mission-control surface (the landing + workspace launcher follow), so the demo's
+  front door reads as one instrument end-to-end.
 
 ## Restrictions
 
@@ -574,3 +585,11 @@ still-proposed._
   unchanged); `check:contrast` must stay green in **both** compositions and each re-skinned widget keeps a
   dark **and** light story. The two deliberate visual worlds (marketing shadcn vs console mission-control)
   require the palette **seam** documented so the two are never cross-paired (0099).
+- The premium front-door unification is scoped and clean-swap (0101, narrowing 0099's seam): the marketing
+  landing, the auth screens, and the workspace launcher move onto the mission-control surface as a **clean
+  per-surface swap, never a half-mix** — proven by a negated shadcn-token `git grep` over those surfaces plus a
+  dark **and** a light axe story on the real surface (check:tokens / check:contrast can't see a half-mix); **zero
+  new tokens**. The **one-click `signInAsDemo`** accepts only a value from the closed demo-account enum — an
+  off-list key is rejected, never coerced (no arbitrary-login path) — and the seed password stays server-side,
+  never in client code (0018/0085); it extends the 0016 email/password baseline and is inert without the seeded
+  accounts. The workspace launcher adds **no new SQL** (existing 0084 `SECURITY INVOKER` RPCs under RLS).
