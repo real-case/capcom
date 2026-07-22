@@ -17,6 +17,8 @@ export const panelIntent = {
     compositionSignature: [],
     composedOf: [],
     usedIn: [
+      "src/app/[locale]/(auth)/sign-in/page.tsx",
+      "src/app/[locale]/(auth)/sign-up/page.tsx",
       "src/widgets/app-shell/ui/ProjectHub.tsx",
       "src/widgets/events-explorer/ui/BulkActionsBar.tsx",
       "src/widgets/events-explorer/ui/EventDetail.tsx",

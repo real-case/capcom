@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 
+import { demoAccountKeySchema, type DemoAccountKey } from "../model/demo";
 import {
   signInSchema,
   signUpSchema,
@@ -31,6 +32,37 @@ export async function signIn(input: SignInValues): Promise<AuthResult> {
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  if (error) return { ok: false, reason: "invalid_credentials" };
+
+  return { ok: true };
+}
+
+// The seeded demo accounts (ADR 0101) share the seed password (`supabase/seed.sql`) — already
+// public on the landing, but held in this "use server" module so it never enters the client
+// bundle: the client sends only a demo-account KEY, never a credential. Not exported.
+const DEMO_PASSWORD = "password123";
+const DEMO_EMAIL: Record<DemoAccountKey, string> = {
+  alice: "alice@capcom.dev",
+  dave: "dave@capcom.dev",
+  bob: "bob@capcom.dev",
+};
+
+/**
+ * One-click demo sign-in (ADR 0101). Accepts only a key from the closed demo-account enum —
+ * the injection boundary — resolves it to the seeded email + shared password held above, then
+ * runs the same password sign-in as `signIn`. An off-list key is rejected (never coerced) and
+ * there is no client-supplied credential path. Extends the 0016 email/password baseline with a
+ * demo-only convenience; inert for a real deployment (only the seeded identities are reachable).
+ */
+export async function signInAsDemo(key: DemoAccountKey): Promise<AuthResult> {
+  const parsed = demoAccountKeySchema.safeParse(key);
+  if (!parsed.success) return { ok: false, reason: "invalid_input" };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({
+    email: DEMO_EMAIL[parsed.data],
+    password: DEMO_PASSWORD,
+  });
   if (error) return { ok: false, reason: "invalid_credentials" };
 
   return { ok: true };

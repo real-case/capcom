@@ -92,6 +92,20 @@
   "Auth": {
     "email": "Email",
     "password": "Password",
+    "demo": {
+      "badge": "CAPCOM · Demo console",
+      "lead": "One click signs you in with seeded data — no password. Each role sees and does different things.",
+      "continueAs": "Continue as {name}",
+      "roleHint": {
+        "owner": "Full access — manage everything",
+        "analyst": "Build and edit analyses",
+        "viewer": "Read-only access"
+      },
+      "or": "or sign in with email",
+      "errors": {
+        "failed": "Couldn't sign you in. Please try again."
+      }
+    },
     "signIn": {
       "title": "Sign in",
       "submit": "Sign in",

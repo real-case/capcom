@@ -11,14 +11,15 @@ import { Link, useRouter } from "@/i18n/navigation";
 import { signUp, type AuthFailure } from "../api/actions";
 import { signUpSchema, type SignUpValues } from "../model/schemas";
 
+// Mission-control surface tokens (ADR 0081/0101) — same field skin as SignInForm.
 const inputClass =
-  "h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50";
+  "h-9 w-full rounded-md border border-border-hairline bg-surface-background px-3 py-1 text-sm text-text-primary shadow-sm transition-colors placeholder:text-text-tertiary focus-visible:ring-2 focus-visible:ring-text-primary focus-visible:outline-none disabled:opacity-50";
 
 /**
  * Email/password sign-up (ADR 0016, 0020). Same canonical-schema contract as
  * sign-in: client-validate, then the `signUp` Server Action re-validates and
  * creates the account. A new user has no memberships, so the workspace home shows
- * its empty state until an admin invites them.
+ * its empty state until an admin invites them. Mission-control surface (ADR 0101).
  */
 export function SignUpForm() {
   const t = useTranslations("Auth");
@@ -58,7 +59,10 @@ export function SignUpForm() {
       className="flex flex-col gap-4"
     >
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="email" className="text-sm font-medium text-foreground">
+        <label
+          htmlFor="email"
+          className="text-sm font-medium text-text-primary"
+        >
           {t("email")}
         </label>
         <input
@@ -70,7 +74,7 @@ export function SignUpForm() {
           {...register("email")}
         />
         {errors.email ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-status-critical-fg">
             {t("errors.emailInvalid")}
           </p>
         ) : null}
@@ -79,7 +83,7 @@ export function SignUpForm() {
       <div className="flex flex-col gap-1.5">
         <label
           htmlFor="password"
-          className="text-sm font-medium text-foreground"
+          className="text-sm font-medium text-text-primary"
         >
           {t("password")}
         </label>
@@ -92,27 +96,27 @@ export function SignUpForm() {
           {...register("password")}
         />
         {errors.password ? (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-status-critical-fg">
             {t("errors.passwordTooShort", { min: 8 })}
           </p>
         ) : null}
       </div>
 
       {errors.root ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-sm text-status-critical-fg">
           {errors.root.message}
         </p>
       ) : null}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" className="w-full" disabled={pending}>
         {t("signUp.submit")}
       </Button>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-text-secondary">
         {t("signUp.haveAccount")}{" "}
         <Link
           href="/sign-in"
-          className="font-medium text-foreground underline-offset-4 hover:underline"
+          className="font-medium text-text-primary underline-offset-4 hover:underline"
         >
           {t("signUp.signInLink")}
         </Link>
