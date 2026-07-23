@@ -21,9 +21,9 @@ export function SiteFooter({ copy }: { copy: LandingCopy["footer"] }) {
   ];
 
   return (
-    <footer className="border-t border-border">
+    <footer className="border-t border-border-hairline">
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-4 px-6 py-10 text-center">
-        <p className="max-w-xl text-sm leading-6 text-muted-foreground text-pretty">
+        <p className="max-w-xl text-sm leading-6 text-pretty text-text-secondary">
           {copy.tagline}
         </p>
         <nav
@@ -36,7 +36,7 @@ export function SiteFooter({ copy }: { copy: LandingCopy["footer"] }) {
               href={link.href}
               target="_blank"
               rel="noreferrer"
-              className="text-sm font-medium text-foreground underline-offset-4 hover:underline"
+              className="text-sm font-medium text-text-primary underline-offset-4 hover:underline"
             >
               {link.label}
             </a>
@@ -46,7 +46,7 @@ export function SiteFooter({ copy }: { copy: LandingCopy["footer"] }) {
           href={STARTER_URL}
           target="_blank"
           rel="noreferrer"
-          className="text-xs text-muted-foreground underline-offset-4 hover:underline"
+          className="text-xs text-text-secondary underline-offset-4 hover:underline"
         >
           {copy.builtOn}
         </a>

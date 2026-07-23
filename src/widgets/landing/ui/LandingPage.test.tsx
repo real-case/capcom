@@ -10,8 +10,10 @@ import { LandingPage } from "./LandingPage";
 /**
  * Renders the REAL composed LandingPage (so Hero / SurfaceShowcase / DemoAccess /
  * MethodologyStrip / SiteFooter all execute and stay in the coverage denominator). The
- * components take copy as props; the provider only supplies the locale the next-intl
- * `Link` needs to render `/en/sign-in`.
+ * components take copy as props; the one-click island is injected as `demoSlot` — here a LOCAL
+ * presentational stub, so the test never imports the auth feature's server-action chain
+ * (→ next/headers), which cannot execute under jsdom. The provider supplies the locale the
+ * next-intl `Link` needs to render `/en/sign-in`.
  */
 function makeCopy(): LandingCopy {
   const card = (title: string) => ({ title, body: `${title} — body copy.` });
@@ -39,9 +41,6 @@ function makeCopy(): LandingCopy {
     demo: {
       heading: "Try it yourself",
       lead: "Demo lead.",
-      credentialsLabel: "Seeded accounts — password password123",
-      roleLabels: { owner: "Owner", analyst: "Analyst", viewer: "Viewer" },
-      cta: "Open the app",
       note: "Data is seeded and isolated per tenant by RLS.",
     },
     methodology: {
@@ -67,16 +66,33 @@ function makeCopy(): LandingCopy {
   };
 }
 
+/**
+ * Local presentational stand-in for the injected one-click cards — mirrors the real
+ * DemoSignIn markup without importing the auth feature (which would drag the server-action
+ * chain into jsdom). The route injects the real `DemoSignInManager`; this proves the slot.
+ */
+function DemoSlotStub() {
+  return (
+    <div className="flex flex-col gap-2">
+      {["Alice", "Dave", "Bob"].map((name) => (
+        <button key={name} type="button">
+          Continue as {name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function renderLanding() {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <LandingPage copy={makeCopy()} />
+      <LandingPage copy={makeCopy()} demoSlot={<DemoSlotStub />} />
     </NextIntlClientProvider>,
   );
 }
 
 describe("LandingPage", () => {
-  it("renders the hero, six surface cards, demo credentials, and the primary CTA", () => {
+  it("embeds the one-click demo sign-in cards via the injected slot", () => {
     renderLanding();
 
     // Exactly one h1 — the brand.
@@ -99,16 +115,17 @@ describe("LandingPage", () => {
       ).toBeInTheDocument();
     }
 
-    // The seeded demo credentials are visible, with each role label.
-    expect(screen.getByText("alice@capcom.dev")).toBeInTheDocument();
-    expect(screen.getByText("dave@capcom.dev")).toBeInTheDocument();
-    expect(screen.getByText("bob@capcom.dev")).toBeInTheDocument();
+    // The injected one-click demo cards render in the DemoAccess block (not an email/password
+    // list) — the demoSlot injection point works.
     expect(
-      screen.getByText("Seeded accounts — password password123"),
+      screen.getByRole("button", { name: "Continue as Alice" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Owner")).toBeInTheDocument();
-    expect(screen.getByText("Analyst")).toBeInTheDocument();
-    expect(screen.getByText("Viewer")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue as Dave" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue as Bob" }),
+    ).toBeInTheDocument();
 
     // Primary CTA links into the app, locale-prefixed by next-intl.
     expect(
@@ -118,6 +135,18 @@ describe("LandingPage", () => {
     expect(
       screen.getByRole("link", { name: "Behind the scenes" }),
     ).toHaveAttribute("href", "#behind-the-scenes");
+  });
+
+  it("retires the public password and renders no credential label", () => {
+    renderLanding();
+
+    // The public demo password + seeded email list are gone (ADR 0101) — the front door no
+    // longer echoes any credential.
+    expect(screen.queryByText(/password123/)).not.toBeInTheDocument();
+    expect(screen.queryByText("alice@capcom.dev")).not.toBeInTheDocument();
+    expect(screen.queryByText("dave@capcom.dev")).not.toBeInTheDocument();
+    expect(screen.queryByText("bob@capcom.dev")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Seeded accounts/)).not.toBeInTheDocument();
   });
 
   it("exposes main and footer landmarks and the outbound repo link", () => {

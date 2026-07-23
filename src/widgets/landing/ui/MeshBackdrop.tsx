@@ -5,9 +5,9 @@ import { Floating } from "./motion";
 /**
  * Decorative aurora mesh (ADR 0096 premium landing). A stack of soft, blurred colour blobs
  * that drift slowly behind the hero — purely presentational, so it is `aria-hidden` and
- * `pointer-events-none`. Every colour is a semantic token (ADR 0058): the brand
- * `primary` / `accent` plus two data-viz hues, all of which flip with the light/dark theme
- * (ADR 0092), so the mesh re-composes with the rest of the chrome. The drift is a
+ * `pointer-events-none`. Every colour is a semantic token (ADR 0081/0058): four data-viz
+ * hues, all of which flip with the light/dark theme (ADR 0092), so the mesh re-composes with
+ * the rest of the mission-control chrome. The drift is a
  * `Floating` island — disabled under reduced motion and frozen in Chromatic (ADR 0043/0039).
  */
 export function MeshBackdrop({ className }: { className?: string }) {
@@ -25,7 +25,7 @@ export function MeshBackdrop({ className }: { className?: string }) {
         x={12}
         duration={11}
       >
-        <div className="h-full w-full rounded-full bg-primary/25 blur-3xl" />
+        <div className="h-full w-full rounded-full bg-viz-categorical-1/25 blur-3xl" />
       </Floating>
       <Floating
         className="absolute -top-32 right-[-6rem] h-[26rem] w-[26rem]"
@@ -40,7 +40,7 @@ export function MeshBackdrop({ className }: { className?: string }) {
         y={26}
         duration={15}
       >
-        <div className="h-full w-full rounded-full bg-accent/25 blur-3xl" />
+        <div className="h-full w-full rounded-full bg-viz-categorical-6/25 blur-3xl" />
       </Floating>
       <Floating
         className="absolute -bottom-32 right-1/4 h-[22rem] w-[22rem]"
@@ -51,7 +51,7 @@ export function MeshBackdrop({ className }: { className?: string }) {
         <div className="h-full w-full rounded-full bg-viz-categorical-2/20 blur-3xl" />
       </Floating>
       {/* A faint top-down wash that fades the mesh into the page background. */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-surface-background" />
     </div>
   );
 }

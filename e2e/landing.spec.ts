@@ -1,10 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 /**
- * Public landing journey (ADR 0030/0031, PR-10). The landing is public and static — no
- * auth, no database — so this spec needs no seed: it loads `/en`, asserts the marketing
- * content (hero, a surface card, the visible seeded demo credentials), checks the JSON-LD
- * structured data is present, and follows the primary CTA into the sign-in route.
+ * Public landing journey (ADR 0030/0031/0101). The landing is public and statically
+ * generated — no auth, no database to render — so this spec needs no seed: it loads `/en`,
+ * asserts the marketing content (hero, a surface card, the one-click demo cards) and that the
+ * public password display is retired, checks the JSON-LD structured data is present, and
+ * follows the primary CTA into the sign-in route.
  */
 test.describe("Public landing (ADR 0031)", () => {
   test("renders the landing, shows demo access, and links into the app", async ({
@@ -25,9 +26,12 @@ test.describe("Public landing (ADR 0031)", () => {
       page.getByRole("heading", { name: "Ask with AI" }),
     ).toBeVisible();
 
-    // The seeded demo credentials are surfaced so a visitor can sign straight in.
-    await expect(page.getByText("alice@capcom.dev")).toBeVisible();
-    await expect(page.getByText(/password password123/)).toBeVisible();
+    // The one-click demo cards let a visitor sign straight in as a seeded role; the public
+    // password display is retired (ADR 0101).
+    await expect(
+      page.getByRole("button", { name: /Continue as Alice/ }),
+    ).toBeVisible();
+    await expect(page.getByText(/password123/)).toHaveCount(0);
 
     // JSON-LD structured data is emitted (ADR 0031).
     const jsonLd = page.locator('script[type="application/ld+json"]');

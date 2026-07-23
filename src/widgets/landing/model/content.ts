@@ -29,22 +29,6 @@ export const METHODOLOGY_KEYS = [
 ] as const;
 export type MethodologyKey = (typeof METHODOLOGY_KEYS)[number];
 
-/** Roles a seeded demo account can carry (a subset of the RBAC ladder, ADR 0083). */
-export type RoleKey = "owner" | "analyst" | "viewer";
-
-/**
- * Seeded demo accounts (all share one password) — surfaced publicly so a visitor can
- * sign straight in and watch RBAC differ by role. The data is seeded and tenant-isolated
- * by Postgres RLS (ADR 0083), so exposing these is a feature, not a leak.
- */
-export const DEMO_PASSWORD = "password123";
-export type DemoAccount = { readonly email: string; readonly roleKey: RoleKey };
-export const DEMO_ACCOUNTS: readonly DemoAccount[] = [
-  { email: "alice@capcom.dev", roleKey: "owner" },
-  { email: "dave@capcom.dev", roleKey: "analyst" },
-  { email: "bob@capcom.dev", roleKey: "viewer" },
-];
-
 /** Outbound links to the source repository (the artifact this demo is about). */
 export const REPO_URL = "https://github.com/real-case/capcom";
 export const ROADMAP_URL = `${REPO_URL}/blob/main/docs/capcom/roadmap.md`;
@@ -83,9 +67,6 @@ export type LandingCopy = {
   readonly demo: {
     readonly heading: string;
     readonly lead: string;
-    readonly credentialsLabel: string;
-    readonly roleLabels: Readonly<Record<RoleKey, string>>;
-    readonly cta: string;
     readonly note: string;
   };
   readonly methodology: {

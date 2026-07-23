@@ -9,12 +9,9 @@ export { LandingPage } from "./ui/LandingPage";
 export { MotionPolicy } from "./ui/motion";
 export { buildLandingJsonLd, type JsonLdGraph } from "./model/jsonld";
 export {
-  DEMO_ACCOUNTS,
-  DEMO_PASSWORD,
   METHODOLOGY_KEYS,
   SURFACE_IDS,
   type LandingCopy,
   type MethodologyKey,
-  type RoleKey,
   type SurfaceId,
 } from "./model/content";

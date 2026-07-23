@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { DemoSignInManager } from "@/features/auth-by-email";
 import { buildAlternates } from "@/i18n/metadata";
 import { routing } from "@/i18n/routing";
 import { env } from "@/lib/env";
 import {
   buildLandingJsonLd,
-  DEMO_PASSWORD,
   LandingPage,
   type LandingCopy,
   MotionPolicy,
@@ -36,10 +36,12 @@ export async function generateMetadata({
 }
 
 /**
- * Public landing route — a thin RSC container (ADR 0065): it reads the `Landing`/`Roles`
- * namespaces (ADR 0030), assembles the typed copy object, emits JSON-LD structured data
- * (ADR 0031), and mounts the presentational `<LandingPage>` from the landing widget. All
- * markup/token discipline lives in the widget; this file is coverage-excluded (route).
+ * Public landing route — a thin RSC container (ADR 0065): it reads the `Landing`
+ * namespace (ADR 0030), assembles the typed copy object, emits JSON-LD structured data
+ * (ADR 0031), and mounts the presentational `<LandingPage>` from the landing widget —
+ * injecting the one-click `DemoSignInManager` as its `demoSlot` (ADR 0101), so the widget
+ * stays free of the server-action chain. All markup/token discipline lives in the widget;
+ * this file is coverage-excluded (route).
  */
 export default async function Home({
   params,
@@ -52,7 +54,6 @@ export default async function Home({
   if (hasLocale(routing.locales, locale)) setRequestLocale(locale);
 
   const t = await getTranslations("Landing");
-  const roles = await getTranslations("Roles");
 
   const copy: LandingCopy = {
     hero: {
@@ -93,13 +94,6 @@ export default async function Home({
     demo: {
       heading: t("demo.heading"),
       lead: t("demo.lead"),
-      credentialsLabel: t("demo.credentialsLabel", { password: DEMO_PASSWORD }),
-      roleLabels: {
-        owner: roles("owner"),
-        analyst: roles("analyst"),
-        viewer: roles("viewer"),
-      },
-      cta: t("demo.cta"),
       note: t("demo.note"),
     },
     methodology: {
@@ -153,7 +147,7 @@ export default async function Home({
         }}
       />
       <MotionPolicy>
-        <LandingPage copy={copy} />
+        <LandingPage copy={copy} demoSlot={<DemoSignInManager />} />
       </MotionPolicy>
     </>
   );

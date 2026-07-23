@@ -29,6 +29,7 @@ export const buttonIntent = {
       "src/widgets/events-explorer/ui/FacetFilter.tsx",
       "src/widgets/events-explorer/ui/GroupByMenu.tsx",
       "src/widgets/events-explorer/ui/SaveViewPopover.tsx",
+      "src/widgets/landing/ui/Hero.tsx",
     ],
   },
   usageRole: "action-trigger",
