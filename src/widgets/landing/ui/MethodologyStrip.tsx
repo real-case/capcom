@@ -40,17 +40,17 @@ export function MethodologyStrip({
     <section
       id={METHODOLOGY_ANCHOR}
       aria-labelledby="methodology-heading"
-      className="scroll-mt-8 border-t border-border"
+      className="scroll-mt-8 border-t border-border-hairline"
     >
       <div className="mx-auto w-full max-w-5xl px-6 py-20 sm:py-24">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2
             id="methodology-heading"
-            className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
+            className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl"
           >
             {copy.heading}
           </h2>
-          <p className="mt-3 text-base leading-7 text-muted-foreground text-pretty">
+          <p className="mt-3 text-base leading-7 text-pretty text-text-secondary">
             {copy.lead}
           </p>
         </Reveal>
@@ -61,14 +61,14 @@ export function MethodologyStrip({
             return (
               <li key={key}>
                 <Reveal delay={i * 0.05} className="flex gap-4">
-                  <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-primary/15 to-accent/15 text-primary">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-md bg-surface-elevated text-viz-categorical-4">
+                    <Icon className="size-5" aria-hidden="true" />
                   </span>
                   <div>
-                    <h3 className="text-base font-medium text-foreground">
+                    <h3 className="text-base font-medium text-text-primary">
                       {item.title}
                     </h3>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground text-pretty">
+                    <p className="mt-1 text-sm leading-6 text-pretty text-text-secondary">
                       {item.body}
                     </p>
                   </div>

@@ -6,12 +6,42 @@ import type { LandingCopy } from "../model/content";
 
 import { LandingPage } from "./LandingPage";
 
-// ADR 0036/0039/0042: colocated CSF 3 story for the public landing. It is presentational
-// (props in), so no play function is required (ADR 0038) — the value is the a11y axe gate
-// (`a11y: { test: "error" }`, ADR 0039) over a full page composition, in light + dark
-// (ADR 0042 theme axis). The copy is a deterministic fixture (no time/random) for
-// Chromatic stability (ADR 0043); the next-intl provider only supplies the locale the
-// `Link` needs (ADR 0030).
+// ADR 0036/0039/0042/0101: colocated CSF 3 story for the public landing on the mission-control
+// surface. It is presentational (props in), so no play function is required (ADR 0038) — the
+// value is the a11y axe gate (`a11y: { test: "error" }`, ADR 0039) over a full page composition,
+// in light (Default) + Dark (ADR 0042/0092 theme axis). That axe run is the load-bearing
+// half-mix proof for the re-skin (ADR 0101), since check:tokens / check:contrast cannot see a
+// half-mix. The copy is a deterministic fixture (no time/random) for Chromatic stability
+// (ADR 0043). The one-click demo island is injected as `demoSlot`: to keep the server-action
+// chain (→ next/headers) out of Storybook, the story renders a LOCAL presentational stub, never
+// the real DemoSignInManager — the real cards' own a11y is covered by DemoSignIn.stories.tsx.
+
+/** A local presentational stand-in for the injected one-click cards (mission-control tokens). */
+function DemoSlotStub() {
+  const accounts = [
+    { name: "Alice", role: "Owner" },
+    { name: "Dave", role: "Analyst" },
+    { name: "Bob", role: "Viewer" },
+  ] as const;
+  return (
+    <div className="flex flex-col gap-2">
+      {accounts.map((account) => (
+        <button
+          key={account.name}
+          type="button"
+          className="flex items-center justify-between gap-3 rounded-md border border-border-hairline bg-surface-elevated px-4 py-3 text-left transition-colors hover:bg-surface-overlay"
+        >
+          <span className="text-sm font-medium text-text-primary">
+            Continue as {account.name}
+          </span>
+          <span className="rounded-full border border-border-hairline bg-surface-panel px-2.5 py-0.5 text-xs font-medium text-text-secondary">
+            {account.role}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const copy: LandingCopy = {
   hero: {
@@ -55,10 +85,7 @@ const copy: LandingCopy = {
   },
   demo: {
     heading: "Try it yourself",
-    lead: "Sign in with a seeded account and explore real multitenant data. Each account carries a different role.",
-    credentialsLabel: "Seeded accounts — password password123",
-    roleLabels: { owner: "Owner", analyst: "Analyst", viewer: "Viewer" },
-    cta: "Open the app",
+    lead: "Pick a role below to sign in instantly — no password needed. Each account carries a different role, so you can watch RBAC change what you can see and do.",
     note: "Data is seeded and isolated per tenant by Postgres Row-Level Security.",
   },
   methodology: {
@@ -109,7 +136,7 @@ const meta = {
       </NextIntlClientProvider>
     ),
   ],
-  args: { copy },
+  args: { copy, demoSlot: <DemoSlotStub /> },
 } satisfies Meta<typeof LandingPage>;
 
 export default meta;

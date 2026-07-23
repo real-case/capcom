@@ -50,9 +50,7 @@
     },
     "demo": {
       "heading": "Try it yourself",
-      "lead": "Sign in with a seeded account and explore real multitenant data. Each account carries a different role, so you can watch RBAC change what you can see and do.",
-      "credentialsLabel": "Seeded accounts — password {password}",
-      "cta": "Open the app",
+      "lead": "Pick a role below to sign in instantly — no password needed. Each account carries a different role, so you can watch RBAC change what you can see and do.",
       "note": "Data is seeded and isolated per tenant by Postgres Row-Level Security."
     },
     "methodology": {

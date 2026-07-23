@@ -36,10 +36,10 @@ export function SurfaceShowcase({ copy }: { copy: LandingCopy["surfaces"] }) {
   return (
     <section className="mx-auto w-full max-w-5xl px-6 py-20 sm:py-24">
       <Reveal className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+        <h2 className="text-3xl font-semibold tracking-tight text-text-primary sm:text-4xl">
           {copy.heading}
         </h2>
-        <p className="mt-3 text-base leading-7 text-muted-foreground text-pretty">
+        <p className="mt-3 text-base leading-7 text-pretty text-text-secondary">
           {copy.lead}
         </p>
       </Reveal>
@@ -50,14 +50,14 @@ export function SurfaceShowcase({ copy }: { copy: LandingCopy["surfaces"] }) {
           return (
             <li key={id}>
               <Reveal delay={i * 0.06} className="h-full">
-                <div className="group h-full rounded-xl border border-border bg-card p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
-                  <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-primary/15 to-accent/15 text-primary transition-colors group-hover:from-primary/25 group-hover:to-accent/25">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
+                <div className="group h-full rounded-xl border border-border-hairline bg-surface-panel p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:bg-surface-elevated hover:shadow-lg">
+                  <span className="inline-flex size-11 items-center justify-center rounded-lg bg-surface-elevated text-viz-categorical-4 transition-colors group-hover:bg-surface-overlay">
+                    <Icon className="size-5" aria-hidden="true" />
                   </span>
-                  <h3 className="mt-4 text-lg font-medium text-card-foreground">
+                  <h3 className="mt-4 text-lg font-medium text-text-primary">
                     {item.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground text-pretty">
+                  <p className="mt-2 text-sm leading-6 text-pretty text-text-secondary">
                     {item.body}
                   </p>
                 </div>
