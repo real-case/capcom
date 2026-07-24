@@ -129,13 +129,21 @@
   "Workspace": {
     "home": {
       "title": "Your workspaces",
-      "lead": "Organizations and projects you can access."
+      "lead": "Pick a project to open its mission control."
     },
     "empty": {
       "title": "No workspaces yet",
       "body": "You're not a member of any organization. Ask an admin to invite you."
     },
-    "openProject": "Open"
+    "metric": {
+      "label": "Active users",
+      "window": "Last 30 days",
+      "deltaCaption": "vs the previous 30 days"
+    },
+    "activity": "{days, plural, =0 {Active today} =1 {Active yesterday} other {Active # days ago}}",
+    "noActivity": "No activity in the last 30 days",
+    "noProjects": "No projects in this organization yet.",
+    "cardError": "Metrics unavailable right now."
   },
   "Roles": {
     "owner": "Owner",

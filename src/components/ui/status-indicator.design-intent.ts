@@ -18,6 +18,7 @@ export const statusIndicatorIntent = {
       "src/components/ui/telemetry-stat.tsx",
       "src/widgets/overview-dashboard/ui/HeroChart.tsx",
       "src/widgets/overview-dashboard/ui/KpiCard.tsx",
+      "src/widgets/workspace-launcher/ui/ProjectCard.tsx",
     ],
   },
   usageRole: "risk-level-indicator",

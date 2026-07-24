@@ -2,19 +2,37 @@ import { hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
+import { fetchOverviewKpis, fetchOverviewSignal } from "@/entities/event";
 import { fetchMyMemberships } from "@/entities/membership";
 import { fetchOrganizations } from "@/entities/organization";
 import { fetchProjects } from "@/entities/project";
-import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { getCurrentUser, getServerClient } from "@/lib/supabase/server";
+import {
+  buildLauncherProjects,
+  lastActiveDaysAgo,
+  WorkspaceLauncher,
+  type LauncherCopy,
+  type LauncherOrg,
+  type LauncherProject,
+} from "@/widgets/workspace-launcher";
+
+const DAY_MS = 86_400_000;
+const WINDOW_DAYS = 30;
 
 /**
- * Workspace home (ADR 0083). Lists the organizations the signed-in member can
- * reach, each with their role and its projects — all RLS-scoped server-side, so
- * the page renders only what the membership join allows. A member of nothing sees
- * the empty state (e.g. a just-signed-up user).
+ * Workspace launcher (ADR 0083/0101 Phase 3). Lists the organizations the signed-in member can
+ * reach as a grid of project launcher cards — each with a headline metric, sparkline, role, and
+ * activity — all RLS-scoped server-side, so the page renders only what the membership join
+ * allows (a member of nothing sees the empty state). This is the composition root: it fetches
+ * and localizes, then hands already-reduced rows to the presentational `WorkspaceLauncher`.
+ *
+ * The per-project metrics come from the EXISTING `SECURITY INVOKER` aggregations
+ * (`fn_overview_kpis` / `fn_overview_signal`, ADR 0084) over one trailing 30-day window — no
+ * new SQL, no app-side aggregation. Each project's two RPCs are one `Promise.all` pair, and the
+ * pairs are fanned out with `Promise.allSettled` so a single project's RPC failure degrades that
+ * one card (`status: "error"`) instead of throwing the whole page into the app error boundary —
+ * which matters because `/p` is the landing pad of every auth path, including the one-click demo.
  */
 export default async function WorkspaceHomePage({
   params,
@@ -37,56 +55,81 @@ export default async function WorkspaceHomePage({
     user ? fetchMyMemberships(supabase, user.id) : Promise.resolve([]),
   ]);
 
-  if (organizations.length === 0) {
-    return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-2 px-6 py-24 text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          {t("empty.title")}
-        </h1>
-        <p className="text-muted-foreground">{t("empty.body")}</p>
-      </div>
-    );
-  }
+  // One trailing 30-day window, `to` floored to the next UTC midnight so the span is stable
+  // within a day. The equal-length previous window (for the delta) is computed in SQL by
+  // fn_overview_kpis (its `_prev` columns) — this route only bounds the current `[from, to)`.
+  const now = new Date();
+  const toMidnight = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+  );
+  const from = new Date(toMidnight - WINDOW_DAYS * DAY_MS).toISOString();
+  const to = new Date(toMidnight).toISOString();
+
+  // One RPC PAIR per project, fanned out. Promise.all inside makes a pair reject if EITHER
+  // RPC fails; Promise.allSettled outside keeps one project's failure from rejecting the page.
+  const settled = await Promise.allSettled(
+    projects.map((project) =>
+      Promise.all([
+        fetchOverviewKpis(supabase, {
+          p_project_id: project.id,
+          p_from: from,
+          p_to: to,
+        }),
+        fetchOverviewSignal(supabase, {
+          p_project_id: project.id,
+          p_from: from,
+          p_to: to,
+          p_interval: "day",
+        }),
+      ]),
+    ),
+  );
+
+  // The ok/error mapping (AC8) lives in a pure, unit-tested helper (model/launcher.ts): a
+  // project is "ok" ONLY when both RPCs fulfilled — a resolved kpis row beside a rejected
+  // signal must not render, or the card would assert "no activity" about unknown activity.
+  // The localized activity line is supplied here (closing over next-intl + `now`) so the
+  // helper stays free of i18n and the clock.
+  const launcherProjects = buildLauncherProjects(
+    projects,
+    settled,
+    (signal) => {
+      const days = lastActiveDaysAgo(signal, now);
+      return days === null ? t("noActivity") : t("activity", { days });
+    },
+  );
+  const projectVM = new Map<string, LauncherProject>(
+    launcherProjects.map((vm) => [vm.id, vm]),
+  );
 
   const roleByOrg = new Map(
     memberships.map((m) => [m.organization_id, m.role]),
   );
 
-  return (
-    <div className="mx-auto w-full max-w-3xl px-6 py-10">
-      <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-        {t("home.title")}
-      </h1>
-      <p className="mt-1 text-muted-foreground">{t("home.lead")}</p>
+  const orgs: LauncherOrg[] = organizations.map((org) => {
+    const role = roleByOrg.get(org.id);
+    return {
+      id: org.id,
+      name: org.name,
+      roleLabel: role ? tRoles(role) : null,
+      projects: projects
+        .filter((p) => p.organization_id === org.id)
+        .map((p) => projectVM.get(p.id)!),
+    };
+  });
 
-      <ul className="mt-8 flex flex-col gap-6">
-        {organizations.map((org) => {
-          const role = roleByOrg.get(org.id);
-          const orgProjects = projects.filter(
-            (p) => p.organization_id === org.id,
-          );
-          return (
-            <li key={org.id} className="rounded-lg border border-border p-4">
-              <div className="flex items-center gap-2">
-                <h2 className="font-medium text-foreground">{org.name}</h2>
-                {role ? <Badge variant="outline">{tRoles(role)}</Badge> : null}
-              </div>
-              <ul className="mt-3 flex flex-col gap-1">
-                {orgProjects.map((p) => (
-                  <li key={p.id}>
-                    <Link
-                      href={`/p/${p.id}`}
-                      className="text-sm text-foreground underline-offset-4 hover:underline"
-                    >
-                      {p.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
-  );
+  const copy: LauncherCopy = {
+    title: t("home.title"),
+    lead: t("home.lead"),
+    metricLabel: t("metric.label"),
+    windowLabel: t("metric.window"),
+    deltaCaption: t("metric.deltaCaption"),
+    noProjects: t("noProjects"),
+    cardError: t("cardError"),
+    empty: { title: t("empty.title"), body: t("empty.body") },
+  };
+
+  return <WorkspaceLauncher orgs={orgs} copy={copy} locale={locale} />;
 }

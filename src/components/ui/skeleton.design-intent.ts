@@ -14,7 +14,10 @@ export const skeletonIntent = {
     archetype: null,
     compositionSignature: [],
     composedOf: [],
-    usedIn: ["src/app/[locale]/(app)/p/[projectId]/loading.tsx"],
+    usedIn: [
+      "src/app/[locale]/(app)/p/[projectId]/loading.tsx",
+      "src/app/[locale]/(app)/p/loading.tsx",
+    ],
   },
   usageRole: null,
   variants: {
