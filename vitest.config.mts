@@ -145,6 +145,11 @@ export default defineConfig({
         "src/app/[locale]/*/sign-up/page.tsx",
         "src/app/[locale]/*/layout.tsx",
         "src/app/[locale]/*/p/page.tsx",
+        // ADR 0101 Phase 3: the workspace launcher's route-level Suspense fallback —
+        // an async-boundary skeleton that never runs under jsdom, same rationale as the
+        // project-scoped `p/*/loading.tsx` below. Covered by `next build`; the launcher
+        // widget it stands in for is unit-tested directly.
+        "src/app/[locale]/*/p/loading.tsx",
         "src/app/[locale]/*/p/*/page.tsx",
         // PR-13: the project-scoped shell layout is an async Server Component that
         // resolves the project + org + project list under RLS, and `loading.tsx` is a

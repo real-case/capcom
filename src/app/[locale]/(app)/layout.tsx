@@ -39,16 +39,16 @@ export default async function AppLayout({
   const tTheme = await getTranslations("Theme");
 
   return (
-    <div className="flex min-h-full flex-col">
-      <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-3">
+    <div className="flex min-h-full flex-col bg-surface-background text-text-primary">
+      <header className="flex items-center justify-between gap-4 border-b border-border-hairline px-6 py-3">
         <Link
           href="/p"
-          className="text-sm font-semibold tracking-tight text-foreground"
+          className="text-sm font-semibold tracking-tight text-text-primary"
         >
           {t("brand")}
         </Link>
         <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-muted-foreground sm:inline">
+          <span className="hidden text-sm text-text-secondary sm:inline">
             {t("signedInAs", { email: user.email ?? "" })}
           </span>
           <ThemeToggle label={tTheme("toggle")} />

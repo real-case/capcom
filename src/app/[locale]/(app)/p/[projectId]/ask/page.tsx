@@ -55,7 +55,7 @@ export default async function AskPage({
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-10">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-text-primary">
         {t("title")}
       </h1>
       <AiQueryManager projectId={projectId} aiConfigured={isAiConfigured()} />

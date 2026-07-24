@@ -33,6 +33,7 @@ export const panelIntent = {
       "src/widgets/retention-grid/ui/RetentionGrid.tsx",
       "src/widgets/segment-builder/ui/SegmentBuilder.tsx",
       "src/widgets/trends-explorer/ui/TrendsExplorer.tsx",
+      "src/widgets/workspace-launcher/ui/ProjectCard.tsx",
     ],
   },
   usageRole: null,
