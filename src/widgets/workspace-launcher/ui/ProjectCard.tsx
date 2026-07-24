@@ -46,13 +46,23 @@ export function ProjectCard({
   locale,
 }: ProjectCardProps) {
   const nameId = `launcher-card-${project.id}`;
+  const roleId = `launcher-card-role-${project.id}`;
+  const descId = `launcher-card-desc-${project.id}`;
   const metric =
     project.status === "ok" ? deriveLauncherMetric(project.kpis) : null;
+  // Name the link with the project name — a clean, non-run-on accessible name (AC2) — but
+  // DESCRIBE it with the role + metric + activity, so a screen-reader user tabbing card to
+  // card still hears the data this launcher exists to surface. aria-labelledby ALONE would
+  // hide every other descendant from the link's announcement. Both ids resolve in each branch.
+  const describedBy = [roleLabel ? roleId : null, descId]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <Link
       href={`/p/${project.id}`}
       aria-labelledby={nameId}
+      aria-describedby={describedBy}
       className="group block h-full rounded-lg focus-visible:ring-2 focus-visible:ring-text-primary focus-visible:outline-none"
     >
       <Panel className="flex h-full flex-col gap-3 transition-colors group-hover:bg-surface-elevated">
@@ -62,6 +72,7 @@ export function ProjectCard({
           </h3>
           {roleLabel ? (
             <Badge
+              id={roleId}
               variant="outline"
               className="shrink-0 border-border-hairline bg-surface-elevated font-normal text-text-secondary"
             >
@@ -71,11 +82,15 @@ export function ProjectCard({
         </div>
 
         {project.status === "error" || metric === null ? (
-          <p role="alert" className="text-sm text-status-critical-fg">
+          <p
+            id={descId}
+            role="alert"
+            className="text-sm text-status-critical-fg"
+          >
             {copy.cardError}
           </p>
         ) : (
-          <>
+          <div id={descId} className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <span className="text-label text-text-secondary">
                 {copy.metricLabel}
@@ -105,7 +120,7 @@ export function ProjectCard({
             <p className="text-sm text-text-secondary">
               {project.activityLabel}
             </p>
-          </>
+          </div>
         )}
       </Panel>
     </Link>

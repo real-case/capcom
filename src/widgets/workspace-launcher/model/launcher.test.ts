@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { OverviewKpis, OverviewSignalBucket } from "@/entities/event";
 
 import {
+  buildLauncherProjects,
   deriveLauncherMetric,
   formatDelta,
   formatMetricValue,
   lastActiveDaysAgo,
+  type ProjectRpcResult,
 } from "./launcher";
 
 const KPIS: OverviewKpis = {
@@ -94,5 +96,58 @@ describe("formatting", () => {
     expect(formatDelta((108 - 56) / 56, "en-US")).toBe("+93%");
     expect(formatDelta(-0.1, "en-US")).toBe("-10%");
     expect(formatDelta(null, "en-US")).toBe("—");
+  });
+});
+
+describe("buildLauncherProjects", () => {
+  const projects = [
+    { id: "p1", name: "One" },
+    { id: "p2", name: "Two" },
+    { id: "p3", name: "Three" },
+  ];
+  // A stub activity-label builder — lets the test assert each project got ITS OWN signal,
+  // without pulling next-intl into the model test.
+  const labelFor = (s: OverviewSignalBucket[]) => `buckets:${s.length}`;
+
+  it("maps a fulfilled pair to status ok with its rows + activity, index-aligned", () => {
+    const settled: ProjectRpcResult[] = [
+      { status: "fulfilled", value: [KPIS, series(JUN_1, [1, 2, 3])] },
+      { status: "fulfilled", value: [KPIS, series(JUN_1, [4])] },
+      { status: "fulfilled", value: [KPIS, series(JUN_1, [])] },
+    ];
+    const vms = buildLauncherProjects(projects, settled, labelFor);
+
+    expect(vms.map((v) => v.id)).toEqual(["p1", "p2", "p3"]);
+    const first = vms[0]!;
+    expect(first.status).toBe("ok");
+    if (first.status === "ok") {
+      expect(first.kpis).toBe(KPIS);
+      expect(first.signal).toHaveLength(3);
+      expect(first.activityLabel).toBe("buckets:3"); // its own signal, not another's
+    }
+  });
+
+  it("degrades a rejected pair to status error without touching its siblings", () => {
+    const settled: ProjectRpcResult[] = [
+      { status: "fulfilled", value: [KPIS, series(JUN_1, [1])] },
+      { status: "rejected", reason: new Error("signal RPC failed") },
+      { status: "fulfilled", value: [KPIS, series(JUN_1, [2])] },
+    ];
+    const vms = buildLauncherProjects(projects, settled, labelFor);
+
+    // The rejected index → error, aligned to the RIGHT project, carrying no rows/activity.
+    expect(vms[1]).toEqual({ id: "p2", name: "Two", status: "error" });
+    // Siblings still render — one failure never blanks the set.
+    expect(vms[0]!.status).toBe("ok");
+    expect(vms[2]!.status).toBe("ok");
+  });
+
+  it("treats a missing settled slot as error (defensive index guard)", () => {
+    const vms = buildLauncherProjects(
+      [{ id: "p1", name: "One" }],
+      [],
+      labelFor,
+    );
+    expect(vms[0]!.status).toBe("error");
   });
 });

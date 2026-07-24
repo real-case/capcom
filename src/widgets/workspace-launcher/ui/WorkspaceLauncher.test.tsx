@@ -101,16 +101,20 @@ describe("WorkspaceLauncher", () => {
     expect(screen.getByText("Active today")).toBeInTheDocument();
     expect(screen.getByText("Active 2 days ago")).toBeInTheDocument();
 
-    // Exactly one link per card, each named by its project (the aria-labelledby scoping),
+    // Exactly one link per card, each NAMED by its project (the aria-labelledby scoping),
     // not by the run-on card body.
     expect(screen.getAllByRole("link")).toHaveLength(2);
-    expect(screen.getByRole("link", { name: "Aurora Web" })).toHaveAttribute(
-      "href",
-      "/en/p/proj-web",
-    );
+    const webLink = screen.getByRole("link", { name: "Aurora Web" });
+    expect(webLink).toHaveAttribute("href", "/en/p/proj-web");
     expect(
       screen.getByRole("link", { name: "Aurora Mobile" }),
     ).toBeInTheDocument();
+
+    // …and DESCRIBED by the role + metric + activity (aria-describedby), so a screen-reader
+    // user tabbing card to card still hears the data — a clean name must not hide the content.
+    expect(webLink).toHaveAccessibleDescription(/Owner/);
+    expect(webLink).toHaveAccessibleDescription(/108/);
+    expect(webLink).toHaveAccessibleDescription(/Active today/);
   });
 
   it("shows the member-of-nothing empty state when there are no organizations", () => {

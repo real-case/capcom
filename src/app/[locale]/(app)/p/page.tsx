@@ -9,6 +9,7 @@ import { fetchProjects } from "@/entities/project";
 import { routing } from "@/i18n/routing";
 import { getCurrentUser, getServerClient } from "@/lib/supabase/server";
 import {
+  buildLauncherProjects,
   lastActiveDaysAgo,
   WorkspaceLauncher,
   type LauncherCopy,
@@ -86,29 +87,21 @@ export default async function WorkspaceHomePage({
     ),
   );
 
-  const activityLabel = (signal: Parameters<typeof lastActiveDaysAgo>[0]) => {
-    const days = lastActiveDaysAgo(signal, now);
-    return days === null ? t("noActivity") : t("activity", { days });
-  };
-
-  // A project is "ok" ONLY when both RPCs fulfilled — a resolved kpis row beside a rejected
+  // The ok/error mapping (AC8) lives in a pure, unit-tested helper (model/launcher.ts): a
+  // project is "ok" ONLY when both RPCs fulfilled — a resolved kpis row beside a rejected
   // signal must not render, or the card would assert "no activity" about unknown activity.
+  // The localized activity line is supplied here (closing over next-intl + `now`) so the
+  // helper stays free of i18n and the clock.
+  const launcherProjects = buildLauncherProjects(
+    projects,
+    settled,
+    (signal) => {
+      const days = lastActiveDaysAgo(signal, now);
+      return days === null ? t("noActivity") : t("activity", { days });
+    },
+  );
   const projectVM = new Map<string, LauncherProject>(
-    projects.map((project, i) => {
-      const result = settled[i]!;
-      const vm: LauncherProject =
-        result.status === "fulfilled"
-          ? {
-              id: project.id,
-              name: project.name,
-              status: "ok",
-              kpis: result.value[0],
-              signal: result.value[1],
-              activityLabel: activityLabel(result.value[1]),
-            }
-          : { id: project.id, name: project.name, status: "error" };
-      return [project.id, vm];
-    }),
+    launcherProjects.map((vm) => [vm.id, vm]),
   );
 
   const roleByOrg = new Map(

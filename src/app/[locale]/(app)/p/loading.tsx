@@ -5,9 +5,10 @@ import { Skeleton } from "@/components/ui/skeleton";
  * per project, so first paint is later than the old bare list — this Suspense fallback holds the
  * launcher's shape (title, lead, one org heading, a card grid) so the layout doesn't jump.
  *
- * Each `Skeleton` carries an explicit `bg-surface-elevated` because the primitive bakes the
- * shadcn `bg-muted` — a grey shadcn block on the mission-control surface that the token grep
- * cannot see and no story exposes to axe. The whole fallback sits on `bg-surface-background`.
+ * Each `Skeleton` carries an explicit `bg-surface-elevated` because the primitive bakes a
+ * shadcn muted-grey fill (the kit default) — a grey shadcn block on the mission-control surface
+ * that the token grep cannot see and no story exposes to axe. The whole fallback sits on
+ * `bg-surface-background`.
  */
 export default function WorkspaceLoading() {
   return (

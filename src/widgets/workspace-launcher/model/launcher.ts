@@ -120,3 +120,39 @@ export function formatDelta(deltaRatio: number | null, locale: string): string {
     signDisplay: "exceptZero",
   }).format(deltaRatio);
 }
+
+/** One project's settled KPI+signal RPC pair (index-aligned with the input projects). */
+export type ProjectRpcResult = PromiseSettledResult<
+  [OverviewKpis, OverviewSignalBucket[]]
+>;
+
+/**
+ * Assemble the per-project view-models from the settled RPC pairs — the load-bearing ok/error
+ * mapping (AC8), extracted from the coverage-excluded route so it is directly unit-testable.
+ * PURE: `settled[i]` is index-aligned with `projects[i]`, and a project is `status: "ok"` only
+ * when its pair FULFILLED (both RPCs resolved); a rejected pair — or a missing slot — becomes
+ * `status: "error"` with no rows and NO activity label, so an unavailable project is never
+ * described as inactive. The localized activity line is supplied by `activityLabelFor` (the
+ * route closes it over next-intl + `now`), keeping this helper free of i18n and the clock.
+ */
+export function buildLauncherProjects(
+  projects: ReadonlyArray<{ id: string; name: string }>,
+  settled: ReadonlyArray<ProjectRpcResult>,
+  activityLabelFor: (signal: OverviewSignalBucket[]) => string,
+): LauncherProject[] {
+  return projects.map((project, i) => {
+    const result = settled[i];
+    if (result?.status === "fulfilled") {
+      const [kpis, signal] = result.value;
+      return {
+        id: project.id,
+        name: project.name,
+        status: "ok",
+        kpis,
+        signal,
+        activityLabel: activityLabelFor(signal),
+      };
+    }
+    return { id: project.id, name: project.name, status: "error" };
+  });
+}

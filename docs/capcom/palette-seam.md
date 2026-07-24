@@ -25,8 +25,9 @@ The convergence happened in two accepted steps:
   the original "two visual worlds," and this file used to be the map of the seam between them.
 - **ADR 0101** then moved the whole **front door** across: the auth screens (Phase 1), the marketing
   landing (Phase 2), and the workspace launcher `src/app/[locale]/(app)/p` + the app top bar
-  `src/app/[locale]/(app)/layout.tsx` (Phase 3). With the launcher migrated, **no product surface is built
-  from the shadcn value layer anymore** — the seam is closed.
+  `src/app/[locale]/(app)/layout.tsx` (Phase 3). With the launcher migrated, **no in-scope front-door
+  product surface is built from the shadcn value layer anymore** — the seam is closed. (The app-wide
+  error/404 chrome is a deliberate residue, out of the front-door scope — see the residue list below.)
 
 What remains shadcn is not a _surface_ but a small, enumerated set of **residues** (below): the shadcn
 component kit consumed as-is, and two app-wide chrome surfaces not in the front-door scope.
@@ -64,8 +65,8 @@ The half-mix is caught only by an **axe story rendered on the real surface**, or
 1. **Every mission-control surface needs a dark _and_ a light story rendered inside its own surface** (e.g.
    a `bg-surface-panel` decorator, or a full-page `bg-surface-background` wrapper), so axe measures the real
    pairing. The ADR-0101 landing and the workspace launcher both ship such a dark + light story; a chart's
-   mission-control text measured against the shadcn `--background` is the _reverse_ half-mix and fails axe
-   just as surely.
+   mission-control text measured against the shadcn `--background` is the _reverse_ half-mix and can fail
+   axe just as readily — the pairing is no longer contrast-guaranteed in either theme.
 2. **SVG `<text>`, `aria-hidden` overlays, and kit _default variants_ are not axe-evaluable.** For those the
    proof is a source grep for shadcn tokens plus the human Chromatic re-baseline. The ADR-0101 re-skins use a
    negated `git grep` for shadcn value-layer utilities over the re-skinned surfaces

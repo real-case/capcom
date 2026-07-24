@@ -11,5 +11,6 @@ export type {
   LauncherCopy,
   LauncherOrg,
   LauncherProject,
+  ProjectRpcResult,
 } from "./model/launcher";
-export { lastActiveDaysAgo } from "./model/launcher";
+export { buildLauncherProjects, lastActiveDaysAgo } from "./model/launcher";
