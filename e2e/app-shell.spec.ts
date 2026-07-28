@@ -72,9 +72,18 @@ test.describe("App shell & navigation (PR-13)", () => {
 
   test("the ⌘K palette jumps to a section", async ({ page }) => {
     // Keyboard shortcut opens it (ControlOrMeta maps per platform; the shell binds both).
-    await page.keyboard.press("ControlOrMeta+k");
+    // The binding is attached in an effect (`AppShell`), so a press that lands before the
+    // shell hydrates is silently dropped — and a lost keypress never retries itself, which
+    // made this assertion race page-load timing rather than test the shortcut. Poll the
+    // press until the palette opens, instead of a fixed wait. The handler TOGGLES, so the
+    // press is guarded on the dialog being closed: a blind retry could shut it again.
     const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
+    await expect(async () => {
+      if (!(await dialog.isVisible())) {
+        await page.keyboard.press("ControlOrMeta+k");
+      }
+      await expect(dialog).toBeVisible({ timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
 
     await dialog.getByPlaceholder("Type a command").fill("funnels");
     await dialog.getByRole("option", { name: /Funnels/ }).click();
